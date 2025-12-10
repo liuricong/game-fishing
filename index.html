@@ -1,0 +1,2648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💘 爱的守护者 - Love Guardian</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(180deg, #2d1b4e 0%, #4a2c6a 50%, #1e3a5f 100%);
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .game-hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: flex-start;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-score {
+            color: #ff69b4;
+            font-size: 24px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8), 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10;
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        /* 首页美化 */
+        #startScreen {
+            background: transparent;
+        }
+        #startScreen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(1200px 600px at 80% -10%, rgba(255,105,180,0.25), transparent 60%),
+                radial-gradient(900px 500px at -10% 110%, rgba(78, 205, 196, 0.18), transparent 60%),
+                radial-gradient(800px 500px at 50% 50%, rgba(255,255,255,0.05), transparent 60%),
+                linear-gradient(180deg, rgba(29,14,52,0.9), rgba(22,38,75,0.9));
+            z-index: -1;
+        }
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: min(80vw, 360px);
+        }
+        .menu-btn {
+            padding: 14px 26px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+            backdrop-filter: blur(6px);
+            cursor: pointer;
+            transition: transform .15s ease, box-shadow .2s ease;
+        }
+        .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,0.45); }
+        .menu-btn:active { transform: translateY(0); }
+        .menu-btn.secondary {
+            border-color: rgba(255,105,180,0.5);
+            background: linear-gradient(180deg, rgba(255,105,180,0.25), rgba(255,20,147,0.15));
+        }
+        
+        /* 首页描述：居中 + 限宽 + 两侧内边距 */
+        .start-desc {
+            color: rgba(255,255,255,0.65);
+            font-size: 13px;
+            text-align: center;
+            width: min(90vw, 420px);
+            margin: 6px auto 0;
+            line-height: 1.6;
+            padding: 0 12px;
+        }
+        .floating-hearts { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .floating-hearts span {
+            position: absolute; color: rgba(255,105,180,0.7); font-size: 18px;
+            animation: float-up 8s linear infinite; filter: drop-shadow(0 0 8px rgba(255,105,180,0.6));
+        }
+        @keyframes float-up {
+            0% { transform: translateY(40px) translateX(0) scale(0.8); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-110%) translateX(-30px) scale(1.2); opacity: 0; }
+        }
+
+        .game-title {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff69b4, #ff1493, #ff6b9d, #da70d6);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s ease infinite;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 105, 180, 0.5);
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .game-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 16px;
+            margin-bottom: 40px;
+            letter-spacing: 3px;
+        }
+
+        .btn {
+            padding: 15px 50px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 20, 147, 0.4);
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 20, 147, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #da70d6 0%, #ff69b4 100%);
+            box-shadow: 0 10px 30px rgba(218, 112, 214, 0.4);
+        }
+
+        .btn-restart:hover {
+            box-shadow: 0 15px 40px rgba(218, 112, 214, 0.6);
+        }
+
+        .final-score {
+            font-size: 28px;
+            color: #fff;
+            margin: 20px 0;
+        }
+
+        .final-score span {
+            color: #ff69b4;
+            font-size: 42px;
+            font-weight: 700;
+        }
+
+        .game-over-title {
+            font-size: 48px;
+            color: #ff69b4;
+            font-weight: 800;
+            text-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-top: 30px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .instructions kbd {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 0 3px;
+        }
+
+        .power-up-indicator {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 5;
+        }
+
+        .power-up-badge {
+            padding: 5px 10px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 45px;
+            left: 15px;
+            color: #ff69b4;
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8);
+            z-index: 5;
+        }
+
+        .wave-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .wave-display.show {
+            animation: wave-announce 2s ease-out forwards;
+        }
+
+        @keyframes wave-announce {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 520px) {
+            .game-title {
+                font-size: 36px;
+            }
+            
+            .btn {
+                padding: 12px 40px;
+                font-size: 18px;
+            }
+        }
+
+        /* 移动端提示 */
+        .mobile-controls-hint {
+            display: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        @media (pointer: coarse) {
+            .instructions {
+                display: none;
+            }
+            
+            .mobile-controls-hint {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="480" height="640"></canvas>
+        
+        <div class="game-hud">
+            <div class="hud-score" id="scoreDisplay">0</div>
+        </div>
+        
+        <div class="combo-display" id="comboDisplay"></div>
+        <div class="wave-display" id="waveDisplay"></div>
+        
+        <!-- 开始界面 -->
+        <div class="overlay" id="startScreen">
+            <div class="floating-hearts">
+                <span style="left:10%; bottom:5%; animation-delay:0s;">❤</span>
+                <span style="left:25%; bottom:-5%; animation-delay:.8s;">❤</span>
+                <span style="left:70%; bottom:-10%; animation-delay:1.2s;">❤</span>
+                <span style="left:85%; bottom:0; animation-delay:2s;">❤</span>
+                <span style="left:50%; bottom:-8%; animation-delay:3s;">❤</span>
+            </div>
+            <div style="font-size: 60px; margin-bottom: 6px; text-shadow:0 10px 30px rgba(255,105,180,.5);">💖</div>
+            <div class="game-title">爱的守护者</div>
+            <div class="game-subtitle">LOVE GUARDIAN</div>
+            <div class="menu-buttons" style="margin: 24px 0;">
+                <button class="menu-btn" onclick="showStageSelect()">🎯 闯关模式</button>
+                <button class="menu-btn secondary" onclick="startGame('endless')">♾️ 无尽模式</button>
+            </div>
+            <div class="start-desc">
+                💆 触摸屏幕控制飞机 · 💗 自动发射爱心 · 🌹 收集道具增强火力
+            </div>
+        </div>
+        
+        <!-- 关卡选择界面 -->
+        <div class="overlay hidden" id="stageSelectScreen">
+            <div style="font-size: 40px; margin-bottom: 10px;">🎮</div>
+            <div class="game-title" style="font-size: 32px; margin-bottom: 5px;">选择关卡</div>
+            <div style="color: rgba(255,255,255,0.5); font-size: 13px; margin-bottom: 15px;">通关前一关解锁下一关</div>
+            <div id="stageGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 15px; max-width: 320px;"></div>
+            <button class="btn" onclick="hideStageSelect()" style="background: linear-gradient(135deg, #666 0%, #444 100%); padding: 12px 40px; font-size: 16px; margin-top: 10px;">🔙 返回</button>
+        </div>
+        
+        <!-- 游戏结束界面 -->
+        <div class="overlay hidden" id="gameOverScreen">
+            <div class="game-over-title" id="gameOverTitle">💔 爱情破碎了</div>
+            <div class="final-score">得分: <span id="finalScore">0</span></div>
+            <div id="stageInfo" style="color: #ff69b4; font-size: 18px; margin: 10px 0;"></div>
+            <button class="btn btn-restart" onclick="restartGame()">💕 再次守护</button>
+            <button class="btn" onclick="backToMenu()" style="background: linear-gradient(135deg, #666 0%, #444 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">🏠 返回菜单</button>
+        </div>
+        
+        <!-- 通关界面 -->
+        <div class="overlay hidden" id="winScreen">
+            <div class="game-over-title" style="color: #ffd700;">🎉 恭喜通关! 🎉</div>
+            <div class="final-score">最终得分: <span id="winScore">0</span></div>
+            <div style="color: #ff69b4; font-size: 20px; margin: 15px 0;">你成功守护了爱情!</div>
+            <button class="btn btn-restart" onclick="restartGame()">💕 再玩一次</button>
+            <button class="btn" onclick="backToMenu()" style="background: linear-gradient(135deg, #666 0%, #444 100%);">🏠 返回菜单</button>
+        </div>
+        
+    </div>
+
+    <script>
+        // Canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 玩家飞机图片 - 使用外部URL
+        const PLAYER_IMG_URL = 'https://s1.chu0.com/prevfiles/da3fdafa112c4563b4560eba35e80462.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:fOHHkI4mdg1N9Gxo-emx8mEDwyk=';
+        
+        // 敌机图片 - 使用外部URL
+        const ENEMY_IMG_URL = 'https://s1.chu0.com/prevfiles/86bc6939ff784900b659c4549da98461.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:o6HansL2MPkfucvDTHIZNIGYiiU=';
+        const ENEMY_IMG_URL2 = 'https://s1.chu0.com/prevfiles/5663194c3f45446e98c9ab970c36e87c.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:Vy37_NPuil0_pkHKP-JxSorwUIw=';
+        const ENEMY_IMG_URL3 = 'https://s1.chu0.com/prevfiles/2eaf3d3676584e67acfb453fc4c15271.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:YJ_HseiOiW40M9biGQPKbikhR6Q=';
+        const ENEMY_IMG_URL4 = 'https://s1.chu0.com/prevfiles/2f2d3cbcebff42e7b87cf3121e18bfab.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:j5I9yS5nq2alsQz_o-V0XXFdtO4=';
+        const ENEMY_IMG_URL5 = 'https://s1.aigei.com/prevfiles/64df65323d724439b0ff24b8c32936a3.png?e=2051020800&token=P7S2Xpzfz11vAkASLTkfHN7Fw-oOZBecqeJaxypL:oegB9IG4TJ2UKBWQtyViBNhUzjA=';
+        const ENEMY_IMG_URL6 = 'https://s1.chu0.com/prevfiles/50de998ea9214e049f32c420f8bba82a.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:uquMekkeu51vRMEJze_Pvy1C8WA=';
+        const ENEMY_IMG_URL7 = 'https://s1.chu0.com/prevfiles/389af27805204fd8a2fd13d78a6bd749.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:7PXKv4RTGbOfUPiL9XalWGYlDAg=';
+        const ENEMY_IMG_URL8 = 'https://s1.chu0.com/prevfiles/a63d2704230345f195ae6201d87dde96.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:ttE-rbrt62auPVSmArTj4NiX_bE=';
+        const ENEMY_IMG_URL9 = 'https://s1.chu0.com/prevfiles/2f2d3cbcebff42e7b87cf3121e18bfab.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:j5I9yS5nq2alsQz_o-V0XXFdtO';
+        const ENEMY_IMG_URL10 = 'https://s1.chu0.com/prevfiles/b5e3c0520f10440fb35c022965cd0fbf.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:jTqeMLe6CIGAj5wA2vGCEdsJ5Zs=';
+        const ENEMY_IMG_URL11 = 'https://s1.chu0.com/prevfiles/6445a9e75e36414fb7b850c8d6d03fdc.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:cuZMH5XfEENPI5QqRTYngXdSSkE=';
+        
+        // 玩家飞机图片
+        const playerImg = new Image();
+        playerImg.crossOrigin = 'anonymous';
+        let playerImgReady = false;
+        playerImg.onload = () => { playerImgReady = true; };
+        playerImg.src = PLAYER_IMG_URL;
+        
+        // 敌机图片
+        const enemyImg = new Image();
+        enemyImg.crossOrigin = 'anonymous';
+        let enemyImgReady = false;
+        enemyImg.onload = () => { enemyImgReady = true; };
+        enemyImg.src = ENEMY_IMG_URL;
+        
+        const enemyImg2 = new Image();
+        enemyImg2.crossOrigin = 'anonymous';
+        let enemyImg2Ready = false;
+        enemyImg2.onload = () => { enemyImg2Ready = true; };
+        enemyImg2.src = ENEMY_IMG_URL2;
+        
+        const enemyImg3 = new Image();
+        enemyImg3.crossOrigin = 'anonymous';
+        let enemyImg3Ready = false;
+        enemyImg3.onload = () => { enemyImg3Ready = true; };
+        enemyImg3.src = ENEMY_IMG_URL3;
+        
+        const enemyImg4 = new Image();
+        enemyImg4.crossOrigin = 'anonymous';
+        let enemyImg4Ready = false;
+        enemyImg4.onload = () => { enemyImg4Ready = true; };
+        enemyImg4.src = ENEMY_IMG_URL4;
+        
+        const enemyImg5 = new Image();
+        enemyImg5.crossOrigin = 'anonymous';
+        let enemyImg5Ready = false;
+        enemyImg5.onload = () => { enemyImg5Ready = true; };
+        enemyImg5.src = ENEMY_IMG_URL5;
+        
+        const enemyImg6 = new Image();
+        enemyImg6.crossOrigin = 'anonymous';
+        let enemyImg6Ready = false;
+        enemyImg6.onload = () => { enemyImg6Ready = true; };
+        enemyImg6.src = ENEMY_IMG_URL6;
+        
+        const enemyImg7 = new Image();
+        enemyImg7.crossOrigin = 'anonymous';
+        let enemyImg7Ready = false;
+        enemyImg7.onload = () => { enemyImg7Ready = true; };
+        enemyImg7.src = ENEMY_IMG_URL7;
+        
+        const enemyImg8 = new Image();
+        enemyImg8.crossOrigin = 'anonymous';
+        let enemyImg8Ready = false;
+        enemyImg8.onload = () => { enemyImg8Ready = true; };
+        enemyImg8.src = ENEMY_IMG_URL8;
+        
+        const enemyImg9 = new Image();
+        enemyImg9.crossOrigin = 'anonymous';
+        let enemyImg9Ready = false;
+        enemyImg9.onload = () => { enemyImg9Ready = true; };
+        enemyImg9.src = ENEMY_IMG_URL9;
+        
+        const enemyImg10 = new Image();
+        enemyImg10.crossOrigin = 'anonymous';
+        let enemyImg10Ready = false;
+        enemyImg10.onload = () => { enemyImg10Ready = true; };
+        enemyImg10.src = ENEMY_IMG_URL10;
+        
+        const enemyImg11 = new Image();
+        enemyImg11.crossOrigin = 'anonymous';
+        let enemyImg11Ready = false;
+        enemyImg11.onload = () => { enemyImg11Ready = true; };
+        enemyImg11.src = ENEMY_IMG_URL11;
+        
+        // 聪仔机贴图
+        const DRONE_IMG_URL = 'https://s1.chu0.com/prevfiles/5773a582a4f04ee78cc76f08bd156564.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:1flCs3cfRHnYf450ofyY7uneUiI=';
+        const droneImg = new Image();
+        droneImg.crossOrigin = 'anonymous';
+        let droneImgReady = false;
+        droneImg.onload = () => { droneImgReady = true; };
+        droneImg.src = DRONE_IMG_URL;
+        
+        // 游戏配置
+        const CONFIG = {
+            CANVAS_WIDTH: window.innerWidth,
+            CANVAS_HEIGHT: window.innerHeight,
+            PLAYER_SPEED: 8,
+            BULLET_SPEED: 12,
+            ENEMY_BASE_SPEED: 3,
+            STAR_COUNT: 150,
+            // === 方案A：道具持续时长（帧 @60fps）===
+            POWERUP_DURATION: 480,      // 武器道具持续8秒
+            SHIELD_DURATION: 180,       // 护盾持续3秒
+            DRONE_DURATION: 600,        // 聪仔机持续10秒
+            // === 道具掉落率 ===
+            POWERUP_DROP_RATE: 0.20,    // 20%掉落几率
+            // === 聪仔机射速 ===
+            DRONE_FIRE_COOLDOWN: 14,    // 聪仔机开火间隔（帧）
+            // 图片敌机占比（0~1），其余使用矢量机型
+            SPRITE_ENEMY_RATIO: 0.6,
+            
+            // === Boss出现节奏配置 ===
+            // 关卡模式：至少击败多少敌人后才可出现Boss（基础+按关卡递增）
+            STAGE_BOSS_BASE: 24,
+            STAGE_BOSS_PER_STAGE: 6,
+            // 关卡模式：每关Boss最早出现时间（帧，60fps）
+            BOSS_MIN_TIME_STAGE: 30 * 60,   // 30秒
+            
+            // 无尽模式：首次Boss分数阈值与后续增量
+            ENDLESS_FIRST_BOSS_SCORE: 2200,
+            ENDLESS_NEXT_BOSS_ADD: 2500,
+            // 无尽模式：相邻两次Boss之间至少间隔的时间（帧）
+            BOSS_MIN_TIME_ENDLESS: 35 * 60   // 35秒
+        };
+        
+        // === 武器冷却/发数/间距配置（方案A）===
+        const WEAPON_CONFIG = {
+            rapid:  { cd: [10, 8, 6],   desc: '快速单发' },
+            double: { cd: [18, 16, 14], offset: [12, 12, 18], extraBullet: [false, true, true], desc: '双/三发' },
+            triple: { cd: [20, 18, 16], lines: [3, 5, 7], gap: 12, desc: '多线' },
+            spread: { cd: [22, 20, 18], angles: [[-3,0,3], [-3,-1.5,0,1.5,3], [-4,-2.5,-1,0,1,2.5,4]], desc: '扇形' },
+            laser:  { cd: [12, 10, 8],  width: [6, 10, 14], desc: '激光' },
+            none:   { cd: [25], desc: '普通' }
+        };
+        
+        // === 敌机首关射速系数（方案A）===
+        const ENEMY_SHOOT_BASE = {
+            fast: 0.008,
+            tank: 0.010,
+            sniper: 0.012,
+            splitter: 0.008,
+            mini: 0.006,
+            normal: 0.010
+        };
+        
+        // 设置canvas实际尺寸
+        canvas.width = CONFIG.CANVAS_WIDTH;
+        canvas.height = CONFIG.CANVAS_HEIGHT;
+
+        // 游戏状态
+        let gameState = {
+            score: 0,
+            wave: 1,
+            combo: 0,
+            maxCombo: 0,
+            isRunning: false,
+            isPaused: false,
+            powerUpType: 'none',    // 当前道具类型
+            powerUpTime: 0,         // 道具剩余时间
+            isInvincible: false,    // 是否无敌
+            invincibleTime: 0,      // 无敌剩余时间
+            powerUpLevel: 0,        // 武器道具等级（0-3）
+            droneActive: false,      // 聪仔机是否激活
+            droneTime: 0,            // 聪仔机剩余时间
+            nextBossScore: CONFIG.ENDLESS_FIRST_BOSS_SCORE,
+            bossActive: false,
+            gameMode: 'endless',
+            currentStage: 1,
+            maxStage: 20,
+            endlessBossCount: 0,
+            stageEnemyCount: 0,
+            stageBossSpawned: false,
+            elapsedFrames: 0,
+            lastBossEndFrame: -99999
+        };
+
+        // 游戏对象
+        let player, bullets, enemies, powerUps, explosions, stars, drones;
+
+        // 按键状态
+        const keys = {};
+
+        // 初始化星星背景
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
+                stars.push({
+                    x: Math.random() * CONFIG.CANVAS_WIDTH,
+                    y: Math.random() * CONFIG.CANVAS_HEIGHT,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 2 + 1,
+                    brightness: Math.random()
+                });
+            }
+        }
+
+        // 初始化玩家
+        function initPlayer() {
+            player = {
+                x: CONFIG.CANVAS_WIDTH / 2,
+                y: CONFIG.CANVAS_HEIGHT - 80,
+                width: 50,
+                height: 50,
+                speed: CONFIG.PLAYER_SPEED,
+                shootCooldown: 0,
+                invincible: 0,
+                trail: []
+            };
+        }
+
+        // 初始化游戏
+        function initGame(mode = 'endless') {
+            gameState = {
+                score: 0,
+                wave: 1,
+                combo: 0,
+                maxCombo: 0,
+                isRunning: false,
+                isPaused: false,
+                powerUpType: 'none',
+                powerUpTime: 0,
+                isInvincible: false,
+                invincibleTime: 0,
+                powerUpLevel: 0,
+                droneActive: false,
+                droneTime: 0,
+                nextBossScore: CONFIG.ENDLESS_FIRST_BOSS_SCORE,
+                bossActive: false,
+                gameMode: mode,
+                currentStage: 1,
+                maxStage: 20,
+                stageEnemyCount: 0,
+                stageBossSpawned: false,
+                elapsedFrames: 0,
+                lastBossEndFrame: -99999
+            };
+            
+            initStars();
+            initPlayer();
+            bullets = [];
+            enemies = [];
+            powerUps = [];
+            explosions = [];
+            drones = [];
+            
+            updateUI();
+        }
+
+        // 开始游戏
+        function startGame(mode = 'endless') {
+            document.getElementById('startScreen').classList.add('hidden');
+            initGame(mode);
+            gameState.isRunning = true;
+            
+            if (mode === 'stage') {
+                showStage();
+            } else {
+                showWave();
+            }
+            gameLoop();
+        }
+
+        // 重新开始
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            
+            if (gameState.gameMode === 'stage') {
+                // 从失败的关卡继续
+                const resume = parseInt(localStorage.getItem('resumeStage') || `${gameState.currentStage || 1}`);
+                initGame('stage');
+                gameState.currentStage = Math.max(1, Math.min(resume, gameState.maxStage));
+                gameState.isRunning = true;
+                showStage();
+                gameLoop();
+            } else {
+                startGame('endless');
+            }
+        }
+        
+        // 返回菜单
+        function backToMenu() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+        
+        // 显示关卡
+        function showStage() {
+            const waveDisplay = document.getElementById('waveDisplay');
+            waveDisplay.textContent = `第 ${gameState.currentStage} 关`;
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
+        }
+        
+        // 获取已解锁关卡
+        function getUnlockedStage() {
+            return parseInt(localStorage.getItem('unlockedStage') || '1');
+        }
+        
+        // 保存解锁关卡
+        function saveUnlockedStage(stage) {
+            const current = getUnlockedStage();
+            if (stage > current) {
+                localStorage.setItem('unlockedStage', stage.toString());
+            }
+        }
+        
+        // 显示关卡选择界面
+        function showStageSelect() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('stageSelectScreen').classList.remove('hidden');
+            
+            const unlockedStage = getUnlockedStage();
+            const grid = document.getElementById('stageGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                const isUnlocked = i <= unlockedStage;
+                
+                btn.innerHTML = isUnlocked ? i : '🔒';
+                btn.style.cssText = `
+                    width: 52px; height: 52px; border-radius: 12px; border: 2px solid ${isUnlocked ? '#ffd700' : '#555'};
+                    background: ${isUnlocked ? 'linear-gradient(135deg, #ff69b4 0%, #ff1493 100%)' : 'linear-gradient(135deg, #444 0%, #333 100%)'};
+                    color: ${isUnlocked ? 'white' : '#666'}; font-size: ${isUnlocked ? '20px' : '16px'}; font-weight: bold;
+                    cursor: ${isUnlocked ? 'pointer' : 'not-allowed'}; transition: all 0.2s;
+                    box-shadow: ${isUnlocked ? '0 4px 15px rgba(255,105,180,0.4)' : 'none'};
+                `;
+                
+                if (isUnlocked) {
+                    btn.onclick = () => startStage(i);
+                    btn.onmouseenter = () => btn.style.transform = 'scale(1.1)';
+                    btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+                }
+                
+                grid.appendChild(btn);
+            }
+        }
+        
+        // 隐藏关卡选择
+        function hideStageSelect() {
+            document.getElementById('stageSelectScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+        
+        // 开始指定关卡
+        function startStage(stageNum) {
+            document.getElementById('stageSelectScreen').classList.add('hidden');
+            initGame('stage');
+            gameState.currentStage = stageNum;
+            gameState.isRunning = true;
+            gameState.elapsedFrames = 0; // 新关卡计时归零
+            gameState.lastBossEndFrame = -99999;
+            showStage();
+            gameLoop();
+        }
+
+        // 显示波次
+        function showWave() {
+            const waveDisplay = document.getElementById('waveDisplay');
+            waveDisplay.textContent = `WAVE ${gameState.wave}`;
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
+        }
+
+        // 更新UI
+        function updateUI() {
+            document.getElementById('scoreDisplay').textContent = gameState.score;
+            
+            const comboDisplay = document.getElementById('comboDisplay');
+            if (gameState.combo >= 3) {
+                comboDisplay.textContent = `🔥 x${gameState.combo}`;
+            } else {
+                comboDisplay.textContent = '';
+            }
+        }
+
+        // 绘制星星背景（浪漫风格）
+        function drawStars() {
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > CONFIG.CANVAS_HEIGHT) {
+                    star.y = 0;
+                    star.x = Math.random() * CONFIG.CANVAS_WIDTH;
+                }
+                
+                const alpha = 0.4 + star.brightness * 0.6;
+                // 混合多种浪漫色彩
+                const colorRand = star.brightness;
+                if (colorRand > 0.7) {
+                    ctx.fillStyle = `rgba(255, 182, 193, ${alpha})`; // 淡粉
+                } else if (colorRand > 0.4) {
+                    ctx.fillStyle = `rgba(255, 218, 233, ${alpha})`; // 樱花粉
+                } else if (colorRand > 0.2) {
+                    ctx.fillStyle = `rgba(230, 190, 255, ${alpha})`; // 淡紫
+                } else {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                }
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // 绘制玩家飞机（使用 self.png + 升级发光/缩放）
+        function drawPlayer() {
+            if (player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0) {
+                return;
+            }
+            
+            // 根据武器等级确定缩放/发光
+            const lvl = gameState.powerUpLevel || 0;
+            const type = gameState.powerUpType;
+            const LEVEL_STYLES = [
+                { glow: null, scale: 1 },
+                { glow: '#00ffcc', scale: 1.05 },
+                { glow: '#ff69b4', scale: 1.1 },
+                { glow: '#ffd700', scale: 1.15 }
+            ];
+            const style = (type !== 'none' && lvl >= 1) ? LEVEL_STYLES[Math.min(lvl, 3)] : LEVEL_STYLES[0];
+            const sc = style.scale;
+
+            // 尾焰
+            player.trail.push({ x: player.x, y: player.y + 25 * sc, alpha: 1 });
+            if (player.trail.length > 10) player.trail.shift();
+            const flameColors = [
+                ['rgba(255,150,50,','rgba(255,100,0,'],
+                ['rgba(0,255,200,','rgba(0,180,150,'],
+                ['rgba(200,100,255,','rgba(150,50,200,'],
+                ['rgba(255,215,0,','rgba(255,140,0,']
+            ];
+            const fc = (type !== 'none' && lvl >= 1) ? flameColors[Math.min(lvl, 3)] : flameColors[0];
+            player.trail.forEach((t, i) => {
+                const gradient = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 15 * sc);
+                const alpha = (i / player.trail.length) * 0.5;
+                gradient.addColorStop(0, fc[0] + alpha + ')');
+                gradient.addColorStop(0.5, fc[1] + (alpha * 0.5) + ')');
+                gradient.addColorStop(1, 'rgba(255,50,0,0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, 15 * sc, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 用图片绘制玩家
+            const baseW = 56, baseH = 56;
+            const drawW = baseW * sc;
+            const drawH = baseH * sc;
+            if (playerImgReady) {
+                ctx.drawImage(playerImg, player.x - drawW / 2, player.y - drawH / 2, drawW, drawH);
+            } else {
+                // 占位图形
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                ctx.fillStyle = '#4a90d9';
+                ctx.beginPath();
+                ctx.moveTo(0, -25 * sc);
+                ctx.lineTo(-15 * sc, 20 * sc);
+                ctx.lineTo(15 * sc, 20 * sc);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 升级发光轮廓
+            if (style.glow) {
+                ctx.save();
+                ctx.shadowColor = style.glow;
+                ctx.shadowBlur = 18 + lvl * 4;
+                ctx.strokeStyle = style.glow;
+                ctx.lineWidth = 2 + lvl * 0.5;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, Math.max(drawW, drawH) / 2 + 2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 无敌护盾
+            if (gameState.isInvincible) {
+                ctx.save();
+                const shieldGlow = ctx.createRadialGradient(player.x, player.y, 25, player.x, player.y, 45);
+                shieldGlow.addColorStop(0, 'rgba(255, 215, 0, 0)');
+                shieldGlow.addColorStop(0.5, 'rgba(255, 215, 0, 0.3)');
+                shieldGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+                ctx.fillStyle = shieldGlow;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 45, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 38, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // 绘制子弹（爱心形状）
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.save();
+                ctx.translate(bullet.x, bullet.y);
+                
+                if (bullet.type === 'player') {
+                    if (bullet.isLaser) {
+                        // 激光束
+                        const w = bullet.laserWidth || 8;
+                        const grad = ctx.createLinearGradient(0, -30, 0, 10);
+                        grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+                        grad.addColorStop(1, 'rgba(255,105,180,0.9)');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(-w/2, -30, w, 30);
+                    } else {
+                        // 爱心子弹
+                        ctx.shadowColor = '#ff69b4';
+                        ctx.shadowBlur = 10;
+                        ctx.fillStyle = '#ff69b4';
+                        ctx.font = '18px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('❤', 0, 0);
+                    }
+                } else {
+                    // 敌人子弹 - 橙黄发光（更醒目）
+                    const r = 6;
+                    // 外部柔光
+                    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
+                    glow.addColorStop(0.0, 'rgba(255, 244, 189, 0.95)');
+                    glow.addColorStop(0.35, 'rgba(255, 200, 60, 0.85)');
+                    glow.addColorStop(0.7, 'rgba(255, 120, 0, 0.55)');
+                    glow.addColorStop(1.0, 'rgba(255, 60, 0, 0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, Math.PI * 2); ctx.fill();
+
+                    // 环形亮边
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#ff8a00';
+                    ctx.beginPath(); ctx.arc(0, 0, r * 0.95, 0, Math.PI * 2); ctx.stroke();
+
+                    // 中心亮点
+                    ctx.fillStyle = '#fff2a8';
+                    ctx.beginPath(); ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2); ctx.fill();
+                }
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            });
+        }
+
+        // 绘制聪仔机
+        function drawDrones() {
+            if (!gameState.droneActive || !drones.length) return;
+            drones.forEach(d => {
+                const x = player.x + d.offsetX;
+                const y = player.y + d.offsetY;
+                ctx.save();
+                
+                // 贴图优先
+                if (droneImgReady) {
+                    const size = 40; // 聪仔机尺寸
+                    // 轻微漂浮动画
+                    d.t = (d.t || 0) + 0.08;
+                    const floatY = Math.sin(d.t) * 2;
+                    ctx.translate(x, y + floatY);
+                    ctx.drawImage(droneImg, -size/2, -size/2, size, size);
+                    
+                    // 柔和光晕
+                    ctx.globalCompositeOperation = 'lighter';
+                    const glow = ctx.createRadialGradient(x, y + floatY, 0, x, y + floatY, 28);
+                    glow.addColorStop(0, 'rgba(0,229,255,0.35)');
+                    glow.addColorStop(1, 'rgba(0,229,255,0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath(); ctx.arc(x, y + floatY, 28, 0, Math.PI*2); ctx.fill();
+                    ctx.globalCompositeOperation = 'source-over';
+                } else {
+                    // 矢量占位
+                    ctx.translate(x, y);
+                    const g = ctx.createLinearGradient(0, -12, 0, 12);
+                    g.addColorStop(0, '#00e5ff');
+                    g.addColorStop(1, '#0088ff');
+                    ctx.fillStyle = g;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -12);
+                    ctx.lineTo(-10, 8);
+                    ctx.lineTo(0, 12);
+                    ctx.lineTo(10, 8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255,105,180,0.9)';
+                    ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-18, 6); ctx.lineTo(-10, 6); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(18, 6); ctx.lineTo(10, 6); ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
+        // 造型绘制工具与绘制函数
+        function enemyGradient(s, colors, hitFlash) {
+            const g = ctx.createLinearGradient(0, -25 * s, 0, 25 * s);
+            if (hitFlash && hitFlash > 0) {
+                g.addColorStop(0, '#ffffff');
+                g.addColorStop(0.5, '#ffeeee');
+                g.addColorStop(1, '#ffffff');
+            } else {
+                g.addColorStop(0, colors[0]);
+                g.addColorStop(0.5, colors[1]);
+                g.addColorStop(1, colors[2]);
+            }
+            return g;
+        }
+
+        function drawEnemySmall(enemy) {
+            const s = Math.max(0.9, (enemy.width || 40) / 40);
+            const colors = enemy.colors || ['#70a1ff', '#1e90ff', '#3742fa'];
+            ctx.shadowColor = colors[0];
+            ctx.shadowBlur = 12;
+
+            const modelByType = {
+                normal: 'fighter',
+                fast: 'interceptor',
+                tank: 'bomber',
+                sniper: 'sniperJet',
+                splitter: 'splitterJet',
+                mini: 'droneJet'
+            };
+            const model = enemy.shape || modelByType[enemy.type] || 'fighter';
+            const isHit = enemy.hitFlash && enemy.hitFlash > 0;
+            
+            // 贴图池（就绪的贴图会被加入池中）
+            const spritePool = [];
+            if (enemyImgReady) spritePool.push(enemyImg);
+            if (enemyImg2Ready) spritePool.push(enemyImg2);
+            if (enemyImg3Ready) spritePool.push(enemyImg3);
+            if (enemyImg4Ready) spritePool.push(enemyImg4);
+            if (enemyImg5Ready) spritePool.push(enemyImg5);
+            if (enemyImg6Ready) spritePool.push(enemyImg6);
+            if (enemyImg7Ready) spritePool.push(enemyImg7);
+            if (enemyImg8Ready) spritePool.push(enemyImg8);
+            if (enemyImg9Ready) spritePool.push(enemyImg9);
+            if (enemyImg10Ready) spritePool.push(enemyImg10);
+            if (enemyImg11Ready) spritePool.push(enemyImg11);
+            
+            // 随机从贴图池选择（首次绘制时确定并缓存）
+            if (spritePool.length > 0) {
+                if (enemy.useSprite === undefined) {
+                    enemy.useSprite = Math.random() < CONFIG.SPRITE_ENEMY_RATIO;
+                }
+                if (enemy.useSprite) {
+                    if (enemy.spriteIdx === undefined) {
+                        // 使用当前位置与随机数混合，确保同一敌机固定贴图
+                        enemy.spriteIdx = Math.floor((Math.random() * 997 + enemy.x + enemy.y)) % spritePool.length;
+                    }
+                    const img = spritePool[enemy.spriteIdx % spritePool.length];
+                    const imgSize = (enemy.width || 40) * 1.2;
+                    // URL图片本身已朝下，需要逆旋转抵消外部的180度旋转
+                    ctx.rotate(Math.PI);
+                    if (isHit) {
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, imgSize / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                    }
+                    ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+                    ctx.shadowBlur = 0;
+                    return;
+                }
+            }
+            
+            // 机身主色
+            const bodyGrad = ctx.createLinearGradient(0, -28 * s, 0, 28 * s);
+            if (isHit) {
+                bodyGrad.addColorStop(0, '#ffffff');
+                bodyGrad.addColorStop(0.5, '#ffdddd');
+                bodyGrad.addColorStop(1, '#ffffff');
+            } else {
+                bodyGrad.addColorStop(0, colors[0]);
+                bodyGrad.addColorStop(0.4, colors[1]);
+                bodyGrad.addColorStop(1, colors[2]);
+            }
+            
+            // 机翼颜色（稍深）
+            const wingColor = isHit ? '#ffcccc' : colors[2];
+            // 座舱颜色
+            const cockpitGrad = ctx.createRadialGradient(0, -8*s, 0, 0, -8*s, 8*s);
+            cockpitGrad.addColorStop(0, '#ffffff');
+            cockpitGrad.addColorStop(0.5, '#aaddff');
+            cockpitGrad.addColorStop(1, '#4488cc');
+
+            switch (model) {
+                case 'fighter': // F-16风格战斗机
+                    // 机身（带弧线）
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -26 * s); // 机头尖端
+                    ctx.quadraticCurveTo(-4 * s, -20 * s, -6 * s, -8 * s); // 左侧弧线
+                    ctx.lineTo(-8 * s, 10 * s); // 左侧机身
+                    ctx.lineTo(-4 * s, 18 * s); // 左尾部
+                    ctx.lineTo(0, 20 * s); // 尾部中心
+                    ctx.lineTo(4 * s, 18 * s); // 右尾部
+                    ctx.lineTo(8 * s, 10 * s); // 右侧机身
+                    ctx.quadraticCurveTo(4 * s, -20 * s, 0, -26 * s); // 右侧弧线
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // 主机翼（后掠翼）
+                    ctx.fillStyle = wingColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-6 * s, 2 * s);
+                    ctx.lineTo(-28 * s, 14 * s);
+                    ctx.lineTo(-26 * s, 18 * s);
+                    ctx.lineTo(-8 * s, 12 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(6 * s, 2 * s);
+                    ctx.lineTo(28 * s, 14 * s);
+                    ctx.lineTo(26 * s, 18 * s);
+                    ctx.lineTo(8 * s, 12 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 尾翼
+                    ctx.fillStyle = colors[1];
+                    ctx.beginPath();
+                    ctx.moveTo(-3 * s, 14 * s);
+                    ctx.lineTo(-10 * s, 22 * s);
+                    ctx.lineTo(-4 * s, 20 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(3 * s, 14 * s);
+                    ctx.lineTo(10 * s, 22 * s);
+                    ctx.lineTo(4 * s, 20 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 座舱
+                    ctx.fillStyle = cockpitGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -10 * s, 3.5 * s, 8 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 进气口
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.ellipse(-5 * s, 6 * s, 2 * s, 4 * s, 0.2, 0, Math.PI * 2);
+                    ctx.ellipse(5 * s, 6 * s, 2 * s, 4 * s, -0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'interceptor': // 高速截击机（类SR-71）
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -30 * s); // 尖锐机头
+                    ctx.quadraticCurveTo(-3 * s, -22 * s, -5 * s, -10 * s);
+                    ctx.lineTo(-6 * s, 12 * s);
+                    ctx.lineTo(-3 * s, 18 * s);
+                    ctx.lineTo(0, 16 * s);
+                    ctx.lineTo(3 * s, 18 * s);
+                    ctx.lineTo(6 * s, 12 * s);
+                    ctx.quadraticCurveTo(3 * s, -22 * s, 0, -30 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // 三角后掠翼
+                    ctx.fillStyle = wingColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-5 * s, -4 * s);
+                    ctx.lineTo(-26 * s, 10 * s);
+                    ctx.lineTo(-22 * s, 14 * s);
+                    ctx.lineTo(-6 * s, 8 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(5 * s, -4 * s);
+                    ctx.lineTo(26 * s, 10 * s);
+                    ctx.lineTo(22 * s, 14 * s);
+                    ctx.lineTo(6 * s, 8 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 双垂尾
+                    ctx.fillStyle = colors[1];
+                    ctx.beginPath();
+                    ctx.moveTo(-4 * s, 10 * s);
+                    ctx.lineTo(-6 * s, 20 * s);
+                    ctx.lineTo(-2 * s, 16 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(4 * s, 10 * s);
+                    ctx.lineTo(6 * s, 20 * s);
+                    ctx.lineTo(2 * s, 16 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 座舱
+                    ctx.fillStyle = cockpitGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -14 * s, 2.5 * s, 6 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 发动机火焰
+                    ctx.fillStyle = '#ff6600';
+                    ctx.beginPath();
+                    ctx.moveTo(-3 * s, 18 * s);
+                    ctx.lineTo(0, 26 * s);
+                    ctx.lineTo(3 * s, 18 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+
+                case 'bomber': // 重型轰炸机（类B-2）
+                    ctx.fillStyle = bodyGrad;
+                    // 飞翼形机身
+                    ctx.beginPath();
+                    ctx.moveTo(0, -20 * s);
+                    ctx.lineTo(-10 * s, -12 * s);
+                    ctx.lineTo(-32 * s, 8 * s);
+                    ctx.lineTo(-28 * s, 14 * s);
+                    ctx.lineTo(-8 * s, 10 * s);
+                    ctx.lineTo(-6 * s, 18 * s);
+                    ctx.lineTo(0, 16 * s);
+                    ctx.lineTo(6 * s, 18 * s);
+                    ctx.lineTo(8 * s, 10 * s);
+                    ctx.lineTo(28 * s, 14 * s);
+                    ctx.lineTo(32 * s, 8 * s);
+                    ctx.lineTo(10 * s, -12 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // 机身中线
+                    ctx.strokeStyle = colors[2];
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -18 * s);
+                    ctx.lineTo(0, 14 * s);
+                    ctx.stroke();
+                    // 座舱
+                    ctx.fillStyle = cockpitGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -8 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 发动机（两侧）
+                    ctx.fillStyle = '#222';
+                    ctx.beginPath();
+                    ctx.ellipse(-14 * s, 6 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
+                    ctx.ellipse(14 * s, 6 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'sniperJet': // 狙击机（细长精准）
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -32 * s); // 超长机头
+                    ctx.quadraticCurveTo(-2 * s, -26 * s, -4 * s, -14 * s);
+                    ctx.lineTo(-5 * s, 10 * s);
+                    ctx.lineTo(-3 * s, 16 * s);
+                    ctx.lineTo(0, 14 * s);
+                    ctx.lineTo(3 * s, 16 * s);
+                    ctx.lineTo(5 * s, 10 * s);
+                    ctx.quadraticCurveTo(2 * s, -26 * s, 0, -32 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // 短小翼
+                    ctx.fillStyle = wingColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-4 * s, 0);
+                    ctx.lineTo(-20 * s, 6 * s);
+                    ctx.lineTo(-18 * s, 10 * s);
+                    ctx.lineTo(-5 * s, 6 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(4 * s, 0);
+                    ctx.lineTo(20 * s, 6 * s);
+                    ctx.lineTo(18 * s, 10 * s);
+                    ctx.lineTo(5 * s, 6 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 座舱（长条形）
+                    ctx.fillStyle = cockpitGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -16 * s, 2 * s, 8 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 瞄准镜
+                    ctx.fillStyle = '#ff0000';
+                    ctx.beginPath();
+                    ctx.arc(0, -28 * s, 1.5 * s, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'splitterJet': // 分裂机（前掠翼）
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -24 * s);
+                    ctx.quadraticCurveTo(-4 * s, -16 * s, -6 * s, -4 * s);
+                    ctx.lineTo(-7 * s, 12 * s);
+                    ctx.lineTo(-4 * s, 18 * s);
+                    ctx.lineTo(0, 16 * s);
+                    ctx.lineTo(4 * s, 18 * s);
+                    ctx.lineTo(7 * s, 12 * s);
+                    ctx.quadraticCurveTo(4 * s, -16 * s, 0, -24 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // 前掠翼（向前延伸）
+                    ctx.fillStyle = wingColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-5 * s, -6 * s);
+                    ctx.lineTo(-24 * s, -12 * s);
+                    ctx.lineTo(-22 * s, -6 * s);
+                    ctx.lineTo(-6 * s, 2 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(5 * s, -6 * s);
+                    ctx.lineTo(24 * s, -12 * s);
+                    ctx.lineTo(22 * s, -6 * s);
+                    ctx.lineTo(6 * s, 2 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 小翼（后部）
+                    ctx.beginPath();
+                    ctx.moveTo(-6 * s, 8 * s);
+                    ctx.lineTo(-14 * s, 14 * s);
+                    ctx.lineTo(-7 * s, 14 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(6 * s, 8 * s);
+                    ctx.lineTo(14 * s, 14 * s);
+                    ctx.lineTo(7 * s, 14 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 座舱
+                    ctx.fillStyle = cockpitGrad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -10 * s, 3 * s, 6 * s, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'droneJet': // 无人侦察机
+                default:
+                    ctx.fillStyle = bodyGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -18 * s);
+                    ctx.quadraticCurveTo(-3 * s, -12 * s, -5 * s, -2 * s);
+                    ctx.lineTo(-6 * s, 10 * s);
+                    ctx.lineTo(-3 * s, 14 * s);
+                    ctx.lineTo(0, 12 * s);
+                    ctx.lineTo(3 * s, 14 * s);
+                    ctx.lineTo(6 * s, 10 * s);
+                    ctx.quadraticCurveTo(3 * s, -12 * s, 0, -18 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // 小翼
+                    ctx.fillStyle = wingColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-5 * s, 2 * s);
+                    ctx.lineTo(-16 * s, 8 * s);
+                    ctx.lineTo(-14 * s, 12 * s);
+                    ctx.lineTo(-6 * s, 8 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(5 * s, 2 * s);
+                    ctx.lineTo(16 * s, 8 * s);
+                    ctx.lineTo(14 * s, 12 * s);
+                    ctx.lineTo(6 * s, 8 * s);
+                    ctx.closePath();
+                    ctx.fill();
+                    // 摄像头/传感器
+                    ctx.fillStyle = '#333';
+                    ctx.beginPath();
+                    ctx.arc(0, -12 * s, 2.5 * s, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#00ff00';
+                    ctx.beginPath();
+                    ctx.arc(0, -12 * s, 1.5 * s, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        // 绘制BOSS（大型飞机）
+        function drawBossLarge(enemy) {
+            const cfg = enemy.bossConfig || { shape: 'fortress', colors: ['#ff4757', '#c0392b', '#8e0000'] };
+            const colors = cfg.colors || enemy.colors || ['#ff4757', '#c0392b', '#8e0000'];
+            const s = (enemy.width || 100) / 80; // 缩放系数
+            ctx.fillStyle = enemyGradient(s, colors, enemy.hitFlash);
+            ctx.shadowColor = colors[0];
+            ctx.shadowBlur = 20;
+
+            const shape = cfg.shape;
+            // 将所有Boss形状映射为“飞机模型”
+            const planeByShape = {
+                heart: 'aceFighter', cupid: 'aceFighter',
+                crescent: 'stealthWing',
+                butterfly: 'interceptorX', bird: 'interceptorX', thunder: 'interceptorX', blade: 'interceptorX',
+                dragon: 'heavyFighter', phoenix: 'heavyFighter', angel: 'heavyFighter', vampire: 'heavyFighter', demon: 'heavyFighter',
+                crystal: 'bomberX', witch: 'bomberX',
+                octopus: 'gunship', giant: 'gunship', eye: 'gunship',
+                sakura: 'stealthWing', rose: 'stealthWing', chaos: 'stealthWing'
+            };
+            const model = planeByShape[shape] || 'aceFighter';
+
+            // 统一飞机绘制（大尺寸）
+            function drawPlane(model) {
+                const bs = Math.max(2.2, s); // Boss缩放
+                // 机身渐变随受击变亮
+                ctx.fillStyle = enemyGradient(bs, colors, enemy.hitFlash);
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.lineWidth = 2;
+
+                // 座舱渐变
+                const cockpit = ctx.createRadialGradient(0, -12*bs, 0, 0, -12*bs, 14*bs);
+                cockpit.addColorStop(0, '#ffffff');
+                cockpit.addColorStop(0.5, '#aaddff');
+                cockpit.addColorStop(1, '#4488cc');
+
+                switch (model) {
+                    case 'stealthWing': // B-2 类飞翼
+                        ctx.beginPath();
+                        ctx.moveTo(0, -28*bs);
+                        ctx.lineTo(-18*bs, -14*bs);
+                        ctx.lineTo(-72*bs, 12*bs);
+                        ctx.lineTo(-64*bs, 24*bs);
+                        ctx.lineTo(-20*bs, 18*bs);
+                        ctx.lineTo(-10*bs, 30*bs);
+                        ctx.lineTo(10*bs, 30*bs);
+                        ctx.lineTo(20*bs, 18*bs);
+                        ctx.lineTo(64*bs, 24*bs);
+                        ctx.lineTo(72*bs, 12*bs);
+                        ctx.lineTo(18*bs, -14*bs);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        // 座舱
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -6*bs, 10*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        // 发动机/进气口
+                        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.ellipse(-24*bs, 6*bs, 6*bs, 8*bs, 0, 0, Math.PI*2); ctx.ellipse(24*bs, 6*bs, 6*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                    case 'heavyFighter': // 大型战斗机，双垂尾
+                        ctx.beginPath();
+                        ctx.moveTo(0, -42*bs);
+                        ctx.quadraticCurveTo(-10*bs, -26*bs, -12*bs, -8*bs);
+                        ctx.lineTo(-14*bs, 24*bs);
+                        ctx.lineTo(-6*bs, 34*bs);
+                        ctx.lineTo(0, 30*bs);
+                        ctx.lineTo(6*bs, 34*bs);
+                        ctx.lineTo(14*bs, 24*bs);
+                        ctx.quadraticCurveTo(10*bs, -26*bs, 0, -42*bs);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        // 大后掠翼
+                        ctx.beginPath(); ctx.moveTo(-10*bs, 0); ctx.lineTo(-68*bs, 26*bs); ctx.lineTo(-40*bs, 34*bs); ctx.lineTo(-14*bs, 18*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(10*bs, 0); ctx.lineTo(68*bs, 26*bs); ctx.lineTo(40*bs, 34*bs); ctx.lineTo(14*bs, 18*bs); ctx.closePath(); ctx.fill();
+                        // 双垂尾
+                        ctx.beginPath(); ctx.moveTo(-8*bs, 16*bs); ctx.lineTo(-18*bs, 40*bs); ctx.lineTo(-4*bs, 30*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(8*bs, 16*bs); ctx.lineTo(18*bs, 40*bs); ctx.lineTo(4*bs, 30*bs); ctx.closePath(); ctx.fill();
+                        // 座舱
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -18*bs, 8*bs, 14*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                    case 'interceptorX': // 细长高速截击机
+                        ctx.beginPath();
+                        ctx.moveTo(0, -48*bs);
+                        ctx.quadraticCurveTo(-8*bs, -30*bs, -10*bs, -10*bs);
+                        ctx.lineTo(-8*bs, 26*bs);
+                        ctx.lineTo(0, 22*bs);
+                        ctx.lineTo(8*bs, 26*bs);
+                        ctx.lineTo(10*bs, -10*bs);
+                        ctx.quadraticCurveTo(8*bs, -30*bs, 0, -48*bs);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        // 三角翼
+                        ctx.beginPath(); ctx.moveTo(-8*bs, -6*bs); ctx.lineTo(-56*bs, 12*bs); ctx.lineTo(-20*bs, 24*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(8*bs, -6*bs); ctx.lineTo(56*bs, 12*bs); ctx.lineTo(20*bs, 24*bs); ctx.closePath(); ctx.fill();
+                        // 座舱
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -24*bs, 7*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                    case 'bomberX': // 重型轰炸机
+                        ctx.beginPath(); ctx.moveTo(-18*bs, -28*bs); ctx.lineTo(18*bs, -28*bs); ctx.lineTo(24*bs, 30*bs); ctx.lineTo(-24*bs, 30*bs); ctx.closePath(); ctx.fill(); ctx.stroke();
+                        // 大展弦比机翼
+                        ctx.beginPath(); ctx.moveTo(-90*bs, 6*bs); ctx.lineTo(-24*bs, 14*bs); ctx.lineTo(-24*bs, 22*bs); ctx.lineTo(-90*bs, 12*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(90*bs, 6*bs); ctx.lineTo(24*bs, 14*bs); ctx.lineTo(24*bs, 22*bs); ctx.lineTo(90*bs, 12*bs); ctx.closePath(); ctx.fill();
+                        // 座舱 + 发动机
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -10*bs, 8*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.ellipse(-12*bs, 8*bs, 6*bs, 10*bs, 0, 0, Math.PI*2); ctx.ellipse(12*bs, 8*bs, 6*bs, 10*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                    case 'gunship': // 武装炮艇
+                        ctx.beginPath();
+                        ctx.moveTo(-20*bs, -34*bs); ctx.lineTo(20*bs, -34*bs); ctx.lineTo(30*bs, 28*bs); ctx.lineTo(-30*bs, 28*bs); ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        // 侧舷炮/舱段
+                        ctx.fillStyle = colors[1];
+                        ctx.beginPath(); ctx.ellipse(-36*bs, 6*bs, 10*bs, 14*bs, 0, 0, Math.PI*2); ctx.ellipse(36*bs, 6*bs, 10*bs, 14*bs, 0, 0, Math.PI*2); ctx.fill();
+                        // 机翼
+                        ctx.fillStyle = enemyGradient(bs, colors, enemy.hitFlash);
+                        ctx.beginPath(); ctx.moveTo(-14*bs, -4*bs); ctx.lineTo(-80*bs, 18*bs); ctx.lineTo(-40*bs, 28*bs); ctx.lineTo(-16*bs, 12*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(14*bs, -4*bs); ctx.lineTo(80*bs, 18*bs); ctx.lineTo(40*bs, 28*bs); ctx.lineTo(16*bs, 12*bs); ctx.closePath(); ctx.fill();
+                        // 座舱
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -8*bs, 9*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                    case 'aceFighter':
+                    default:
+                        ctx.beginPath();
+                        ctx.moveTo(0, -40*bs);
+                        ctx.quadraticCurveTo(-8*bs, -26*bs, -10*bs, -6*bs);
+                        ctx.lineTo(-12*bs, 26*bs);
+                        ctx.lineTo(-6*bs, 34*bs);
+                        ctx.lineTo(0, 30*bs);
+                        ctx.lineTo(6*bs, 34*bs);
+                        ctx.lineTo(12*bs, 26*bs);
+                        ctx.quadraticCurveTo(8*bs, -26*bs, 0, -40*bs);
+                        ctx.closePath();
+                        ctx.fill(); ctx.stroke();
+                        // 后掠翼
+                        ctx.beginPath(); ctx.moveTo(-10*bs, 2*bs); ctx.lineTo(-64*bs, 20*bs); ctx.lineTo(-32*bs, 30*bs); ctx.lineTo(-12*bs, 16*bs); ctx.closePath(); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(10*bs, 2*bs); ctx.lineTo(64*bs, 20*bs); ctx.lineTo(32*bs, 30*bs); ctx.lineTo(12*bs, 16*bs); ctx.closePath(); ctx.fill();
+                        // 座舱
+                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -16*bs, 7*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
+                        break;
+                }
+            }
+
+            drawPlane(model);
+        }
+
+        // === Boss命中路径（与绘制造型一致，用于像素级命中）===
+        function getBossModelByShape(shape) {
+            const planeByShape = {
+                heart: 'aceFighter', cupid: 'aceFighter',
+                crescent: 'stealthWing',
+                butterfly: 'interceptorX', bird: 'interceptorX', thunder: 'interceptorX', blade: 'interceptorX',
+                dragon: 'heavyFighter', phoenix: 'heavyFighter', angel: 'heavyFighter', vampire: 'heavyFighter', demon: 'heavyFighter',
+                crystal: 'bomberX', witch: 'bomberX',
+                octopus: 'gunship', giant: 'gunship', eye: 'gunship',
+                sakura: 'stealthWing', rose: 'stealthWing', chaos: 'stealthWing'
+            };
+            return planeByShape[shape] || 'aceFighter';
+        }
+
+        function buildBossHitPath(enemy) {
+            const cfg = enemy.bossConfig || { shape: 'fighter' };
+            const model = getBossModelByShape(cfg.shape);
+            const s = (enemy.width || 100) / 80;
+            const bs = Math.max(2.2, s);
+            const p = new Path2D();
+            switch (model) {
+                case 'stealthWing':
+                    p.moveTo(0, -28*bs);
+                    p.lineTo(-18*bs, -14*bs);
+                    p.lineTo(-72*bs, 12*bs);
+                    p.lineTo(-64*bs, 24*bs);
+                    p.lineTo(-20*bs, 18*bs);
+                    p.lineTo(-10*bs, 30*bs);
+                    p.lineTo(10*bs, 30*bs);
+                    p.lineTo(20*bs, 18*bs);
+                    p.lineTo(64*bs, 24*bs);
+                    p.lineTo(72*bs, 12*bs);
+                    p.lineTo(18*bs, -14*bs);
+                    p.closePath();
+                    break;
+                case 'heavyFighter':
+                    // 机身
+                    p.moveTo(0, -42*bs);
+                    p.lineTo(-12*bs, -8*bs);
+                    p.lineTo(-14*bs, 24*bs);
+                    p.lineTo(-6*bs, 34*bs);
+                    p.lineTo(0, 30*bs);
+                    p.lineTo(6*bs, 34*bs);
+                    p.lineTo(14*bs, 24*bs);
+                    p.lineTo(12*bs, -8*bs);
+                    p.closePath();
+                    // 大后掠翼
+                    p.moveTo(-10*bs, 0); p.lineTo(-68*bs, 26*bs); p.lineTo(-40*bs, 34*bs); p.lineTo(-14*bs, 18*bs); p.closePath();
+                    p.moveTo(10*bs, 0); p.lineTo(68*bs, 26*bs); p.lineTo(40*bs, 34*bs); p.lineTo(14*bs, 18*bs); p.closePath();
+                    // 双垂尾
+                    p.moveTo(-8*bs, 16*bs); p.lineTo(-18*bs, 40*bs); p.lineTo(-4*bs, 30*bs); p.closePath();
+                    p.moveTo(8*bs, 16*bs); p.lineTo(18*bs, 40*bs); p.lineTo(4*bs, 30*bs); p.closePath();
+                    break;
+                case 'interceptorX':
+                    // 机身
+                    p.moveTo(0, -48*bs);
+                    p.lineTo(-10*bs, -10*bs);
+                    p.lineTo(-8*bs, 26*bs);
+                    p.lineTo(8*bs, 26*bs);
+                    p.lineTo(10*bs, -10*bs);
+                    p.closePath();
+                    // 三角翼
+                    p.moveTo(-8*bs, -6*bs); p.lineTo(-56*bs, 12*bs); p.lineTo(-20*bs, 24*bs); p.closePath();
+                    p.moveTo(8*bs, -6*bs); p.lineTo(56*bs, 12*bs); p.lineTo(20*bs, 24*bs); p.closePath();
+                    break;
+                case 'bomberX':
+                    // 机身
+                    p.moveTo(-18*bs, -28*bs); p.lineTo(18*bs, -28*bs); p.lineTo(24*bs, 30*bs); p.lineTo(-24*bs, 30*bs); p.closePath();
+                    // 大机翼（外展宽）
+                    p.moveTo(-90*bs, 6*bs); p.lineTo(-24*bs, 14*bs); p.lineTo(-24*bs, 22*bs); p.lineTo(-90*bs, 12*bs); p.closePath();
+                    p.moveTo(90*bs, 6*bs); p.lineTo(24*bs, 14*bs); p.lineTo(24*bs, 22*bs); p.lineTo(90*bs, 12*bs); p.closePath();
+                    break;
+                case 'gunship':
+                    // 机身
+                    p.moveTo(-20*bs, -34*bs); p.lineTo(20*bs, -34*bs); p.lineTo(30*bs, 28*bs); p.lineTo(-30*bs, 28*bs); p.closePath();
+                    // 机翼
+                    p.moveTo(-14*bs, -4*bs); p.lineTo(-80*bs, 18*bs); p.lineTo(-40*bs, 28*bs); p.lineTo(-16*bs, 12*bs); p.closePath();
+                    p.moveTo(14*bs, -4*bs); p.lineTo(80*bs, 18*bs); p.lineTo(40*bs, 28*bs); p.lineTo(16*bs, 12*bs); p.closePath();
+                    break;
+                case 'aceFighter':
+                default:
+                    // 机身
+                    p.moveTo(0, -40*bs);
+                    p.lineTo(-10*bs, -6*bs);
+                    p.lineTo(-12*bs, 26*bs);
+                    p.lineTo(-6*bs, 34*bs);
+                    p.lineTo(0, 30*bs);
+                    p.lineTo(6*bs, 34*bs);
+                    p.lineTo(12*bs, 26*bs);
+                    p.lineTo(10*bs, -6*bs);
+                    p.closePath();
+                    // 后掠翼
+                    p.moveTo(-10*bs, 2*bs); p.lineTo(-64*bs, 20*bs); p.lineTo(-32*bs, 30*bs); p.lineTo(-12*bs, 16*bs); p.closePath();
+                    p.moveTo(10*bs, 2*bs); p.lineTo(64*bs, 20*bs); p.lineTo(32*bs, 30*bs); p.lineTo(12*bs, 16*bs); p.closePath();
+                    break;
+            }
+            return p;
+        }
+
+        // 绘制敌人
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y);
+                // 敌机旋转180度，使机头朝下（朝向玩家）
+                ctx.rotate(Math.PI);
+                if (enemy.type === 'boss') {
+                    drawBossLarge(enemy);
+                } else {
+                    drawEnemySmall(enemy);
+                }
+                if (enemy.hitFlash > 0) enemy.hitFlash--;
+                ctx.restore();
+            });
+        }
+
+        // 绘制聪仔机
+        function drawPowerUps() {
+            powerUps.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                
+                // 动画计时
+                p.animTime = (p.animTime || 0) + 0.08;
+                const pulse = 1 + Math.sin(p.animTime) * 0.1; // 呼吸效果
+                const floatY = Math.sin(p.animTime * 0.8) * 3; // 漂浮效果
+                
+                ctx.translate(0, floatY);
+                ctx.scale(pulse, pulse);
+                
+                // 外层光晕
+                const outerGlow = ctx.createRadialGradient(0, 0, 15, 0, 0, 40);
+                outerGlow.addColorStop(0, p.color + '60');
+                outerGlow.addColorStop(0.6, p.color + '20');
+                outerGlow.addColorStop(1, 'transparent');
+                ctx.fillStyle = outerGlow;
+                ctx.beginPath();
+                ctx.arc(0, 0, 40, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 内层圆形背景
+                const innerGrad = ctx.createRadialGradient(0, -8, 0, 0, 5, 25);
+                innerGrad.addColorStop(0, '#ffffff');
+                innerGrad.addColorStop(0.3, p.color);
+                innerGrad.addColorStop(1, p.color + '88');
+                ctx.fillStyle = innerGrad;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 金色边框
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2;
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // 道具图标
+                ctx.font = 'bold 22px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(p.icon, 0, 1);
+                
+                // 闪光点
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.beginPath();
+                ctx.arc(-8, -8, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+
+        // 绘制爆炸效果
+        function drawExplosions() {
+            explosions.forEach((exp, index) => {
+                const progress = exp.frame / exp.maxFrame;
+                const radius = exp.maxRadius * progress;
+                const alpha = 1 - progress;
+                
+                // 多层爆炸效果
+                for (let i = 3; i >= 0; i--) {
+                    const layerRadius = radius * (1 - i * 0.2);
+                    const layerAlpha = alpha * (1 - i * 0.2);
+                    
+                    const gradient = ctx.createRadialGradient(
+                        exp.x, exp.y, 0,
+                        exp.x, exp.y, layerRadius
+                    );
+                    gradient.addColorStop(0, `rgba(255, 255, 200, ${layerAlpha})`);
+                    gradient.addColorStop(0.3, `rgba(255, 150, 50, ${layerAlpha * 0.8})`);
+                    gradient.addColorStop(0.6, `rgba(255, 50, 0, ${layerAlpha * 0.5})`);
+                    gradient.addColorStop(1, 'rgba(100, 0, 0, 0)');
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, layerRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // 粒子效果
+                exp.particles.forEach(particle => {
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.alpha -= 0.03;
+                    
+                    if (particle.alpha > 0) {
+                        ctx.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 50, ${particle.alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+                
+                exp.frame++;
+                if (exp.frame >= exp.maxFrame) {
+                    explosions.splice(index, 1);
+                }
+            });
+        }
+
+        // 创建爆炸
+        function createExplosion(x, y, size = 1) {
+            const particles = [];
+            for (let i = 0; i < 15 * size; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 4 + 2;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 3 + 1,
+                    alpha: 1
+                });
+            }
+            
+            explosions.push({
+                x: x,
+                y: y,
+                frame: 0,
+                maxFrame: 30,
+                maxRadius: 40 * size,
+                particles: particles
+            });
+        }
+
+        // 玩家射击 - 支持武器道具升级（最多3级），使用WEAPON_CONFIG
+        function playerShoot() {
+            if (player.shootCooldown > 0) return;
+            
+            const type = gameState.powerUpType;
+            const lvl = Math.max(1, Math.min(3, gameState.powerUpLevel));
+            const idx = lvl - 1;
+            const speed = CONFIG.BULLET_SPEED;
+            const cfg = WEAPON_CONFIG[type] || WEAPON_CONFIG.none;
+            let cooldown = cfg.cd[idx] ?? cfg.cd[0];
+            
+            function shoot(x, y, vx, vy, extra = {}) {
+                bullets.push(Object.assign({ x, y, vx, vy, type: 'player' }, extra));
+            }
+            
+            if (type === 'rapid') {
+                shoot(player.x, player.y - 25, 0, -speed);
+            } else if (type === 'double') {
+                const o = cfg.offset[idx];
+                shoot(player.x - o, player.y - 20, 0, -speed);
+                shoot(player.x + o, player.y - 20, 0, -speed);
+                if (cfg.extraBullet[idx]) shoot(player.x, player.y - 25, 0, -speed);
+            } else if (type === 'triple') {
+                const lines = cfg.lines[idx];
+                const gap = cfg.gap;
+                const half = (lines - 1) / 2;
+                for (let i = 0; i < lines; i++) {
+                    shoot(player.x + (i - half) * gap, player.y - 20, 0, -speed);
+                }
+            } else if (type === 'spread') {
+                cfg.angles[idx].forEach(a => shoot(player.x, player.y - 22, a, -speed * 0.95));
+            } else if (type === 'laser') {
+                const w = cfg.width[idx];
+                shoot(player.x, player.y - 25, 0, -speed * 1.6, { isLaser: true, laserWidth: w });
+            } else {
+                // 无道具：普通单发
+                shoot(player.x, player.y - 25, 0, -speed);
+            }
+            
+            player.shootCooldown = cooldown;
+        }
+
+        // 生成敌人（按关卡主题挑选敌机+配色）
+        function spawnEnemy() {
+            let type, hp, speed, shootRate, width, height;
+            
+            // 难度与主题
+            const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
+            const diffMult = (stage - 1) / 19; // 线性递增
+            const theme = STAGE_THEMES[(stage - 1) % STAGE_THEMES.length];
+            const pool = theme.types;
+            type = pool[Math.floor(Math.random() * pool.length)];
+            const defaultByType = { normal:'fighter', fast:'interceptor', tank:'bomber', sniper:'sniperJet', splitter:'splitterJet', mini:'droneJet' };
+            const shape = (theme.shapesByType && theme.shapesByType[type]) || defaultByType[type] || 'triangle';
+            
+            // 按类型设定属性
+            switch(type) {
+                case 'fast':
+                    hp = 1;
+                    speed = 1.5 + diffMult * 2.5;
+                    shootRate = ENEMY_SHOOT_BASE.fast + diffMult * ENEMY_SHOOT_BASE.fast;
+                    width = 35; height = 30; break;
+                case 'tank':
+                    hp = 1 + Math.floor(stage / 4);
+                    speed = 1 + diffMult * 1.3;
+                    shootRate = ENEMY_SHOOT_BASE.tank + diffMult * ENEMY_SHOOT_BASE.tank;
+                    width = 50; height = 45; break;
+                case 'sniper':
+                    hp = 1;
+                    speed = 1 + diffMult * 1.4;
+                    shootRate = ENEMY_SHOOT_BASE.sniper + diffMult * ENEMY_SHOOT_BASE.sniper;
+                    width = 40; height = 35; break;
+                case 'splitter':
+                    hp = 1 + Math.floor(stage / 6);
+                    speed = 1.2 + diffMult * 1.8;
+                    shootRate = ENEMY_SHOOT_BASE.splitter + diffMult * ENEMY_SHOOT_BASE.splitter;
+                    width = 45; height = 40; break;
+                case 'mini':
+                    hp = 1;
+                    speed = 1.8 + diffMult * 2.0;
+                    shootRate = ENEMY_SHOOT_BASE.mini + diffMult * ENEMY_SHOOT_BASE.mini;
+                    width = 25; height = 22; break;
+                default: // normal
+                    hp = 1 + Math.floor(stage / 8);
+                    speed = 1.3 + diffMult * 1.5;
+                    shootRate = ENEMY_SHOOT_BASE.normal + diffMult * ENEMY_SHOOT_BASE.normal;
+                    width = 40; height = 35; break;
+            }
+            
+            enemies.push({
+                x: Math.random() * (CONFIG.CANVAS_WIDTH - 60) + 30,
+                y: -50,
+                width,
+                height,
+                type,
+                hp,
+                maxHp: hp,
+                speed,
+                shootRate,
+                movePattern: Math.floor(Math.random() * 4),
+                colors: theme.palette,
+                shape: shape
+            });
+        }
+        
+        // 关卡主题：每关不同敌机组合与配色（20关循环）
+        const STAGE_THEMES = [
+            { name: '樱粉之境',  types: ['normal','mini'], palette: ['#ff9acb','#ff6fb3','#ff3e9e'], shapesByType: {normal:'fighter', mini:'droneJet'} },
+            { name: '湛蓝之海',  types: ['fast','normal'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter'} },
+            { name: '琥珀荒原',  types: ['tank','normal'], palette: ['#ffb74d','#fb8c00','#ef6c00'], shapesByType: {tank:'bomber', normal:'fighter'} },
+            { name: '紫晶秘域',  types: ['sniper','mini'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {sniper:'sniperJet', mini:'droneJet'} },
+            { name: '翡翠林地',  types: ['splitter','normal'], palette: ['#66e6a8','#2ecc71','#1abc9c'], shapesByType: {splitter:'splitterJet', normal:'fighter'} },
+            { name: '极夜星空',  types: ['fast','sniper'], palette: ['#a29bfe','#6c5ce7','#341f97'], shapesByType: {fast:'interceptor', sniper:'sniperJet'} },
+            { name: '熔火之都',  types: ['tank','splitter'], palette: ['#ff6b6b','#ff3d3d','#c71f1f'], shapesByType: {tank:'bomber', splitter:'splitterJet'} },
+            { name: '风暴群岛',  types: ['fast','splitter'], palette: ['#00e5ff','#00b3ff','#0088ff'], shapesByType: {fast:'interceptor', splitter:'splitterJet'} },
+            { name: '雪原晨光',  types: ['mini','sniper'], palette: ['#e3f2fd','#bbdefb','#90caf9'], shapesByType: {mini:'droneJet', sniper:'sniperJet'} },
+            { name: '沙海遗迹',  types: ['tank','sniper'], palette: ['#ffd166','#f8b400','#e09f3e'], shapesByType: {tank:'bomber', sniper:'sniperJet'} },
+            { name: '幽冥深渊',  types: ['splitter','mini'], palette: ['#00d1b2','#00a896','#05668d'], shapesByType: {splitter:'splitterJet', mini:'droneJet'} },
+            { name: '雷霆高原',  types: ['fast','tank'], palette: ['#ffd54f','#ffca28','#ffa000'], shapesByType: {fast:'interceptor', tank:'bomber'} },
+            { name: '蔷薇花园',  types: ['normal','sniper'], palette: ['#ff85a1','#ff5c8a','#ff2d6f'], shapesByType: {normal:'fighter', sniper:'sniperJet'} },
+            { name: '磁暴城墙',  types: ['splitter','sniper'], palette: ['#8fd3fe','#69bff8','#4098d7'], shapesByType: {splitter:'splitterJet', sniper:'sniperJet'} },
+            { name: '暮色海湾',  types: ['mini','normal'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {mini:'droneJet', normal:'fighter'} },
+            { name: '黑曜峡谷',  types: ['tank','mini'], palette: ['#95a5a6','#7f8c8d','#566573'], shapesByType: {tank:'bomber', mini:'droneJet'} },
+            { name: '疾风荒岭',  types: ['fast','splitter'], palette: ['#a8e6cf','#56c7c2','#2fb7b0'], shapesByType: {fast:'interceptor', splitter:'splitterJet'} },
+            { name: '霓虹码头',  types: ['fast','sniper','mini'], palette: ['#ff6ec7','#ff3ea5','#d10fd1'], shapesByType: {fast:'interceptor', sniper:'sniperJet', mini:'droneJet'} },
+            { name: '青雷竹海',  types: ['tank','normal','splitter'], palette: ['#a7ff83','#17b978','#086972'], shapesByType: {tank:'bomber', normal:'fighter', splitter:'splitterJet'} },
+            { name: '月光天穹',  types: ['normal','fast','sniper'], palette: ['#c5b3ff','#9d7dff','#6b4eff'], shapesByType: {normal:'fighter', fast:'interceptor', sniper:'sniperJet'} }
+        ];
+
+        // Boss配置 - 20种独特Boss
+        const BOSS_CONFIGS = [
+            { name: 'BASS', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
+            { name: '玄月', color: '#9b59b6', shape: 'crescent', bulletPattern: 'spiral' },
+            { name: '暗夜玄鸿', color: '#2c3e50', shape: 'bird', bulletPattern: 'wave' },
+            { name: '烈焰凤凰', color: '#e74c3c', shape: 'phoenix', bulletPattern: 'burst' },
+            { name: '冰霜女王', color: '#74b9ff', shape: 'crystal', bulletPattern: 'ring' },
+            { name: '雷电之主', color: '#f39c12', shape: 'thunder', bulletPattern: 'zigzag' },
+            { name: '深海巨兽', color: '#0984e3', shape: 'octopus', bulletPattern: 'tentacle' },
+            { name: '毒刺玄蝶', color: '#00b894', shape: 'butterfly', bulletPattern: 'scatter' },
+            { name: '血月魔君', color: '#c0392b', shape: 'vampire', bulletPattern: 'cross' },
+            { name: '幻影魔女', color: '#8e44ad', shape: 'witch', bulletPattern: 'homing' },
+            { name: '黄金帝龙', color: '#f1c40f', shape: 'dragon', bulletPattern: 'breath' },
+            { name: '樱花精灵', color: '#fd79a8', shape: 'sakura', bulletPattern: 'petal' },
+            { name: '暗影刃', color: '#636e72', shape: 'blade', bulletPattern: 'slash' },
+            { name: '星空巨人', color: '#6c5ce7', shape: 'giant', bulletPattern: 'meteor' },
+            { name: '花园守护者', color: '#e056fd', shape: 'rose', bulletPattern: 'thorn' },
+            { name: '风暴之眼', color: '#00cec9', shape: 'eye', bulletPattern: 'tornado' },
+            { name: '地狱火焰', color: '#d63031', shape: 'demon', bulletPattern: 'inferno' },
+            { name: '天使之翼', color: '#ffeaa7', shape: 'angel', bulletPattern: 'feather' },
+            { name: '混沌之心', color: '#2d3436', shape: 'chaos', bulletPattern: 'random' },
+            { name: '爱神丘比特', color: '#ff69b4', shape: 'cupid', bulletPattern: 'heart' }
+        ];
+        
+        // 生成Boss
+        function spawnBoss() {
+            if (gameState.bossActive) return;
+            
+            gameState.bossActive = true;
+            
+            // 根据模式计算Boss等级
+            let bossLevel;
+            if (gameState.gameMode === 'stage') {
+                bossLevel = gameState.currentStage;
+            } else {
+                bossLevel = Math.floor(gameState.nextBossScore / 1000);
+                if (bossLevel > 20) bossLevel = ((bossLevel - 1) % 20) + 1;
+            }
+            
+            const bossConfig = BOSS_CONFIGS[(bossLevel - 1) % 20];
+            
+            // Boss属性随关卡递增 - 提高耐久
+            const hp = 150 + bossLevel * 50; // 第1关:200HP, 第20关:1150HP
+            const size = 220 + bossLevel * 8; // 更大尺寸：第1关≈228，第20关≈380
+            
+            // 根据Boss造型映射到飞机模型（与绘制保持一致），用于估算更贴合的判定框
+            const planeByShape = {
+                heart: 'aceFighter', cupid: 'aceFighter',
+                crescent: 'stealthWing',
+                butterfly: 'interceptorX', bird: 'interceptorX', thunder: 'interceptorX', blade: 'interceptorX',
+                dragon: 'heavyFighter', phoenix: 'heavyFighter', angel: 'heavyFighter', vampire: 'heavyFighter', demon: 'heavyFighter',
+                crystal: 'bomberX', witch: 'bomberX',
+                octopus: 'gunship', giant: 'gunship', eye: 'gunship',
+                sakura: 'stealthWing', rose: 'stealthWing', chaos: 'stealthWing'
+            };
+            const model = planeByShape[bossConfig.shape] || 'aceFighter';
+            
+            // 估算命中框比例（相对于size）。说明：此前绘制时机翼外展远超width，导致翼尖命中无效
+            let hitW = size, hitH = size * 0.85;
+            switch (model) {
+                case 'stealthWing':
+                    hitW = size * 1.85; hitH = size * 0.95; break;
+                case 'bomberX':
+                    hitW = size * 2.20; hitH = size * 1.00; break;
+                case 'interceptorX':
+                    hitW = size * 1.60; hitH = size * 0.95; break;
+                case 'heavyFighter':
+                    hitW = size * 1.30; hitH = size * 1.00; break;
+                case 'gunship':
+                    hitW = size * 2.00; hitH = size * 1.00; break;
+                case 'aceFighter':
+                default:
+                    hitW = size * 1.50; hitH = size * 0.95; break;
+            }
+            
+            const bossObj = {
+                x: CONFIG.CANVAS_WIDTH / 2,
+                y: -150,
+                width: size,
+                height: size * 0.85,
+                hitW: hitW,
+                hitH: hitH,
+                type: 'boss',
+                hp: hp,
+                maxHp: hp,
+                speed: 0.8 + bossLevel * 0.04, // 第1关慢，第20关快
+                shootRate: 0.005 + bossLevel * 0.003, // 第1关很少射击
+                movePattern: 10,
+                moveDir: 1,
+                bossLevel: bossLevel,
+                bossConfig: bossConfig,
+                shootTimer: 0,
+                animTimer: 0
+            };
+            enemies.push(bossObj);
+            
+            // 显示Boss警告
+            const waveDisplay = document.getElementById('waveDisplay');
+            if (gameState.gameMode === 'stage') {
+                waveDisplay.textContent = `⚠️ ${bossConfig.name} 来袭! ⚠️`;
+            } else {
+                waveDisplay.textContent = `⚠️ ${bossConfig.name} Lv.${bossLevel} ⚠️`;
+            }
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
+        }
+
+        // 道具类型配置
+        const POWERUP_TYPES = [
+            { type: 'rapid', icon: '⚡', name: '快速射击', color: '#f1c40f' },
+            { type: 'double', icon: '❇️', name: '双发', color: '#3498db' },
+            { type: 'triple', icon: '🔱', name: '三发', color: '#9b59b6' },
+            { type: 'spread', icon: '🌟', name: '散射', color: '#e74c3c' },
+            { type: 'laser', icon: '💠', name: '激光', color: '#00ff88' },
+            { type: 'shield', icon: '🛡️', name: '无敌护盾', color: '#ffd700' },
+            { type: 'drone', icon: '🛰️', name: '聪仔机', color: '#00e5ff' }
+        ];
+        
+        // 生成道具
+        function spawnPowerUp(x, y) {
+            if (Math.random() < CONFIG.POWERUP_DROP_RATE) {
+                const powerType = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                powerUps.push({
+                    x: x,
+                    y: y,
+                    powerType: powerType.type,
+                    icon: powerType.icon,
+                    color: powerType.color,
+                    speed: 2,
+                    rotation: 0
+                });
+            }
+        }
+
+        // 敌人射击
+        function enemyShoot(enemy) {
+            if (enemy.type === 'boss' && enemy.bossConfig) {
+                // Boss特殊弹道
+                enemy.shootTimer = (enemy.shootTimer || 0) + 1;
+                // Boss进入后延迟开火，低等级延迟更长
+                const delay = 180 - (enemy.bossLevel || 1) * 6;
+                if (enemy.shootTimer < delay) return;
+                
+                const pattern = enemy.bossConfig.bulletPattern;
+                const cx = enemy.x;
+                const cy = enemy.y + ((enemy.hitH || enemy.height) / 2);
+                
+                switch(pattern) {
+                    case 'spread3': // 3路扩散
+                        if (enemy.shootTimer % 30 === 0) {
+                            for (let i = -1; i <= 1; i++) {
+                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 2, vy: 6, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'spiral': // 螂旋
+                        if (enemy.shootTimer % 10 === 0) {
+                            const angle = enemy.shootTimer * 0.15;
+                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 4, vy: Math.sin(angle) * 2 + 4, type: 'enemy' });
+                        }
+                        break;
+                    case 'wave': // 波动
+                        if (enemy.shootTimer % 25 === 0) {
+                            for (let i = 0; i < 5; i++) {
+                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 5, type: 'enemy', wave: true, waveOffset: i });
+                            }
+                        }
+                        break;
+                    case 'burst': // 爆裂
+                        if (enemy.shootTimer % 80 === 0) {
+                            for (let i = 0; i < 8; i++) {
+                                const a = (i / 8) * Math.PI * 2;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 + 2, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'ring': // 圆环
+                        if (enemy.shootTimer % 60 === 0) {
+                            for (let i = 0; i < 12; i++) {
+                                const a = (i / 12) * Math.PI * 2;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 + 1, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'zigzag': // 之字形
+                        if (enemy.shootTimer % 20 === 0) {
+                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 5, vy: 5, type: 'enemy' });
+                        }
+                        break;
+                    case 'tentacle': // 触手
+                        if (enemy.shootTimer % 15 === 0) {
+                            const side = (enemy.shootTimer / 15) % 2 === 0 ? -1 : 1;
+                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1, vy: 5, type: 'enemy' });
+                        }
+                        break;
+                    case 'scatter': // 散射
+                        if (enemy.shootTimer % 40 === 0) {
+                            for (let i = 0; i < 6; i++) {
+                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 4, vy: 4 + Math.random() * 2, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'cross': // 十字
+                        if (enemy.shootTimer % 50 === 0) {
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 4, vy: 4, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: -4, vy: 4, type: 'enemy' });
+                        }
+                        break;
+                    case 'homing': // 追踪
+                        if (enemy.shootTimer % 60 === 0) {
+                            const dx = player.x - cx;
+                            const dy = player.y - cy;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 5, vy: (dy / dist) * 5, type: 'enemy' });
+                        }
+                        break;
+                    case 'breath': // 龙息
+                        if (enemy.shootTimer % 5 === 0 && enemy.shootTimer % 100 < 30) {
+                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2, vy: 7, type: 'enemy' });
+                        }
+                        break;
+                    case 'petal': // 花瓣
+                        if (enemy.shootTimer % 45 === 0) {
+                            for (let i = 0; i < 5; i++) {
+                                const a = (i / 5) * Math.PI * 2 + enemy.shootTimer * 0.02;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: 4, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    default: // 默认
+                        if (enemy.shootTimer % 35 === 0) {
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                        }
+                }
+            } else if (Math.random() < enemy.shootRate) {
+                bullets.push({
+                    x: enemy.x,
+                    y: enemy.y + 20,
+                    vx: 0,
+                    vy: 5,
+                    type: 'enemy'
+                });
+            }
+        }
+
+        // 碰撞检测
+        function checkCollision(a, b) {
+            return Math.abs(a.x - b.x) < (a.width + b.width) / 2 &&
+                   Math.abs(a.y - b.y) < (a.height + b.height) / 2;
+        }
+
+        // 更新游戏状态
+        function update() {
+            if (!gameState.isRunning || gameState.isPaused) return;
+
+            // 帧计数（用于Boss最早出现时间控制）
+            gameState.elapsedFrames = (gameState.elapsedFrames || 0) + 1;
+
+            // 更新玩家位置 - 键盘控制
+            if (keys['ArrowLeft'] || keys['KeyA']) player.x -= player.speed;
+            if (keys['ArrowRight'] || keys['KeyD']) player.x += player.speed;
+            if (keys['ArrowUp'] || keys['KeyW']) player.y -= player.speed;
+            if (keys['ArrowDown'] || keys['KeyS']) player.y += player.speed;
+            
+            // 更新玩家位置 - 触摸跟随控制
+            if (isTouching) {
+                // 平滑移动到触摸位置
+                const dx = touchTarget.x - player.x;
+                const dy = touchTarget.y - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 5) {
+                    const moveSpeed = Math.min(player.speed * 1.5, dist);
+                    player.x += (dx / dist) * moveSpeed;
+                    player.y += (dy / dist) * moveSpeed;
+                }
+            }
+            
+            // 边界限制
+            player.x = Math.max(30, Math.min(CONFIG.CANVAS_WIDTH - 30, player.x));
+            player.y = Math.max(30, Math.min(CONFIG.CANVAS_HEIGHT - 30, player.y));
+            
+            // 自动射击
+            playerShoot();
+            if (player.shootCooldown > 0) player.shootCooldown--;
+            
+            // 道具时间
+            if (gameState.powerUpTime > 0) {
+                gameState.powerUpTime--;
+                if (gameState.powerUpTime === 0) {
+                    gameState.powerUpType = 'none';
+                    gameState.powerUpLevel = 0;
+                }
+            }
+            
+            // 无敌时间
+            if (gameState.invincibleTime > 0) {
+                gameState.invincibleTime--;
+                if (gameState.invincibleTime === 0) {
+                    gameState.isInvincible = false;
+                }
+            }
+            
+            // 聪仔机时间与行为
+            if (gameState.droneActive) {
+                if (gameState.droneTime > 0) {
+                    gameState.droneTime--;
+                } else {
+                    gameState.droneActive = false;
+                    drones = [];
+                }
+            }
+
+            // 聪仔机跟随与开火
+            if (gameState.droneActive && drones.length) {
+                drones.forEach(d => {
+                    // 自动开火
+                    if (d.shootCooldown > 0) d.shootCooldown--;
+                    if (d.shootCooldown <= 0) {
+                        bullets.push({ x: player.x + d.offsetX, y: player.y + d.offsetY - 10, vx: 0, vy: -CONFIG.BULLET_SPEED, type: 'player' });
+                        d.shootCooldown = CONFIG.DRONE_FIRE_COOLDOWN;
+                    }
+                });
+            }
+
+            // 更新子弹
+            bullets.forEach((bullet, index) => {
+                bullet.y += (bullet.vy || 0);
+                bullet.x += (bullet.vx || 0);
+                // 波动子弹特殊处理
+                if (bullet.wave) {
+                    bullet.x += Math.sin(bullet.y * 0.05 + bullet.waveOffset) * 2;
+                }
+                if (bullet.y < -20 || bullet.y > CONFIG.CANVAS_HEIGHT + 20 || 
+                    bullet.x < -20 || bullet.x > CONFIG.CANVAS_WIDTH + 20) {
+                    bullets.splice(index, 1);
+                }
+            });
+
+            // 更新敌人
+            enemies.forEach((enemy, eIndex) => {
+                // 移动模式
+                switch(enemy.movePattern) {
+                    case 0: // 直线
+                        enemy.y += enemy.speed;
+                        break;
+                    case 1: // 正弦波
+                        enemy.y += enemy.speed;
+                        enemy.x += Math.sin(enemy.y * 0.05) * 3;
+                        break;
+                    case 2: // 追踪玩家
+                        enemy.y += enemy.speed;
+                        if (enemy.x < player.x) enemy.x += 1;
+                        if (enemy.x > player.x) enemy.x -= 1;
+                        break;
+                    case 3: // 之字形
+                        enemy.y += enemy.speed;
+                        enemy.x += Math.sin(enemy.y * 0.03) * 4;
+                        break;
+                    case 10: // Boss特殊移动
+                        // Boss先进入屏幕
+                        if (enemy.y < 80) {
+                            enemy.y += enemy.speed;
+                        } else {
+                            // 左右移动
+                            enemy.x += enemy.speed * 2 * enemy.moveDir;
+                            if (enemy.x > CONFIG.CANVAS_WIDTH - 80) enemy.moveDir = -1;
+                            if (enemy.x < 80) enemy.moveDir = 1;
+                        }
+                        break;
+                }
+                
+                // 边界
+                enemy.x = Math.max(30, Math.min(CONFIG.CANVAS_WIDTH - 30, enemy.x));
+                
+                // 射击
+                enemyShoot(enemy);
+                
+                // 移出屏幕
+                if (enemy.y > CONFIG.CANVAS_HEIGHT + 50) {
+                    enemies.splice(eIndex, 1);
+                    gameState.combo = 0;
+                }
+            });
+
+            // 更新道具
+            powerUps.forEach((p, index) => {
+                p.y += p.speed;
+                if (p.y > CONFIG.CANVAS_HEIGHT + 20) {
+                    powerUps.splice(index, 1);
+                }
+            });
+
+            // 碰撞检测：玩家子弹 vs 敌人
+            bullets.forEach((bullet, bIndex) => {
+                if (bullet.type !== 'player') return;
+                
+                enemies.forEach((enemy, eIndex) => {
+                    let hit = false;
+                    if (enemy.type === 'boss') {
+                        // 基于Boss绘制路径的精确命中
+                        if (!enemy._hitPath || enemy._hitPathKey !== enemy.width) {
+                            enemy._hitPath = buildBossHitPath(enemy);
+                            enemy._hitPathKey = enemy.width;
+                        }
+                        // 将子弹坐标转换到Boss本地坐标（旋转了180度）
+                        const lx = enemy.x - bullet.x;
+                        const ly = enemy.y - bullet.y;
+                        ctx.save();
+                        ctx.setTransform(1,0,0,1,0,0); // 保证使用单位变换
+                        hit = ctx.isPointInPath(enemy._hitPath, lx, ly, 'nonzero');
+                        ctx.restore();
+                    } else {
+                        const hbW = (enemy.hitW || enemy.width);
+                        const hbH = (enemy.hitH || enemy.height);
+                        hit = Math.abs(bullet.x - enemy.x) < hbW / 2 && Math.abs(bullet.y - enemy.y) < hbH / 2;
+                    }
+                    if (hit) {
+                        bullets.splice(bIndex, 1);
+                        enemy.hp--;
+                        enemy.hitFlash = 8; // 闪烁帧数
+                        
+                        if (enemy.hp <= 0) {
+                            createExplosion(enemy.x, enemy.y, enemy.type === 'boss' ? 3 : 1);
+                            
+                            // Boss被击败
+                            if (enemy.type === 'boss') {
+                                gameState.bossActive = false;
+                                
+                                // Boss掉落多个道具
+                                for (let i = 0; i < 3; i++) {
+                                    setTimeout(() => {
+                                        spawnPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y);
+                                    }, i * 100);
+                                }
+                                
+                                if (gameState.gameMode === 'stage') {
+                                    // 闯关模式：进入下一关
+                                    // 解锁下一关
+                                    saveUnlockedStage(gameState.currentStage + 1);
+                                    
+                                    if (gameState.currentStage >= gameState.maxStage) {
+                                        // 通关了!
+                                        setTimeout(() => gameWin(), 500);
+                                    } else {
+                                        gameState.currentStage++;
+                                        gameState.stageEnemyCount = 0;
+                                        gameState.stageBossSpawned = false;
+                                        gameState.elapsedFrames = 0;              // 新关卡重新计时
+                                        gameState.lastBossEndFrame = -99999;      // 重置上次Boss结束时间
+                                        setTimeout(() => showStage(), 1000);
+                                    }
+                                } else {
+                                    // 无尽模式 - 无限继续
+                                    gameState.endlessBossCount++;
+                                    gameState.nextBossScore += CONFIG.ENDLESS_NEXT_BOSS_ADD; // 提高下一次Boss分数阈值
+                                    gameState.lastBossEndFrame = gameState.elapsedFrames;     // 记录Boss结束时间
+                                }
+                            } else {
+                                spawnPowerUp(enemy.x, enemy.y);
+                                // 闯关模式计数
+                                if (gameState.gameMode === 'stage') {
+                                    gameState.stageEnemyCount++;
+                                }
+                            }
+                            enemies.splice(eIndex, 1);
+                            
+                            // 计分（降分 + 连击封顶）
+                            let points;
+                            switch(enemy.type) {
+                                case 'boss': points = 400; break;
+                                case 'tank': points = 60; break;
+                                case 'sniper': points = 50; break;
+                                case 'splitter': points = 40; break;
+                                case 'fast': points = 30; break;
+                                case 'mini': points = 15; break;
+                                default: points = 20;
+                            }
+                            gameState.combo++;
+                            if (gameState.combo > gameState.maxCombo) {
+                                gameState.maxCombo = gameState.combo;
+                            }
+                            const comboMult = 1 + Math.min(gameState.combo, 10) * 0.05; // 最高1.5x
+                            gameState.score += Math.floor(points * comboMult);
+                        }
+                    }
+                });
+            });
+
+            // 碰撞检测：敌人子弹 vs 玩家（无敌时免疫）
+            if (!gameState.isInvincible) {
+                bullets.forEach((bullet, bIndex) => {
+                    if (bullet.type !== 'enemy') return;
+                    
+                    if (Math.abs(bullet.x - player.x) < 20 &&
+                        Math.abs(bullet.y - player.y) < 20) {
+                        bullets.splice(bIndex, 1);
+                        playerHit();
+                    }
+                });
+                
+                // 碰撞检测：敌人 vs 玩家
+                enemies.forEach((enemy, eIndex) => {
+                    if (checkCollision(
+                        { x: player.x, y: player.y, width: 30, height: 30 },
+                        { x: enemy.x, y: enemy.y, width: (enemy.hitW || enemy.width), height: (enemy.hitH || enemy.height) }
+                    )) {
+                        createExplosion(enemy.x, enemy.y);
+                        enemies.splice(eIndex, 1);
+                        playerHit();
+                    }
+                });
+            }
+
+            // 碰撞检测：道具 vs 玩家
+            powerUps.forEach((p, index) => {
+                if (Math.abs(p.x - player.x) < 25 && Math.abs(p.y - player.y) < 25) {
+                    if (p.powerType === 'shield') {
+                        // 无敌护盾
+                        gameState.isInvincible = true;
+                        gameState.invincibleTime = CONFIG.SHIELD_DURATION;
+                    } else if (p.powerType === 'drone') {
+                        // 聪仔机
+                        gameState.droneActive = true;
+                        gameState.droneTime = CONFIG.DRONE_DURATION;
+                        summonDrones();
+                    } else {
+                        // 武器道具 - 同类叠加升级（最多3级），不同则切换为1级
+                        if (gameState.powerUpType === p.powerType) {
+                            gameState.powerUpLevel = Math.min(3, (gameState.powerUpLevel || 0) + 1);
+                        } else {
+                            gameState.powerUpType = p.powerType;
+                            gameState.powerUpLevel = 1;
+                        }
+                        gameState.powerUpTime = CONFIG.POWERUP_DURATION;
+                    }
+                    powerUps.splice(index, 1);
+                }
+            });
+
+            // 根据游戏模式处理进度
+            if (gameState.gameMode === 'stage') {
+            // 闯关模式：击败足够敌人后出现Boss（且达到最短时间）
+                const enemiesNeeded = CONFIG.STAGE_BOSS_BASE + gameState.currentStage * CONFIG.STAGE_BOSS_PER_STAGE;
+                if (
+                    gameState.stageEnemyCount >= enemiesNeeded &&
+                    !gameState.bossActive &&
+                    !gameState.stageBossSpawned &&
+                    gameState.elapsedFrames >= CONFIG.BOSS_MIN_TIME_STAGE
+                ) {
+                    gameState.stageBossSpawned = true;
+                    spawnBoss();
+                }
+            } else {
+                // 无尽模式：波次升级
+                if (gameState.score > gameState.wave * 1000) {
+                    gameState.wave++;
+                    showWave();
+                }
+                
+                // 检查是否要生成Boss（达到分数且与上次Boss间隔足够长）
+                if (
+                    gameState.score >= gameState.nextBossScore &&
+                    !gameState.bossActive &&
+                    gameState.elapsedFrames >= (gameState.lastBossEndFrame + CONFIG.BOSS_MIN_TIME_ENDLESS)
+                ) {
+                    spawnBoss();
+                }
+            }
+
+            // 生成敌人
+            let spawnRate, maxEnemies;
+            if (gameState.bossActive) {
+                spawnRate = 0.008;
+                maxEnemies = 3;
+            } else if (gameState.gameMode === 'stage') {
+                spawnRate = 0.02 + gameState.currentStage * 0.003;
+                maxEnemies = 6 + gameState.currentStage;
+            } else {
+                spawnRate = 0.025 + gameState.wave * 0.005;
+                maxEnemies = 12 + gameState.wave;
+            }
+            
+            if (Math.random() < spawnRate && enemies.length < maxEnemies) {
+                spawnEnemy();
+            }
+
+            updateUI();
+        }
+
+        // 玩家受击 - 直接死亡
+        function playerHit() {
+            createExplosion(player.x, player.y, 1.5);
+            gameOver();
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameState.isRunning = false;
+            document.getElementById('finalScore').textContent = gameState.score;
+            
+            // 记录失败关卡用于“再次守护”
+            if (gameState.gameMode === 'stage') {
+                localStorage.setItem('resumeStage', String(gameState.currentStage));
+            }
+            
+            // 显示关卡信息
+            const stageInfo = document.getElementById('stageInfo');
+            if (gameState.gameMode === 'stage') {
+                stageInfo.textContent = `到达第 ${gameState.currentStage} 关`;
+            } else {
+                const bossCount = Math.floor(gameState.score / 1000);
+                stageInfo.textContent = `击败了 ${bossCount} 个 Boss`;
+            }
+            
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        // 游戏通关
+        function gameWin() {
+            gameState.isRunning = false;
+            document.getElementById('winScore').textContent = gameState.score;
+            document.getElementById('winScreen').classList.remove('hidden');
+        }
+
+        // 绘制
+        function draw() {
+            // 清空画布 - 浪漫渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#1a0a2e');
+            gradient.addColorStop(0.3, '#2d1b4e');
+            gradient.addColorStop(0.6, '#4a2c6a');
+            gradient.addColorStop(1, '#1e3a5f');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            
+            // 绘制各元素
+            drawStars();
+            drawPowerUps();
+            drawDrones();
+            drawBullets();
+            drawEnemies();
+            drawPlayer();
+            drawExplosions();
+        }
+
+        // 召唤聪仔机
+        function summonDrones() {
+            if (!drones || drones.length === 0) {
+                drones = [
+                    { offsetX: -45, offsetY: -10, shootCooldown: 0 },
+                    { offsetX: 45, offsetY: -10, shootCooldown: 0 }
+                ];
+            } else {
+                // 刷新时间即可
+            }
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            update();
+            draw();
+            
+            if (gameState.isRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // 键盘事件
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Space') e.preventDefault();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // ============ 移动端触摸控制 ============
+        let touchTarget = { x: 0, y: 0 };
+        let isTouching = false;
+        
+        // 获取canvas相对位置
+        function getTouchPos(touch) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = CONFIG.CANVAS_WIDTH / rect.width;
+            const scaleY = CONFIG.CANVAS_HEIGHT / rect.height;
+            return {
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
+            };
+        }
+        
+        // 触摸开始
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const pos = getTouchPos(touch);
+            touchTarget.x = pos.x;
+            touchTarget.y = pos.y;
+            isTouching = true;
+        }, { passive: false });
+        
+        // 触摸移动 - 飞机跟随手指
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isTouching) return;
+            const touch = e.touches[0];
+            const pos = getTouchPos(touch);
+            touchTarget.x = pos.x;
+            touchTarget.y = pos.y;
+        }, { passive: false });
+        
+        // 触摸结束
+        canvas.addEventListener('touchend', (e) => {
+            isTouching = false;
+        });
+        
+        canvas.addEventListener('touchcancel', (e) => {
+            isTouching = false;
+        });
+        
+        // 防止页面滚动
+        document.addEventListener('touchmove', (e) => {
+            if (gameState.isRunning) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // 初始化
+        initGame();
+        draw();
+    </script>
+</body>
+</html>
