@@ -136,6 +136,27 @@
             padding: 0 12px;
             z-index: 1;
         }
+        
+        /* 首页随机描述文案 */
+        .start-quote {
+            color: #fff;
+            font-size: 15px;
+            text-align: center;
+            width: min(85vw, 380px);
+            margin: 0 auto 20px;
+            line-height: 1.8;
+            padding: 12px 18px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+            z-index: 1;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         .game-title {
             font-size: 48px;
@@ -695,6 +716,7 @@
             <div style="font-size: 60px; margin-bottom: 6px; text-shadow:0 10px 30px rgba(255,105,180,.5); z-index: 1;">💖</div>
             <div class="game-title" style="z-index: 1;">爱的守护者</div>
             <div class="game-subtitle" style="z-index: 1;">LOVE GUARDIAN</div>
+            <div class="start-quote" id="startQuote" style="z-index: 1;">正在加载爱的誓言...</div>
             <div class="top-right-buttons">
                 <button class="icon-btn" onclick="showAchievements()" title="成就">🏆</button>
                 <button class="icon-btn" onclick="showLeaderboard()" title="排行榜">📊</button>
@@ -819,8 +841,8 @@
             BOSS_MIN_TIME_STAGE: 30 * 60,   // 30秒
             
             // 无尽模式：首次Boss分数阈值与后续增量
-            ENDLESS_FIRST_BOSS_SCORE: 2200,
-            ENDLESS_NEXT_BOSS_ADD: 2500,
+            ENDLESS_FIRST_BOSS_SCORE: 800,
+            ENDLESS_NEXT_BOSS_ADD: 1000,
             // 无尽模式：相邻两次Boss之间至少间隔的时间（帧）
             BOSS_MIN_TIME_ENDLESS: 35 * 60,   // 35秒
             
@@ -1010,7 +1032,62 @@
             document.getElementById('pauseBtn').classList.add('hidden');
             document.getElementById('startScreen').classList.remove('hidden');
             initHomepageAnimation(); // 重新启动首页动画
+            showRandomQuote(); // 显示随机文案
         }
+        
+        // === 首页随机文案 ===
+        const START_QUOTES = [
+            // === ❤️ 深情告白篇 ===
+            "深海之中，你是我唯一的光。<br>为你，我愿在波涛中逆流而上。",
+            "在这片海域，我不是最强大的。<br>但守护你的决心，比海洋还要深。",
+            "每一个气泡，都是我对你的告白。<br>看它们升到海面，化作满天繁星。",
+            "你说海很可怕，充满未知的危险。<br>没关系，有我在前面为你开路。",
+            "哪怕整片海洋都成为敌人，<br>我也会为你击穿每一道波浪。",
+            "小鱼虽小，却有大大的勇气。<br>因为要守护的人，就在身后。",
+            "我们可能只是海里的小鱼，<br>但我们的爱，足以填满整片海洋。",
+            "每次[再来一次]，<br>都是为了再一次与你相遇。",
+            
+            // === 🌊 生存哲学篇 ===
+            "生活就像海底的洋流，<br>有时顺风，有时逆流。坚持下去，就能看到曙光。",
+            "每一个敌人都是成长的踏脚石，<br>打败它们，你会变得更强大。",
+            "不要害怕那些Boss，<br>再强大的敌人，也有软肋。找到它，击败它！",
+            "失败不可怕，可怕的是不敢再试。<br>每一次跌倒，都是为了更好的起飞。",
+            "真正的守护，不是让你躲在温室，<br>而是陪你从浅海游向深渊。",
+            "海底的黑暗不可怕，<br>因为心中有光，路就不会迷。",
+            "有些路只能一个人游，<br>但在心里，我们从未分开。",
+            "哪怕在[困难模式]里挣扎，<br>也要相信光就在前方。",
+            
+            // === 🎮 游戏攻略篇 ===
+            "收集各种武器道具，提升你的火力！<br>✨双发 🔱三发 🌟散射 全等你来解锁！",
+            "“🛡️无敌护盾”是关键时刻的救命稻草！<br>当它出现时，一定要抓住！",
+            "想要额外的火力支援吗？<br>🛰️ 聪仔机会成为你的得力助手！",
+            "策略提示：走位要灵活，<br>边输出边躲避，才能活得更久！",
+            "同类武器叠加可以升级！<br>最高三级，火力翻倍！试试看吧！",
+            "无尽模式有三条命，<br>吃到❤️爱心可以恢复生命哦！",
+            "🌀黑洞道具是极稀有的神器！<br>它能把敌人全部吸进去！",
+            "记住：Boss很强，但不是无敌的。<br>观察它的弹道，找出空隙！",
+            
+            // === 💞 爱情篇 ===
+            "爱情就像海底的珍珠，<br>要用心寻找，用心守护。",
+            "真正的爱，不是没有风浪，<br>而是在风浪中紧紧相依。",
+            "为了你，我愿意变成这片海域最勇敢的鱼。<br>冲破一切，只为见你一面。",
+            "我不需要整片海洋，<br>有你在的地方，就是我的全世界。",
+            "其实最难打败的不是Boss，<br>而是没有你在身边的日子。",
+            "你问我为什么不怕深海？<br>因为有你，再深的海也充满温暖。",
+            "我的使命很简单：<br>在你身边，守护你。",
+            "爱不是说说而已，<br>而是每一次为你挡在前面的勇气。"
+        ];
+        
+        // 显示随机文案
+        function showRandomQuote() {
+            const quoteEl = document.getElementById('startQuote');
+            if (quoteEl) {
+                quoteEl.innerHTML = START_QUOTES[Math.floor(Math.random() * START_QUOTES.length)];
+            }
+        }
+        
+        // 初始化时显示随机文案
+        showRandomQuote();
         
         // 暂停游戏
         function pauseGame() {
@@ -1501,17 +1578,11 @@
             const breathe = 1 + Math.sin(playerAnimTime * 0.6) * 0.025; // 呼吸
             const finWave = Math.sin(playerAnimTime * 1.8) * 0.25; // 鳍摆动
             
-            // 根据武器等级确定缩放/发光
+            // 根据武器等级确定缩放（不再显示发光圆圈）
             const lvl = gameState.powerUpLevel || 0;
             const type = gameState.powerUpType;
-            const LEVEL_STYLES = [
-                { glow: null, scale: 1 },
-                { glow: '#00ffcc', scale: 1.05 },
-                { glow: '#ff69b4', scale: 1.1 },
-                { glow: '#ffd700', scale: 1.15 }
-            ];
-            const style = (type !== 'none' && lvl >= 1) ? LEVEL_STYLES[Math.min(lvl, 3)] : LEVEL_STYLES[0];
-            const sc = style.scale * 0.75; // 缩小玩家鱼体型
+            const LEVEL_SCALES = [1, 1.05, 1.1, 1.15];
+            const sc = ((type !== 'none' && lvl >= 1) ? LEVEL_SCALES[Math.min(lvl, 3)] : 1) * 0.75; // 缩小玩家鱼体型
 
             // 气泡尾迹
             player.trail.push({ x: player.x, y: player.y + 22 * sc, alpha: 1 });
@@ -1643,19 +1714,6 @@
             }
             
             ctx.restore();
-
-            // 升级发光轮廓
-            if (style.glow) {
-                ctx.save();
-                ctx.shadowColor = style.glow;
-                ctx.shadowBlur = 20 + lvl * 5;
-                ctx.strokeStyle = style.glow;
-                ctx.lineWidth = 2.5 + lvl * 0.5;
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, 35 * sc, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-            }
 
             // 无敌护盾（气泡盾）
             if (gameState.isInvincible) {
