@@ -68,6 +68,10 @@
         .overlay.hidden {
             display: none;
         }
+        
+        .hidden {
+            display: none !important;
+        }
 
         /* 首页美化 - 海洋主题 */
         #startScreen {
@@ -429,9 +433,9 @@
         /* 生命显示 */
         .lives-display {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 24px;
+            top: 22px;
+            right: 65px;
+            font-size: 22px;
             z-index: 5;
             pointer-events: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -489,6 +493,72 @@
         .close-btn:hover {
             background: rgba(255,100,100,0.3);
             border-color: rgba(255,100,100,0.6);
+        }
+        
+        /* 暂停按钮 */
+        .pause-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        .pause-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        /* 暂停界面 */
+        #pauseScreen {
+            background: rgba(0,20,40,0.95);
+        }
+        .pause-title {
+            font-size: 28px;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+        .pause-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .pause-btn-action {
+            padding: 16px 50px;
+            border-radius: 30px;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pause-btn-action.continue {
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(255,105,180,0.4);
+        }
+        .pause-btn-action.continue:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(255,105,180,0.5);
+        }
+        .pause-btn-action.quit {
+            background: linear-gradient(135deg, #666 0%, #444 100%);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .pause-btn-action.quit:hover {
+            transform: scale(1.05);
         }
         
         /* 排行榜样式 */
@@ -692,6 +762,19 @@
             <button class="btn" onclick="backToMenu()" style="background: linear-gradient(135deg, #666 0%, #444 100%);">🏠 返回菜单</button>
         </div>
         
+        <!-- 暂停界面 -->
+        <div class="overlay hidden" id="pauseScreen">
+            <div style="font-size: 60px; margin-bottom: 15px;">⏸️</div>
+            <div class="pause-title">游戏暂停</div>
+            <div class="pause-buttons">
+                <button class="pause-btn-action continue" onclick="resumeGame()">💖 继续爱</button>
+                <button class="pause-btn-action quit" onclick="quitGame()">💤 休息一下</button>
+            </div>
+        </div>
+        
+        <!-- 暂停按钮 -->
+        <button class="pause-btn hidden" id="pauseBtn" onclick="pauseGame()">❚❚</button>
+        
     </div>
 
     <script>
@@ -763,14 +846,14 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机基础射击率（每帧概率，第一关适度开火）===
+        // === 敌机基础射击率（每帧概率，第一关很少开火）===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.012,
-            tank: 0.015,
-            sniper: 0.012,
-            splitter: 0.010,
-            mini: 0.005,
-            normal: 0.015
+            fast: 0.003,
+            tank: 0.004,
+            sniper: 0.005,
+            splitter: 0.003,
+            mini: 0.002,
+            normal: 0.004
         };
         // 敌机射速随关卡递增的最大倍率
         const ENEMY_SHOOT_MAX_MULT = 1.5;
@@ -890,6 +973,9 @@
             initGame(mode);
             gameState.isRunning = true;
             
+            // 显示暂停按钮
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
             if (mode === 'stage') {
                 showStage();
             } else {
@@ -920,8 +1006,34 @@
         function backToMenu() {
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('pauseScreen').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
             document.getElementById('startScreen').classList.remove('hidden');
             initHomepageAnimation(); // 重新启动首页动画
+        }
+        
+        // 暂停游戏
+        function pauseGame() {
+            if (!gameState.isRunning || gameState.isPaused) return;
+            gameState.isPaused = true;
+            document.getElementById('pauseScreen').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+        }
+        
+        // 继续游戏
+        function resumeGame() {
+            if (!gameState.isPaused) return;
+            gameState.isPaused = false;
+            document.getElementById('pauseScreen').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+        }
+        
+        // 退出游戏
+        function quitGame() {
+            gameState.isRunning = false;
+            gameState.isPaused = false;
+            document.getElementById('pauseScreen').classList.add('hidden');
+            backToMenu();
         }
         
         // 显示关卡
@@ -1265,6 +1377,8 @@
             gameState.isRunning = true;
             gameState.elapsedFrames = 0; // 新关卡计时归零
             gameState.lastBossEndFrame = -99999;
+            // 显示暂停按钮
+            document.getElementById('pauseBtn').classList.remove('hidden');
             showStage();
             gameLoop();
         }
@@ -2110,7 +2224,16 @@
             
             // 难度与主题
             const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
-            const diffMult = (stage - 1) / 19; // 线性递增
+            // 闯关模式难度封顶为1，无尽模式难度继续增加（超过20波后每10波+0.1）
+            let diffMult;
+            if (gameState.gameMode === 'stage') {
+                diffMult = (stage - 1) / 19;
+            } else {
+                // 无尽模式：前20波正常增长，之后缓慢增加，封顶1.3倍
+                const baseDiff = Math.min(1, (stage - 1) / 19);
+                const extraDiff = stage > 20 ? (stage - 20) * 0.015 : 0; // 每波+0.015
+                diffMult = Math.min(1.3, baseDiff + extraDiff); // 最高难度1.3倍
+            }
             const theme = STAGE_THEMES[(stage - 1) % STAGE_THEMES.length];
             const pool = theme.types;
             type = pool[Math.floor(Math.random() * pool.length)];
@@ -2937,8 +3060,12 @@
                 spawnRate = 0.01 + gameState.currentStage * 0.002;
                 maxEnemies = 3 + Math.floor(gameState.currentStage * 0.35);
             } else {
-                spawnRate = 0.025 + gameState.wave * 0.005;
-                maxEnemies = 12 + gameState.wave;
+                // 无尽模式：基础与闯关模式一致，但超过20波后缓慢增加，有封顶
+                const wave = gameState.wave;
+                const baseWave = Math.min(wave, 20);
+                const extraWave = wave > 20 ? (wave - 20) * 0.2 : 0;
+                spawnRate = Math.min(0.06, 0.01 + (baseWave + extraWave) * 0.002);  // 封顶 0.06
+                maxEnemies = Math.min(12, 3 + Math.floor((baseWave + extraWave) * 0.35)); // 封顶 12个
             }
             
             if (Math.random() < spawnRate && enemies.length < maxEnemies) {
@@ -2978,6 +3105,7 @@
         // 游戏结束
         function gameOver() {
             gameState.isRunning = false;
+            document.getElementById('pauseBtn').classList.add('hidden');
             updateStats('game', 1); // 成就: 游戏次数
             document.getElementById('finalScore').textContent = gameState.score;
             
@@ -3012,6 +3140,7 @@
         // 游戏通关
         function gameWin() {
             gameState.isRunning = false;
+            document.getElementById('pauseBtn').classList.add('hidden');
             // 保存最后一关分数
             saveStageScore(gameState.currentStage, gameState.score);
             document.getElementById('winScore').textContent = gameState.score;
