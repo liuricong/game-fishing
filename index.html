@@ -745,8 +745,12 @@
             ENDLESS_LIVES: 3,
             // 受击后无敌时间（帧）
             RESPAWN_INVINCIBLE: 120,   // 2秒
-            // 彩蛋Boss强化持续时间（帧）
-            SECRET_BUFF_DURATION: 1800  // 30秒
+            // 彩蛋 Boss强化持续时间（帧）
+            SECRET_BUFF_DURATION: 1800,  // 30秒
+            // 黑洞配置
+            BLACKHOLE_DURATION: 180,     // 黑洞持续3秒
+            BLACKHOLE_RADIUS: 120,       // 黑洞吸引半径
+            BLACKHOLE_PULL_FORCE: 3      // 吸引力度
         };
         
         // === 武器冷却/发数/间距配置（方案A）===
@@ -803,7 +807,7 @@
         };
 
         // 游戏对象
-        let player, bullets, enemies, powerUps, explosions, stars, drones;
+        let player, bullets, enemies, powerUps, explosions, stars, drones, blackholes;
 
         // 按键状态
         const keys = {};
@@ -874,6 +878,7 @@
             powerUps = [];
             explosions = [];
             drones = [];
+            blackholes = [];
             
             updateUI();
         }
@@ -2331,7 +2336,8 @@
             { type: 'laser', icon: '💠', name: '激光', color: '#00ff88' },
             { type: 'shield', icon: '🛡️', name: '无敌护盾', color: '#ffd700' },
             { type: 'drone', icon: '🛰️', name: '聪仔机', color: '#00e5ff' },
-            { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', endlessOnly: true }
+            { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', endlessOnly: true },
+            { type: 'blackhole', icon: '🌀', name: '黑洞', color: '#4a0080', rare: true }
         ];
         
         // 生成道具
@@ -2341,6 +2347,10 @@
                 let availableTypes = POWERUP_TYPES.filter(p => {
                     if (p.type === 'heart') {
                         return gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES;
+                    }
+                    // 稀有道具只有10%概率进入候选池
+                    if (p.rare && Math.random() > 0.1) {
+                        return false;
                     }
                     return !p.endlessOnly || gameState.gameMode === 'endless';
                 });
@@ -2619,14 +2629,16 @@
                     drones = [];
                 }
             }
-            
-            // 彩蛋Boss强化时间
+            // 彩蛋 Boss强化时间
             if (gameState.secretBuff && gameState.secretBuffTime > 0) {
                 gameState.secretBuffTime--;
                 if (gameState.secretBuffTime === 0) {
                     gameState.secretBuff = false;
                 }
             }
+            
+            // 更新黑洞
+            updateBlackholes();
 
             // 聪仔机跟随与开火
             if (gameState.droneActive && drones.length) {
@@ -2803,13 +2815,13 @@
                             // 计分（降分 + 连击封顶）
                             let points;
                             switch(enemy.type) {
-                                case 'boss': points = 400 * (enemy.rewardMultiplier || 1); break;
-                                case 'tank': points = 60; break;
-                                case 'sniper': points = 50; break;
-                                case 'splitter': points = 40; break;
-                                case 'fast': points = 30; break;
-                                case 'mini': points = 15; break;
-                                default: points = 20;
+                                case 'boss': points = 300 * (enemy.rewardMultiplier || 1); break;
+                                case 'tank': points = 40; break;
+                                case 'sniper': points = 35; break;
+                                case 'splitter': points = 25; break;
+                                case 'fast': points = 20; break;
+                                case 'mini': points = 10; break;
+                                default: points = 15;
                             }
                             gameState.combo++;
                             if (gameState.combo > gameState.maxCombo) {
@@ -2867,6 +2879,9 @@
                             gameState.lives++;
                             showLivesHint();
                         }
+                    } else if (p.powerType === 'blackhole') {
+                        // 黑洞 - 在顶部中央生成黑洞
+                        spawnBlackhole(CONFIG.CANVAS_WIDTH / 2, 150);
                     } else {
                         // 武器道具 - 同类叠加升级（最多3级），不同则切换为1级
                         if (gameState.powerUpType === p.powerType) {
@@ -3040,6 +3055,7 @@
             
             // 绘制各元素
             drawStars();
+            drawBlackholes();
             drawPowerUps();
             drawDrones();
             drawBullets();
@@ -3058,6 +3074,133 @@
             } else {
                 // 刷新时间即可
             }
+        }
+        
+        // 生成黑洞
+        function spawnBlackhole(x, y) {
+            blackholes.push({
+                x: x,
+                y: y,
+                radius: CONFIG.BLACKHOLE_RADIUS,
+                duration: CONFIG.BLACKHOLE_DURATION,
+                rotation: 0
+            });
+            // 显示黑洞提示
+            const waveDisplay = document.getElementById('waveDisplay');
+            waveDisplay.textContent = '🌀 黑洞启动!';
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
+        }
+        
+        // 更新黑洞
+        function updateBlackholes() {
+            for (let i = blackholes.length - 1; i >= 0; i--) {
+                const bh = blackholes[i];
+                bh.duration--;
+                bh.rotation += 0.15;
+                
+                // 吸引敌人
+                enemies.forEach(enemy => {
+                    if (enemy.type === 'boss') return; // Boss不被吸引
+                    const dx = bh.x - enemy.x;
+                    const dy = bh.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < bh.radius && dist > 5) {
+                        const force = CONFIG.BLACKHOLE_PULL_FORCE * (1 - dist / bh.radius);
+                        enemy.x += (dx / dist) * force;
+                        enemy.y += (dy / dist) * force;
+                        // 到达中心则消灭
+                        if (dist < 20) {
+                            createExplosion(enemy.x, enemy.y, 0.5);
+                            const eIndex = enemies.indexOf(enemy);
+                            if (eIndex > -1) {
+                                enemies.splice(eIndex, 1);
+                                gameState.score += 10;
+                                updateStats('kill', 1);
+                            }
+                        }
+                    }
+                });
+                
+                // 吸引敌人子弹
+                bullets.forEach((bullet, bIndex) => {
+                    if (bullet.type !== 'enemy') return;
+                    const dx = bh.x - bullet.x;
+                    const dy = bh.y - bullet.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < bh.radius) {
+                        const force = CONFIG.BLACKHOLE_PULL_FORCE * 1.5 * (1 - dist / bh.radius);
+                        bullet.vx = (bullet.vx || 0) + (dx / dist) * force;
+                        bullet.vy = (bullet.vy || 0) + (dy / dist) * force;
+                        // 到达中心则消灭
+                        if (dist < 15) {
+                            bullets.splice(bIndex, 1);
+                        }
+                    }
+                });
+                
+                // 时间到则移除黑洞
+                if (bh.duration <= 0) {
+                    blackholes.splice(i, 1);
+                }
+            }
+        }
+        
+        // 绘制黑洞
+        function drawBlackholes() {
+            blackholes.forEach(bh => {
+                ctx.save();
+                ctx.translate(bh.x, bh.y);
+                ctx.rotate(bh.rotation);
+                
+                // 外圈吸引范围指示
+                const fadeRatio = Math.min(1, bh.duration / 30); // 最后0.5秒淡出
+                ctx.globalAlpha = 0.2 * fadeRatio;
+                ctx.beginPath();
+                ctx.arc(0, 0, bh.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#4a0080';
+                ctx.fill();
+                
+                // 旋涡线条
+                ctx.globalAlpha = 0.6 * fadeRatio;
+                for (let i = 0; i < 4; i++) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `hsl(${270 + i * 20}, 80%, ${50 + i * 10}%)`;
+                    ctx.lineWidth = 3;
+                    const startAngle = (i / 4) * Math.PI * 2;
+                    for (let j = 0; j < 50; j++) {
+                        const angle = startAngle + j * 0.15;
+                        const r = 10 + j * 1.8;
+                        const x = Math.cos(angle) * r;
+                        const y = Math.sin(angle) * r;
+                        if (j === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                
+                // 中心黑洞
+                ctx.globalAlpha = 1 * fadeRatio;
+                const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 25);
+                coreGrad.addColorStop(0, '#000000');
+                coreGrad.addColorStop(0.5, '#1a0033');
+                coreGrad.addColorStop(1, '#4a0080');
+                ctx.beginPath();
+                ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                ctx.fillStyle = coreGrad;
+                ctx.fill();
+                
+                // 中心光晕
+                ctx.shadowColor = '#9932cc';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.arc(0, 0, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#9932cc';
+                ctx.fill();
+                
+                ctx.restore();
+            });
         }
 
         // 游戏主循环
