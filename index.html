@@ -829,7 +829,7 @@
                 { glow: '#ffd700', scale: 1.15 }
             ];
             const style = (type !== 'none' && lvl >= 1) ? LEVEL_STYLES[Math.min(lvl, 3)] : LEVEL_STYLES[0];
-            const sc = style.scale;
+            const sc = style.scale * 0.75; // 缩小玩家鱼体型
 
             // 气泡尾迹
             player.trail.push({ x: player.x, y: player.y + 22 * sc, alpha: 1 });
