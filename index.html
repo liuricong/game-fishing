@@ -141,6 +141,7 @@
         .start-quote {
             color: #fff;
             font-size: 15px;
+            font-weight: 600;
             text-align: center;
             width: min(85vw, 380px);
             margin: 0 auto 20px;
@@ -150,7 +151,13 @@
             border-radius: 14px;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+            /* 立体描边效果 */
+            text-shadow:
+                -1px -1px 0 rgba(0, 80, 150, 0.8),
+                1px -1px 0 rgba(0, 80, 150, 0.8),
+                -1px 1px 0 rgba(0, 80, 150, 0.8),
+                1px 1px 0 rgba(0, 80, 150, 0.8),
+                0 2px 4px rgba(0, 0, 0, 0.5);
             z-index: 1;
             min-height: 50px;
             display: flex;
@@ -854,7 +861,7 @@
             // 彩蛋 Boss强化持续时间（帧）
             SECRET_BUFF_DURATION: 1800,  // 30秒
             // 黑洞配置
-            BLACKHOLE_DURATION: 180,     // 黑洞持续3秒
+            BLACKHOLE_DURATION: 300,     // 黑洞持续5秒
             BLACKHOLE_RADIUS: 120,       // 黑洞吸引半径
             BLACKHOLE_PULL_FORCE: 3      // 吸引力度
         };
@@ -2403,6 +2410,7 @@
                     width = 40; height = 35; break;
             }
             
+            // 随机移动参数 - 每条鱼都不一样
             enemies.push({
                 x: Math.random() * (CONFIG.CANVAS_WIDTH - 60) + 30,
                 y: -50,
@@ -2413,7 +2421,23 @@
                 maxHp: hp,
                 speed,
                 shootRate,
-                movePattern: Math.floor(Math.random() * 4),
+                movePattern: 0, // 普通敌人统一用动态组合
+                // 第一层波动
+                waveAmp: 1.5 + Math.random() * 3,
+                waveFreq: 0.03 + Math.random() * 0.05,
+                phase1: Math.random() * Math.PI * 2,
+                // 第二层波动（不同频率叠加）
+                waveAmp2: 0.5 + Math.random() * 2,
+                waveFreq2: 0.01 + Math.random() * 0.03,
+                phase2: Math.random() * Math.PI * 2,
+                // 漂移
+                driftDir: Math.random() > 0.5 ? 1 : -1,
+                driftSpeed: 0.2 + Math.random() * 0.6,
+                // 突变间隔（40-120帧随机改变方向）
+                switchInterval: 40 + Math.floor(Math.random() * 80),
+                // 追踪强度（0=不追踪，随机部分敌人会追踪）
+                chaseStrength: Math.random() < 0.3 ? (0.3 + Math.random() * 0.5) : 0,
+                moveTime: Math.random() * 100,
                 colors: theme.palette,
                 shape: shape
             });
@@ -2487,6 +2511,7 @@
                 bossLevel = gameState.currentStage;
             } else {
                 bossLevel = Math.floor(gameState.nextBossScore / 1000);
+                if (bossLevel < 1) bossLevel = 1; // 确保最小为1
                 if (bossLevel > 20) bossLevel = ((bossLevel - 1) % 20) + 1;
             }
             
@@ -2566,11 +2591,7 @@
             
             // 显示Boss警告
             const waveDisplay = document.getElementById('waveDisplay');
-            if (gameState.gameMode === 'stage') {
-                waveDisplay.textContent = `⚠️ ${bossConfig.name}`;
-            } else {
-                waveDisplay.textContent = `⚠️ ${bossConfig.name} Lv.${bossLevel}`;
-            }
+            waveDisplay.textContent = `⚠️ ${bossConfig.name}`;
             waveDisplay.classList.remove('show');
             void waveDisplay.offsetWidth;
             waveDisplay.classList.add('show');
@@ -2622,6 +2643,28 @@
                 });
             }
         }
+        
+        // Boss战期间掉落道具（排除黑洞）
+        function spawnBossPowerUp(x, y) {
+            // 过滤掉黑洞和无尽模式限定道具
+            let availableTypes = POWERUP_TYPES.filter(p => {
+                if (p.type === 'blackhole') return false; // 排除黑洞
+                if (p.type === 'heart') {
+                    return gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES;
+                }
+                return !p.endlessOnly || gameState.gameMode === 'endless';
+            });
+            const powerType = weightedRandomPowerup(availableTypes);
+            powerUps.push({
+                x: x,
+                y: y,
+                powerType: powerType.type,
+                icon: powerType.icon,
+                color: powerType.color,
+                speed: 2,
+                rotation: 0
+            });
+        }
 
         // 敌人射击 - 子弹速度随关卡递增
         function enemyShoot(enemy) {
@@ -2641,167 +2684,170 @@
                 const cy = enemy.y + ((enemy.hitH || enemy.height) / 2);
                 const spd = bulletSpeedMult; // Boss子弹速度倍率
                 
+                // 低等级Boss射击间隔更长
+                const shootInterval = Math.max(1, 1.8 - (enemy.bossLevel || 1) * 0.05); // 第1关1.75倍间隔，第20关1.0倍
+                
                 switch(pattern) {
                     case 'spread3': // 3路扩散
-                        if (enemy.shootTimer % 30 === 0) {
+                        if (enemy.shootTimer % Math.floor(45 * shootInterval) === 0) {
                             for (let i = -1; i <= 1; i++) {
-                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 2 * spd, vy: 6 * spd, type: 'enemy' });
+                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 1.5 * spd, vy: 5 * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'spiral': // 蟂旋
-                        if (enemy.shootTimer % 10 === 0) {
+                        if (enemy.shootTimer % Math.floor(15 * shootInterval) === 0) {
                             const angle = enemy.shootTimer * 0.15;
-                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 4 * spd, vy: (Math.sin(angle) * 2 + 4) * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 3.5 * spd, vy: (Math.sin(angle) * 2 + 4) * spd, type: 'enemy' });
                         }
                         break;
                     case 'wave': // 波动
-                        if (enemy.shootTimer % 25 === 0) {
+                        if (enemy.shootTimer % Math.floor(35 * shootInterval) === 0) {
                             for (let i = 0; i < 5; i++) {
-                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 5 * spd, type: 'enemy', wave: true, waveOffset: i });
+                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 4.5 * spd, type: 'enemy', wave: true, waveOffset: i });
                             }
                         }
                         break;
                     case 'burst': // 爆裂
-                        if (enemy.shootTimer % 80 === 0) {
+                        if (enemy.shootTimer % Math.floor(100 * shootInterval) === 0) {
                             for (let i = 0; i < 8; i++) {
                                 const a = (i / 8) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 4 * spd, vy: (Math.sin(a) * 4 + 2) * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3.5 * spd, vy: (Math.sin(a) * 3.5 + 2) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'ring': // 圆环
-                        if (enemy.shootTimer % 60 === 0) {
+                        if (enemy.shootTimer % Math.floor(80 * shootInterval) === 0) {
                             for (let i = 0; i < 12; i++) {
                                 const a = (i / 12) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3 * spd, vy: (Math.sin(a) * 3 + 1) * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 2.5 * spd, vy: (Math.sin(a) * 2.5 + 1) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'zigzag': // 之字形
-                        if (enemy.shootTimer % 20 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 5 * spd, vy: 5 * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(30 * shootInterval) === 0) {
+                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 4 * spd, vy: 4.5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'tentacle': // 触手
-                        if (enemy.shootTimer % 15 === 0) {
+                        if (enemy.shootTimer % Math.floor(22 * shootInterval) === 0) {
                             const side = (enemy.shootTimer / 15) % 2 === 0 ? -1 : 1;
-                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1 * spd, vy: 5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1 * spd, vy: 4.5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'scatter': // 散射
-                        if (enemy.shootTimer % 40 === 0) {
-                            for (let i = 0; i < 6; i++) {
-                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 4 * spd, vy: (4 + Math.random() * 2) * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(55 * shootInterval) === 0) {
+                            for (let i = 0; i < 5; i++) {
+                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 3.5 * spd, vy: (4 + Math.random() * 2) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'cross': // 十字
-                        if (enemy.shootTimer % 50 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: 4 * spd, vy: 4 * spd, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: -4 * spd, vy: 4 * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(65 * shootInterval) === 0) {
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 5.5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 3.5 * spd, vy: 3.5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: -3.5 * spd, vy: 3.5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'homing': // 追踪
-                        if (enemy.shootTimer % 60 === 0) {
+                        if (enemy.shootTimer % Math.floor(80 * shootInterval) === 0) {
                             const dx = player.x - cx;
                             const dy = player.y - cy;
                             const dist = Math.sqrt(dx * dx + dy * dy);
-                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 5 * spd, vy: (dy / dist) * 5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 4.5 * spd, vy: (dy / dist) * 4.5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'breath': // 龙息
-                        if (enemy.shootTimer % 5 === 0 && enemy.shootTimer % 100 < 30) {
-                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2 * spd, vy: 7 * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(8 * shootInterval) === 0 && enemy.shootTimer % Math.floor(120 * shootInterval) < Math.floor(35 * shootInterval)) {
+                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2 * spd, vy: 6 * spd, type: 'enemy' });
                         }
                         break;
                     case 'petal': // 花瓣
-                        if (enemy.shootTimer % 45 === 0) {
+                        if (enemy.shootTimer % Math.floor(60 * shootInterval) === 0) {
                             for (let i = 0; i < 5; i++) {
                                 const a = (i / 5) * Math.PI * 2 + enemy.shootTimer * 0.02;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3 * spd, vy: 4 * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 2.5 * spd, vy: 3.5 * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'slash': // 斩击 - 快速三连击
-                        if (enemy.shootTimer % 60 < 15 && enemy.shootTimer % 5 === 0) {
-                            const offset = (enemy.shootTimer % 60) / 5 - 1;
-                            bullets.push({ x: cx + offset * 40, y: cy, vx: offset * 3 * spd, vy: 8 * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(80 * shootInterval) < Math.floor(18 * shootInterval) && enemy.shootTimer % Math.floor(6 * shootInterval) === 0) {
+                            const offset = (enemy.shootTimer % Math.floor(80 * shootInterval)) / Math.floor(6 * shootInterval) - 1;
+                            bullets.push({ x: cx + offset * 40, y: cy, vx: offset * 2.5 * spd, vy: 7 * spd, type: 'enemy' });
                         }
                         break;
                     case 'meteor': // 流星 - 从天而降的大弹幕
-                        if (enemy.shootTimer % 70 === 0) {
-                            for (let i = 0; i < 7; i++) {
+                        if (enemy.shootTimer % Math.floor(90 * shootInterval) === 0) {
+                            for (let i = 0; i < 6; i++) {
                                 const startX = Math.random() * CONFIG.CANVAS_WIDTH;
-                                bullets.push({ x: startX, y: cy - 50, vx: (Math.random() - 0.5) * 2 * spd, vy: (5 + Math.random() * 3) * spd, type: 'enemy' });
+                                bullets.push({ x: startX, y: cy - 50, vx: (Math.random() - 0.5) * 2 * spd, vy: (4.5 + Math.random() * 2.5) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'thorn': // 荆棘 - 两侧交叉射击
-                        if (enemy.shootTimer % 25 === 0) {
-                            const side = (enemy.shootTimer / 25) % 2;
+                        if (enemy.shootTimer % Math.floor(35 * shootInterval) === 0) {
+                            const side = (enemy.shootTimer / 35) % 2;
                             for (let i = 0; i < 3; i++) {
                                 const angle = (side ? 0.3 : -0.3) + (i - 1) * 0.15;
-                                bullets.push({ x: cx + (side ? 60 : -60), y: cy, vx: Math.sin(angle) * 4 * spd, vy: Math.cos(angle) * 5 * spd, type: 'enemy' });
+                                bullets.push({ x: cx + (side ? 60 : -60), y: cy, vx: Math.sin(angle) * 3.5 * spd, vy: Math.cos(angle) * 4.5 * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'tornado': // 龙卷 - 旋转扩散
-                        if (enemy.shootTimer % 8 === 0) {
+                        if (enemy.shootTimer % Math.floor(12 * shootInterval) === 0) {
                             const a = enemy.shootTimer * 0.2;
                             const r = 30 + (enemy.shootTimer % 80) * 0.5;
-                            bullets.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.3, vx: Math.cos(a) * 2 * spd, vy: 5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.3, vx: Math.cos(a) * 2 * spd, vy: 4.5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'inferno': // 地狱火 - 密集火焰弹幕
-                        if (enemy.shootTimer % 4 === 0 && enemy.shootTimer % 120 < 60) {
+                        if (enemy.shootTimer % Math.floor(6 * shootInterval) === 0 && enemy.shootTimer % Math.floor(150 * shootInterval) < Math.floor(70 * shootInterval)) {
                             const spread = Math.sin(enemy.shootTimer * 0.1) * 80;
-                            bullets.push({ x: cx + spread, y: cy, vx: (Math.random() - 0.5) * 3 * spd, vy: (6 + Math.random() * 2) * spd, type: 'enemy' });
+                            bullets.push({ x: cx + spread, y: cy, vx: (Math.random() - 0.5) * 2.5 * spd, vy: (5.5 + Math.random() * 1.5) * spd, type: 'enemy' });
                         }
                         break;
                     case 'feather': // 羽毛 - 飘落式弹幕
-                        if (enemy.shootTimer % 35 === 0) {
+                        if (enemy.shootTimer % Math.floor(50 * shootInterval) === 0) {
                             for (let i = 0; i < 4; i++) {
                                 const x = cx - 60 + i * 40;
-                                bullets.push({ x: x, y: cy, vx: Math.sin(i + enemy.shootTimer * 0.05) * 2 * spd, vy: 4 * spd, type: 'enemy', wave: true, waveOffset: i * 0.5 });
+                                bullets.push({ x: x, y: cy, vx: Math.sin(i + enemy.shootTimer * 0.05) * 2 * spd, vy: 3.5 * spd, type: 'enemy', wave: true, waveOffset: i * 0.5 });
                             }
                         }
                         break;
                     case 'random': // 混沌 - 随机组合攻击
-                        if (enemy.shootTimer % 20 === 0) {
+                        if (enemy.shootTimer % Math.floor(30 * shootInterval) === 0) {
                             const mode = Math.floor(Math.random() * 4);
                             if (mode === 0) { // 直线
-                                bullets.push({ x: cx, y: cy, vx: 0, vy: 7 * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
                             } else if (mode === 1) { // 双发
-                                bullets.push({ x: cx - 30, y: cy, vx: -1 * spd, vy: 6 * spd, type: 'enemy' });
-                                bullets.push({ x: cx + 30, y: cy, vx: 1 * spd, vy: 6 * spd, type: 'enemy' });
+                                bullets.push({ x: cx - 30, y: cy, vx: -1 * spd, vy: 5.5 * spd, type: 'enemy' });
+                                bullets.push({ x: cx + 30, y: cy, vx: 1 * spd, vy: 5.5 * spd, type: 'enemy' });
                             } else if (mode === 2) { // 追踪
                                 const dx = player.x - cx, dy = player.y - cy;
                                 const d = Math.sqrt(dx*dx + dy*dy) || 1;
-                                bullets.push({ x: cx, y: cy, vx: (dx/d) * 5 * spd, vy: (dy/d) * 5 * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: (dx/d) * 4.5 * spd, vy: (dy/d) * 4.5 * spd, type: 'enemy' });
                             } else { // 散射
                                 for (let i = 0; i < 3; i++) {
-                                    bullets.push({ x: cx, y: cy, vx: (Math.random() - 0.5) * 6 * spd, vy: (4 + Math.random() * 3) * spd, type: 'enemy' });
+                                    bullets.push({ x: cx, y: cy, vx: (Math.random() - 0.5) * 5 * spd, vy: (4 + Math.random() * 2.5) * spd, type: 'enemy' });
                                 }
                             }
                         }
                         break;
                     case 'heart': // 爱心 - 心形弹幕
-                        if (enemy.shootTimer % 50 === 0) {
+                        if (enemy.shootTimer % Math.floor(70 * shootInterval) === 0) {
                             // 绘制心形轮廓的子弹
-                            for (let i = 0; i < 16; i++) {
-                                const t = (i / 16) * Math.PI * 2;
+                            for (let i = 0; i < 14; i++) {
+                                const t = (i / 14) * Math.PI * 2;
                                 // 心形参数方程
                                 const hx = 16 * Math.pow(Math.sin(t), 3);
                                 const hy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                                bullets.push({ x: cx, y: cy, vx: hx * 0.2 * spd, vy: -hy * 0.2 * spd + 3 * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: hx * 0.18 * spd, vy: -hy * 0.18 * spd + 2.5 * spd, type: 'enemy' });
                             }
                         }
                         break;
                     default: // 默认
-                        if (enemy.shootTimer % 35 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
+                        if (enemy.shootTimer % Math.floor(50 * shootInterval) === 0) {
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 5.5 * spd, type: 'enemy' });
                         }
                 }
             } else if (Math.random() < enemy.shootRate) {
@@ -2924,35 +2970,46 @@
 
             // 更新敌人
             enemies.forEach((enemy, eIndex) => {
-                // 移动模式
-                switch(enemy.movePattern) {
-                    case 0: // 直线
+                // 被黑洞吸引的敌人不执行正常移动
+                if (enemy.beingSucked) return;
+                
+                enemy.moveTime = (enemy.moveTime || 0) + 1;
+                const t = enemy.moveTime;
+                
+                if (enemy.movePattern === 10) {
+                    // Boss特殊移动
+                    if (enemy.y < 80) {
                         enemy.y += enemy.speed;
-                        break;
-                    case 1: // 正弦波
-                        enemy.y += enemy.speed;
-                        enemy.x += Math.sin(enemy.y * 0.05) * 3;
-                        break;
-                    case 2: // 追踪玩家
-                        enemy.y += enemy.speed;
-                        if (enemy.x < player.x) enemy.x += 1;
-                        if (enemy.x > player.x) enemy.x -= 1;
-                        break;
-                    case 3: // 之字形
-                        enemy.y += enemy.speed;
-                        enemy.x += Math.sin(enemy.y * 0.03) * 4;
-                        break;
-                    case 10: // Boss特殊移动
-                        // Boss先进入屏幕
-                        if (enemy.y < 80) {
-                            enemy.y += enemy.speed;
-                        } else {
-                            // 左右移动
-                            enemy.x += enemy.speed * 2 * enemy.moveDir;
-                            if (enemy.x > CONFIG.CANVAS_WIDTH - 80) enemy.moveDir = -1;
-                            if (enemy.x < 80) enemy.moveDir = 1;
-                        }
-                        break;
+                    } else {
+                        enemy.x += enemy.speed * 2 * enemy.moveDir;
+                        if (enemy.x > CONFIG.CANVAS_WIDTH - 80) enemy.moveDir = -1;
+                        if (enemy.x < 80) enemy.moveDir = 1;
+                    }
+                } else {
+                    // 普通敌人 - 动态组合轨迹
+                    enemy.y += enemy.speed;
+                    
+                    // 基础横向移动：正弦波
+                    let dx = Math.sin(t * enemy.waveFreq + enemy.phase1) * enemy.waveAmp;
+                    
+                    // 叠加第二层波动（不同频率）
+                    dx += Math.sin(t * enemy.waveFreq2 + enemy.phase2) * enemy.waveAmp2;
+                    
+                    // 随机漂移（慢慢向一个方向移动）
+                    dx += enemy.driftDir * enemy.driftSpeed * 0.5;
+                    
+                    // 随机突变：每隔一段时间可能改变方向
+                    if (t % enemy.switchInterval === 0) {
+                        enemy.driftDir *= -1;
+                    }
+                    
+                    // 追踪玩家（轻微）
+                    if (enemy.chaseStrength > 0) {
+                        if (enemy.x < player.x - 20) dx += enemy.chaseStrength;
+                        if (enemy.x > player.x + 20) dx -= enemy.chaseStrength;
+                    }
+                    
+                    enemy.x += dx;
                 }
                 
                 // 边界
@@ -3004,6 +3061,11 @@
                         bullets.splice(bIndex, 1);
                         enemy.hp--;
                         enemy.hitFlash = 8; // 闪烁帧数
+                        
+                        // Boss被击中时有概率掉落道具（排除黑洞）
+                        if (enemy.type === 'boss' && Math.random() < 0.03) {
+                            spawnBossPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y + 50);
+                        }
                         
                         if (enemy.hp <= 0) {
                             createExplosion(enemy.x, enemy.y, enemy.type === 'boss' ? 3 : 1);
@@ -3183,12 +3245,12 @@
                 }
             }
 
-            // 生成敌人
-            let spawnRate, maxEnemies;
+            // 生成敌人 - Boss出现时不生成普通敌人
             if (gameState.bossActive) {
-                spawnRate = 0.008;
-                maxEnemies = 3;
-            } else if (gameState.gameMode === 'stage') {
+                // Boss战期间不生成新敌人
+            } else {
+                let spawnRate, maxEnemies;
+                if (gameState.gameMode === 'stage') {
                 // 第1关: spawnRate=0.012, maxEnemies=4; 第20关: spawnRate=0.05, maxEnemies=10
                 spawnRate = 0.01 + gameState.currentStage * 0.002;
                 maxEnemies = 3 + Math.floor(gameState.currentStage * 0.35);
@@ -3199,10 +3261,11 @@
                 const extraWave = wave > 20 ? (wave - 20) * 0.2 : 0;
                 spawnRate = Math.min(0.06, 0.01 + (baseWave + extraWave) * 0.002);  // 封顶 0.06
                 maxEnemies = Math.min(12, 3 + Math.floor((baseWave + extraWave) * 0.35)); // 封顶 12个
-            }
-            
-            if (Math.random() < spawnRate && enemies.length < maxEnemies) {
-                spawnEnemy();
+                }
+                
+                if (Math.random() < spawnRate && enemies.length < maxEnemies) {
+                    spawnEnemy();
+                }
             }
 
             updateUI();
@@ -3368,45 +3431,56 @@
                 bh.duration--;
                 bh.rotation += 0.15;
                 
-                // 吸引敌人
-                enemies.forEach(enemy => {
-                    if (enemy.type === 'boss') return; // Boss不被吸引
+                // 吸引敌人 - 先吸到中心再消灭
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    if (enemy.type === 'boss') continue; // Boss不被吸引
+                    
                     const dx = bh.x - enemy.x;
                     const dy = bh.y - enemy.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < bh.radius && dist > 5) {
-                        const force = CONFIG.BLACKHOLE_PULL_FORCE * (1 - dist / bh.radius);
-                        enemy.x += (dx / dist) * force;
-                        enemy.y += (dy / dist) * force;
+                    
+                    if (dist < bh.radius) {
+                        // 标记为被吸引状态，禁用正常移动
+                        enemy.beingSucked = true;
+                        
+                        // 吸引力随距离增强（越近中心吸力越大）
+                        const pullStrength = 4 + (1 - dist / bh.radius) * 8;
+                        enemy.x += (dx / dist) * pullStrength;
+                        enemy.y += (dy / dist) * pullStrength;
+                        
                         // 到达中心则消灭
-                        if (dist < 20) {
-                            createExplosion(enemy.x, enemy.y, 0.5);
-                            const eIndex = enemies.indexOf(enemy);
-                            if (eIndex > -1) {
-                                enemies.splice(eIndex, 1);
-                                gameState.score += 10;
-                                updateStats('kill', 1);
-                            }
+                        if (dist < 25) {
+                            createExplosion(bh.x, bh.y, 0.8);
+                            enemies.splice(j, 1);
+                            gameState.score += 15;
+                            gameState.combo++;
+                            updateStats('kill', 1);
                         }
                     }
-                });
+                }
                 
                 // 吸引敌人子弹
-                bullets.forEach((bullet, bIndex) => {
-                    if (bullet.type !== 'enemy') return;
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const bullet = bullets[j];
+                    if (bullet.type !== 'enemy') continue;
+                    
                     const dx = bh.x - bullet.x;
                     const dy = bh.y - bullet.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
+                    
                     if (dist < bh.radius) {
-                        const force = CONFIG.BLACKHOLE_PULL_FORCE * 1.5 * (1 - dist / bh.radius);
-                        bullet.vx = (bullet.vx || 0) + (dx / dist) * force;
-                        bullet.vy = (bullet.vy || 0) + (dy / dist) * force;
+                        // 强力吸引子弹
+                        const pullStrength = 3 + (1 - dist / bh.radius) * 6;
+                        bullet.vx = (dx / dist) * pullStrength;
+                        bullet.vy = (dy / dist) * pullStrength;
+                        
                         // 到达中心则消灭
-                        if (dist < 15) {
-                            bullets.splice(bIndex, 1);
+                        if (dist < 20) {
+                            bullets.splice(j, 1);
                         }
                     }
-                });
+                }
                 
                 // 时间到则移除黑洞
                 if (bh.duration <= 0) {
