@@ -427,17 +427,17 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机首关射速系数（降低基础值，让第一关更简单）===
+        // === 敌机基础射击率（第一关适度开火）===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.001,
-            tank: 0.002,
-            sniper: 0.002,
-            splitter: 0.001,
-            mini: 0.001,
-            normal: 0.002
+            fast: 0.004,
+            tank: 0.005,
+            sniper: 0.006,
+            splitter: 0.003,
+            mini: 0.003,
+            normal: 0.005
         };
         // 敌机射速随关卡递增的最大倍率
-        const ENEMY_SHOOT_MAX_MULT = 10;
+        const ENEMY_SHOOT_MAX_MULT = 5;
         
         // 设置canvas实际尺寸
         canvas.width = CONFIG.CANVAS_WIDTH;
@@ -1096,7 +1096,7 @@
             ctx.shadowBlur = 0;
         }
 
-        // 绘制BOSS（大型鱼类）
+        // 绘制BOSS（大型鱼类）- 头朝下绘制
         function drawBossLarge(enemy) {
             const cfg = enemy.bossConfig || { shape: 'shark', colors: ['#ff4757', '#c0392b', '#8e0000'] };
             const colors = cfg.colors || enemy.colors || ['#ff4757', '#c0392b', '#8e0000'];
@@ -1107,7 +1107,7 @@
             ctx.shadowBlur = 15;
             
             // Boss鱼身主色
-            const bodyGrad = ctx.createLinearGradient(0, -40 * s, 0, 40 * s);
+            const bodyGrad = ctx.createLinearGradient(0, -50 * s, 0, 50 * s);
             if (isHit) {
                 bodyGrad.addColorStop(0, '#ffffff');
                 bodyGrad.addColorStop(0.5, '#ffdddd');
@@ -1124,65 +1124,59 @@
             ctx.ellipse(0, 0, 35 * s, 50 * s, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 大鱼尾
+            // 鱼尾（在上方，y负方向）
             ctx.beginPath();
-            ctx.moveTo(0, 40 * s);
-            ctx.lineTo(-25 * s, 70 * s);
-            ctx.lineTo(0, 55 * s);
-            ctx.lineTo(25 * s, 70 * s);
+            ctx.moveTo(0, -40 * s);
+            ctx.lineTo(-25 * s, -70 * s);
+            ctx.lineTo(0, -55 * s);
+            ctx.lineTo(25 * s, -70 * s);
             ctx.closePath();
             ctx.fill();
             
-            // 大背鳕
-            ctx.beginPath();
-            ctx.moveTo(0, -45 * s);
-            ctx.lineTo(-15 * s, -65 * s);
-            ctx.lineTo(15 * s, -65 * s);
-            ctx.closePath();
-            ctx.fill();
+            // 背鳍（鱼头朝下时不显示，因为背鳍在背部）
             
-            // 大侧鳕
+            // 侧鳍（左右）
             ctx.beginPath();
             ctx.moveTo(-30 * s, 0);
-            ctx.lineTo(-55 * s, 15 * s);
-            ctx.lineTo(-30 * s, 10 * s);
+            ctx.lineTo(-55 * s, -10 * s);
+            ctx.lineTo(-30 * s, -5 * s);
             ctx.closePath();
             ctx.fill();
             ctx.beginPath();
             ctx.moveTo(30 * s, 0);
-            ctx.lineTo(55 * s, 15 * s);
-            ctx.lineTo(30 * s, 10 * s);
+            ctx.lineTo(55 * s, -10 * s);
+            ctx.lineTo(30 * s, -5 * s);
             ctx.closePath();
             ctx.fill();
             
-            // 腹部白色
+            // 腹部白色（在下方）
             ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,255,0.4)';
             ctx.beginPath();
-            ctx.ellipse(0, 10 * s, 25 * s, 30 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 15 * s, 25 * s, 28 * s, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 大眼睛
+            // 大眼睛（在下方，朝向玩家）
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-15 * s, -20 * s, 12 * s, 0, Math.PI * 2);
-            ctx.arc(15 * s, -20 * s, 12 * s, 0, Math.PI * 2);
+            ctx.arc(-15 * s, 25 * s, 12 * s, 0, Math.PI * 2);
+            ctx.arc(15 * s, 25 * s, 12 * s, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#880000';
             ctx.beginPath();
-            ctx.arc(-15 * s, -20 * s, 6 * s, 0, Math.PI * 2);
-            ctx.arc(15 * s, -20 * s, 6 * s, 0, Math.PI * 2);
+            ctx.arc(-15 * s, 25 * s, 6 * s, 0, Math.PI * 2);
+            ctx.arc(15 * s, 25 * s, 6 * s, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-13 * s, -22 * s, 3 * s, 0, Math.PI * 2);
-            ctx.arc(17 * s, -22 * s, 3 * s, 0, Math.PI * 2);
+            ctx.arc(-13 * s, 23 * s, 3 * s, 0, Math.PI * 2);
+            ctx.arc(17 * s, 23 * s, 3 * s, 0, Math.PI * 2);
             ctx.fill();
             
-            // 嘴巴
+            // 嘴巴（在最下方）
             ctx.strokeStyle = isHit ? '#faa' : colors[2];
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(0, -35 * s, 10 * s, 0.2 * Math.PI, 0.8 * Math.PI);
+            ctx.arc(0, 40 * s, 10 * s, 1.2 * Math.PI, 1.8 * Math.PI);
             ctx.stroke();
             
             ctx.shadowBlur = 0;
@@ -1202,11 +1196,12 @@
             enemies.forEach(enemy => {
                 ctx.save();
                 ctx.translate(enemy.x, enemy.y);
-                // 敌人鱼旋转180度，使头朝下（朝向玩家）
-                ctx.rotate(Math.PI);
                 if (enemy.type === 'boss') {
+                    // Boss不旋转，绘制函数内部已调整为头朝下
                     drawBossLarge(enemy);
                 } else {
+                    // 普通敌人旋转180度，使头朝下
+                    ctx.rotate(Math.PI);
                     drawEnemySmall(enemy);
                 }
                 if (enemy.hitFlash > 0) enemy.hitFlash--;
@@ -2141,8 +2136,9 @@
                 spawnRate = 0.008;
                 maxEnemies = 3;
             } else if (gameState.gameMode === 'stage') {
-                spawnRate = 0.02 + gameState.currentStage * 0.003;
-                maxEnemies = 6 + gameState.currentStage;
+                // 第1关: spawnRate=0.012, maxEnemies=4; 第20关: spawnRate=0.05, maxEnemies=10
+                spawnRate = 0.01 + gameState.currentStage * 0.002;
+                maxEnemies = 3 + Math.floor(gameState.currentStage * 0.35);
             } else {
                 spawnRate = 0.025 + gameState.wave * 0.005;
                 maxEnemies = 12 + gameState.wave;
