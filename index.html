@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', 'PingFang SC', sans-serif;
-            background: linear-gradient(180deg, #2d1b4e 0%, #4a2c6a 50%, #1e3a5f 100%);
+            background: linear-gradient(180deg, #001a33 0%, #003366 50%, #004080 100%);
             margin: 0;
             padding: 0;
             width: 100vw;
@@ -69,7 +69,7 @@
             display: none;
         }
 
-        /* 首页美化 */
+        /* 首页美化 - 海洋主题 */
         #startScreen {
             background: transparent;
         }
@@ -78,17 +78,28 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(1200px 600px at 80% -10%, rgba(255,105,180,0.25), transparent 60%),
-                radial-gradient(900px 500px at -10% 110%, rgba(78, 205, 196, 0.18), transparent 60%),
-                radial-gradient(800px 500px at 50% 50%, rgba(255,255,255,0.05), transparent 60%),
-                linear-gradient(180deg, rgba(29,14,52,0.9), rgba(22,38,75,0.9));
+                radial-gradient(1200px 600px at 80% -10%, rgba(0,180,216,0.25), transparent 60%),
+                radial-gradient(900px 500px at -10% 110%, rgba(0,119,182,0.20), transparent 60%),
+                radial-gradient(800px 500px at 50% 50%, rgba(72,202,228,0.08), transparent 60%),
+                linear-gradient(180deg, rgba(0,26,51,0.95), rgba(0,51,102,0.95));
             z-index: -1;
+        }
+        /* 首页 Canvas 背景层 */
+        #homepageCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
         }
         .menu-buttons {
             display: flex;
             flex-direction: column;
             gap: 14px;
             width: min(80vw, 360px);
+            z-index: 1;
         }
         .menu-btn {
             padding: 14px 26px;
@@ -106,8 +117,8 @@
         .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,0.45); }
         .menu-btn:active { transform: translateY(0); }
         .menu-btn.secondary {
-            border-color: rgba(255,105,180,0.5);
-            background: linear-gradient(180deg, rgba(255,105,180,0.25), rgba(255,20,147,0.15));
+            border-color: rgba(0,180,216,0.5);
+            background: linear-gradient(180deg, rgba(0,180,216,0.25), rgba(0,119,182,0.15));
         }
         
         /* 首页描述：居中 + 限宽 + 两侧内边距 */
@@ -119,16 +130,7 @@
             margin: 6px auto 0;
             line-height: 1.6;
             padding: 0 12px;
-        }
-        .floating-hearts { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-        .floating-hearts span {
-            position: absolute; color: rgba(255,105,180,0.7); font-size: 18px;
-            animation: float-up 8s linear infinite; filter: drop-shadow(0 0 8px rgba(255,105,180,0.6));
-        }
-        @keyframes float-up {
-            0% { transform: translateY(40px) translateX(0) scale(0.8); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(-110%) translateX(-30px) scale(1.2); opacity: 0; }
+            z-index: 1;
         }
 
         .game-title {
@@ -310,6 +312,7 @@
             }
         }
     </style>
+    <script src="static/bg-base64.js"></script>
 </head>
 <body>
     <div class="game-container">
@@ -324,22 +327,16 @@
         
         <!-- 开始界面 -->
         <div class="overlay" id="startScreen">
-            <div class="floating-hearts">
-                <span style="left:10%; bottom:5%; animation-delay:0s;">❤</span>
-                <span style="left:25%; bottom:-5%; animation-delay:.8s;">❤</span>
-                <span style="left:70%; bottom:-10%; animation-delay:1.2s;">❤</span>
-                <span style="left:85%; bottom:0; animation-delay:2s;">❤</span>
-                <span style="left:50%; bottom:-8%; animation-delay:3s;">❤</span>
-            </div>
-            <div style="font-size: 60px; margin-bottom: 6px; text-shadow:0 10px 30px rgba(255,105,180,.5);">💖</div>
-            <div class="game-title">爱的守护者</div>
-            <div class="game-subtitle">LOVE GUARDIAN</div>
+            <canvas id="homepageCanvas"></canvas>
+            <div style="font-size: 60px; margin-bottom: 6px; text-shadow:0 10px 30px rgba(255,105,180,.5); z-index: 1;">💖</div>
+            <div class="game-title" style="z-index: 1;">爱的守护者</div>
+            <div class="game-subtitle" style="z-index: 1;">LOVE GUARDIAN</div>
             <div class="menu-buttons" style="margin: 24px 0;">
                 <button class="menu-btn" onclick="showStageSelect()">🎯 闯关模式</button>
                 <button class="menu-btn secondary" onclick="startGame('endless')">♾️ 无尽模式</button>
             </div>
             <div class="start-desc">
-                💆 触摸屏幕控制飞机 · 💗 自动发射爱心 · 🌹 收集道具增强火力
+                🐟 触摸屏幕控制小鱼 · 💧 自动发射气泡 · ✨ 收集道具增强火力
             </div>
         </div>
         
@@ -377,103 +374,17 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 玩家飞机图片 - 使用外部URL
-        const PLAYER_IMG_URL = 'https://s1.chu0.com/prevfiles/da3fdafa112c4563b4560eba35e80462.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:fOHHkI4mdg1N9Gxo-emx8mEDwyk=';
+        // 不使用外部图片，全部使用矢量绘制鱼类
         
-        // 敌机图片 - 使用外部URL
-        const ENEMY_IMG_URL = 'https://s1.chu0.com/prevfiles/86bc6939ff784900b659c4549da98461.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:o6HansL2MPkfucvDTHIZNIGYiiU=';
-        const ENEMY_IMG_URL2 = 'https://s1.chu0.com/prevfiles/5663194c3f45446e98c9ab970c36e87c.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:Vy37_NPuil0_pkHKP-JxSorwUIw=';
-        const ENEMY_IMG_URL3 = 'https://s1.chu0.com/prevfiles/2eaf3d3676584e67acfb453fc4c15271.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:YJ_HseiOiW40M9biGQPKbikhR6Q=';
-        const ENEMY_IMG_URL4 = 'https://s1.chu0.com/prevfiles/2f2d3cbcebff42e7b87cf3121e18bfab.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:j5I9yS5nq2alsQz_o-V0XXFdtO4=';
-        const ENEMY_IMG_URL5 = 'https://s1.aigei.com/prevfiles/64df65323d724439b0ff24b8c32936a3.png?e=2051020800&token=P7S2Xpzfz11vAkASLTkfHN7Fw-oOZBecqeJaxypL:oegB9IG4TJ2UKBWQtyViBNhUzjA=';
-        const ENEMY_IMG_URL6 = 'https://s1.chu0.com/prevfiles/50de998ea9214e049f32c420f8bba82a.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:uquMekkeu51vRMEJze_Pvy1C8WA=';
-        const ENEMY_IMG_URL7 = 'https://s1.chu0.com/prevfiles/389af27805204fd8a2fd13d78a6bd749.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:7PXKv4RTGbOfUPiL9XalWGYlDAg=';
-        const ENEMY_IMG_URL8 = 'https://s1.chu0.com/prevfiles/a63d2704230345f195ae6201d87dde96.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:ttE-rbrt62auPVSmArTj4NiX_bE=';
-        const ENEMY_IMG_URL9 = 'https://s1.chu0.com/prevfiles/2f2d3cbcebff42e7b87cf3121e18bfab.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:j5I9yS5nq2alsQz_o-V0XXFdtO';
-        const ENEMY_IMG_URL10 = 'https://s1.chu0.com/prevfiles/b5e3c0520f10440fb35c022965cd0fbf.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:jTqeMLe6CIGAj5wA2vGCEdsJ5Zs=';
-        const ENEMY_IMG_URL11 = 'https://s1.chu0.com/prevfiles/6445a9e75e36414fb7b850c8d6d03fdc.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:cuZMH5XfEENPI5QqRTYngXdSSkE=';
-        
-        // 玩家飞机图片
-        const playerImg = new Image();
-        playerImg.crossOrigin = 'anonymous';
-        let playerImgReady = false;
-        playerImg.onload = () => { playerImgReady = true; };
-        playerImg.src = PLAYER_IMG_URL;
-        
-        // 敌机图片
-        const enemyImg = new Image();
-        enemyImg.crossOrigin = 'anonymous';
-        let enemyImgReady = false;
-        enemyImg.onload = () => { enemyImgReady = true; };
-        enemyImg.src = ENEMY_IMG_URL;
-        
-        const enemyImg2 = new Image();
-        enemyImg2.crossOrigin = 'anonymous';
-        let enemyImg2Ready = false;
-        enemyImg2.onload = () => { enemyImg2Ready = true; };
-        enemyImg2.src = ENEMY_IMG_URL2;
-        
-        const enemyImg3 = new Image();
-        enemyImg3.crossOrigin = 'anonymous';
-        let enemyImg3Ready = false;
-        enemyImg3.onload = () => { enemyImg3Ready = true; };
-        enemyImg3.src = ENEMY_IMG_URL3;
-        
-        const enemyImg4 = new Image();
-        enemyImg4.crossOrigin = 'anonymous';
-        let enemyImg4Ready = false;
-        enemyImg4.onload = () => { enemyImg4Ready = true; };
-        enemyImg4.src = ENEMY_IMG_URL4;
-        
-        const enemyImg5 = new Image();
-        enemyImg5.crossOrigin = 'anonymous';
-        let enemyImg5Ready = false;
-        enemyImg5.onload = () => { enemyImg5Ready = true; };
-        enemyImg5.src = ENEMY_IMG_URL5;
-        
-        const enemyImg6 = new Image();
-        enemyImg6.crossOrigin = 'anonymous';
-        let enemyImg6Ready = false;
-        enemyImg6.onload = () => { enemyImg6Ready = true; };
-        enemyImg6.src = ENEMY_IMG_URL6;
-        
-        const enemyImg7 = new Image();
-        enemyImg7.crossOrigin = 'anonymous';
-        let enemyImg7Ready = false;
-        enemyImg7.onload = () => { enemyImg7Ready = true; };
-        enemyImg7.src = ENEMY_IMG_URL7;
-        
-        const enemyImg8 = new Image();
-        enemyImg8.crossOrigin = 'anonymous';
-        let enemyImg8Ready = false;
-        enemyImg8.onload = () => { enemyImg8Ready = true; };
-        enemyImg8.src = ENEMY_IMG_URL8;
-        
-        const enemyImg9 = new Image();
-        enemyImg9.crossOrigin = 'anonymous';
-        let enemyImg9Ready = false;
-        enemyImg9.onload = () => { enemyImg9Ready = true; };
-        enemyImg9.src = ENEMY_IMG_URL9;
-        
-        const enemyImg10 = new Image();
-        enemyImg10.crossOrigin = 'anonymous';
-        let enemyImg10Ready = false;
-        enemyImg10.onload = () => { enemyImg10Ready = true; };
-        enemyImg10.src = ENEMY_IMG_URL10;
-        
-        const enemyImg11 = new Image();
-        enemyImg11.crossOrigin = 'anonymous';
-        let enemyImg11Ready = false;
-        enemyImg11.onload = () => { enemyImg11Ready = true; };
-        enemyImg11.src = ENEMY_IMG_URL11;
-        
-        // 聪仔机贴图
-        const DRONE_IMG_URL = 'https://s1.chu0.com/prevfiles/5773a582a4f04ee78cc76f08bd156564.png?e=2051020800&token=1srnZGLKZ0Aqlz6dk7yF4SkiYf4eP-YrEOdM1sob:1flCs3cfRHnYf450ofyY7uneUiI=';
-        const droneImg = new Image();
-        droneImg.crossOrigin = 'anonymous';
-        let droneImgReady = false;
-        droneImg.onload = () => { droneImgReady = true; };
-        droneImg.src = DRONE_IMG_URL;
+        // 加载背景图
+        let bgImage = new Image();
+        let bgImageReady = false;
+        if (typeof BG_IMAGE_BASE64 !== 'undefined') {
+            bgImage.onload = function() {
+                bgImageReady = true;
+            };
+            bgImage.src = BG_IMAGE_BASE64;
+        }
         
         // 游戏配置
         const CONFIG = {
@@ -489,10 +400,8 @@
             DRONE_DURATION: 600,        // 聪仔机持续10秒
             // === 道具掉落率 ===
             POWERUP_DROP_RATE: 0.20,    // 20%掉落几率
-            // === 聪仔机射速 ===
-            DRONE_FIRE_COOLDOWN: 14,    // 聪仔机开火间隔（帧）
-            // 图片敌机占比（0~1），其余使用矢量机型
-            SPRITE_ENEMY_RATIO: 0.6,
+            // === 小鱼射速 ===
+            DRONE_FIRE_COOLDOWN: 14,    // 小鱼开火间隔（帧）
             
             // === Boss出现节奏配置 ===
             // 关卡模式：至少击败多少敌人后才可出现Boss（基础+按关卡递增）
@@ -518,15 +427,17 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机首关射速系数（方案A）===
+        // === 敌机首关射速系数（降低基础值，让第一关更简单）===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.008,
-            tank: 0.010,
-            sniper: 0.012,
-            splitter: 0.008,
-            mini: 0.006,
-            normal: 0.010
+            fast: 0.001,
+            tank: 0.002,
+            sniper: 0.002,
+            splitter: 0.001,
+            mini: 0.001,
+            normal: 0.002
         };
+        // 敌机射速随关卡递增的最大倍率
+        const ENEMY_SHOOT_MAX_MULT = 10;
         
         // 设置canvas实际尺寸
         canvas.width = CONFIG.CANVAS_WIDTH;
@@ -565,16 +476,17 @@
         // 按键状态
         const keys = {};
 
-        // 初始化星星背景
+        // 初始化气泡背景（海底风格）
         function initStars() {
             stars = [];
             for (let i = 0; i < CONFIG.STAR_COUNT; i++) {
                 stars.push({
                     x: Math.random() * CONFIG.CANVAS_WIDTH,
                     y: Math.random() * CONFIG.CANVAS_HEIGHT,
-                    size: Math.random() * 2 + 0.5,
-                    speed: Math.random() * 2 + 1,
-                    brightness: Math.random()
+                    size: Math.random() * 4 + 2,
+                    speed: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random(),
+                    wobble: Math.random() * Math.PI * 2
                 });
             }
         }
@@ -634,6 +546,7 @@
         // 开始游戏
         function startGame(mode = 'endless') {
             document.getElementById('startScreen').classList.add('hidden');
+            stopHomepageAnimation(); // 停止首页动画
             initGame(mode);
             gameState.isRunning = true;
             
@@ -668,6 +581,7 @@
             document.getElementById('gameOverScreen').classList.add('hidden');
             document.getElementById('winScreen').classList.add('hidden');
             document.getElementById('startScreen').classList.remove('hidden');
+            initHomepageAnimation(); // 重新启动首页动画
         }
         
         // 显示关卡
@@ -692,6 +606,38 @@
             }
         }
         
+        // 获取关卡最高分
+        function getStageHighScore(stage) {
+            const scores = JSON.parse(localStorage.getItem('stageHighScores') || '{}');
+            return scores[stage] || 0;
+        }
+        
+        // 保存关卡分数（只保存更高分）
+        function saveStageScore(stage, score) {
+            const scores = JSON.parse(localStorage.getItem('stageHighScores') || '{}');
+            if (!scores[stage] || score > scores[stage]) {
+                scores[stage] = score;
+                localStorage.setItem('stageHighScores', JSON.stringify(scores));
+                return true; // 新纪录
+            }
+            return false;
+        }
+        
+        // 获取无尽模式最高分
+        function getEndlessHighScore() {
+            return parseInt(localStorage.getItem('endlessHighScore') || '0');
+        }
+        
+        // 保存无尽模式分数
+        function saveEndlessScore(score) {
+            const current = getEndlessHighScore();
+            if (score > current) {
+                localStorage.setItem('endlessHighScore', score.toString());
+                return true;
+            }
+            return false;
+        }
+        
         // 显示关卡选择界面
         function showStageSelect() {
             document.getElementById('startScreen').classList.add('hidden');
@@ -704,14 +650,25 @@
             for (let i = 1; i <= 20; i++) {
                 const btn = document.createElement('button');
                 const isUnlocked = i <= unlockedStage;
+                const highScore = getStageHighScore(i);
                 
-                btn.innerHTML = isUnlocked ? i : '🔒';
+                // 显示关卡号和最高分
+                if (isUnlocked) {
+                    btn.innerHTML = highScore > 0 
+                        ? `<div style="font-size:16px;line-height:1.1">${i}</div><div style="font-size:9px;color:#ffd700">${highScore}</div>` 
+                        : `<div style="font-size:20px">${i}</div>`;
+                } else {
+                    btn.innerHTML = '🔒';
+                }
+                
                 btn.style.cssText = `
-                    width: 52px; height: 52px; border-radius: 12px; border: 2px solid ${isUnlocked ? '#ffd700' : '#555'};
+                    width: 56px; height: 56px; border-radius: 12px; border: 2px solid ${isUnlocked ? '#ffd700' : '#555'};
                     background: ${isUnlocked ? 'linear-gradient(135deg, #ff69b4 0%, #ff1493 100%)' : 'linear-gradient(135deg, #444 0%, #333 100%)'};
-                    color: ${isUnlocked ? 'white' : '#666'}; font-size: ${isUnlocked ? '20px' : '16px'}; font-weight: bold;
+                    color: ${isUnlocked ? 'white' : '#666'}; font-weight: bold;
                     cursor: ${isUnlocked ? 'pointer' : 'not-allowed'}; transition: all 0.2s;
                     box-shadow: ${isUnlocked ? '0 4px 15px rgba(255,105,180,0.4)' : 'none'};
+                    display: flex; flex-direction: column; justify-content: center; align-items: center;
+                    padding: 2px;
                 `;
                 
                 if (isUnlocked) {
@@ -733,6 +690,7 @@
         // 开始指定关卡
         function startStage(stageNum) {
             document.getElementById('stageSelectScreen').classList.add('hidden');
+            stopHomepageAnimation(); // 停止首页动画
             initGame('stage');
             gameState.currentStage = stageNum;
             gameState.isRunning = true;
@@ -763,34 +721,39 @@
             }
         }
 
-        // 绘制星星背景（浪漫风格）
+        // 绘制气泡背景（海底风格）
         function drawStars() {
             stars.forEach(star => {
-                star.y += star.speed;
-                if (star.y > CONFIG.CANVAS_HEIGHT) {
-                    star.y = 0;
+                // 气泡向上漂浮
+                star.y -= star.speed;
+                star.wobble += 0.02;
+                star.x += Math.sin(star.wobble) * 0.3;
+                
+                if (star.y < -10) {
+                    star.y = CONFIG.CANVAS_HEIGHT + 10;
                     star.x = Math.random() * CONFIG.CANVAS_WIDTH;
                 }
                 
-                const alpha = 0.4 + star.brightness * 0.6;
-                // 混合多种浪漫色彩
-                const colorRand = star.brightness;
-                if (colorRand > 0.7) {
-                    ctx.fillStyle = `rgba(255, 182, 193, ${alpha})`; // 淡粉
-                } else if (colorRand > 0.4) {
-                    ctx.fillStyle = `rgba(255, 218, 233, ${alpha})`; // 樱花粉
-                } else if (colorRand > 0.2) {
-                    ctx.fillStyle = `rgba(230, 190, 255, ${alpha})`; // 淡紫
-                } else {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                }
+                const alpha = 0.2 + star.brightness * 0.3;
+                // 气泡效果
+                ctx.save();
                 ctx.beginPath();
                 ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 230, 255, ${alpha * 0.3})`;
                 ctx.fill();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // 气泡高光
+                ctx.beginPath();
+                ctx.arc(star.x - star.size * 0.3, star.y - star.size * 0.3, star.size * 0.25, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+                ctx.fill();
+                ctx.restore();
             });
         }
 
-        // 绘制玩家飞机（使用 self.png + 升级发光/缩放）
+        // 绘制玩家鱼（矢量绘制）
         function drawPlayer() {
             if (player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0) {
                 return;
@@ -808,47 +771,91 @@
             const style = (type !== 'none' && lvl >= 1) ? LEVEL_STYLES[Math.min(lvl, 3)] : LEVEL_STYLES[0];
             const sc = style.scale;
 
-            // 尾焰
-            player.trail.push({ x: player.x, y: player.y + 25 * sc, alpha: 1 });
-            if (player.trail.length > 10) player.trail.shift();
-            const flameColors = [
-                ['rgba(255,150,50,','rgba(255,100,0,'],
-                ['rgba(0,255,200,','rgba(0,180,150,'],
-                ['rgba(200,100,255,','rgba(150,50,200,'],
-                ['rgba(255,215,0,','rgba(255,140,0,']
-            ];
-            const fc = (type !== 'none' && lvl >= 1) ? flameColors[Math.min(lvl, 3)] : flameColors[0];
+            // 气泡尾迹
+            player.trail.push({ x: player.x, y: player.y + 20 * sc, alpha: 1 });
+            if (player.trail.length > 8) player.trail.shift();
             player.trail.forEach((t, i) => {
-                const gradient = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 15 * sc);
-                const alpha = (i / player.trail.length) * 0.5;
-                gradient.addColorStop(0, fc[0] + alpha + ')');
-                gradient.addColorStop(0.5, fc[1] + (alpha * 0.5) + ')');
-                gradient.addColorStop(1, 'rgba(255,50,0,0)');
-                ctx.fillStyle = gradient;
+                const alpha = (i / player.trail.length) * 0.4;
+                const size = 3 + (i / player.trail.length) * 5;
                 ctx.beginPath();
-                ctx.arc(t.x, t.y, 15 * sc, 0, Math.PI * 2);
+                ctx.arc(t.x + (Math.random() - 0.5) * 4, t.y, size * sc, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 230, 255, ${alpha})`;
                 ctx.fill();
             });
 
-            // 用图片绘制玩家
-            const baseW = 56, baseH = 56;
-            const drawW = baseW * sc;
-            const drawH = baseH * sc;
-            if (playerImgReady) {
-                ctx.drawImage(playerImg, player.x - drawW / 2, player.y - drawH / 2, drawW, drawH);
-            } else {
-                // 占位图形
-                ctx.save();
-                ctx.translate(player.x, player.y);
-                ctx.fillStyle = '#4a90d9';
-                ctx.beginPath();
-                ctx.moveTo(0, -25 * sc);
-                ctx.lineTo(-15 * sc, 20 * sc);
-                ctx.lineTo(15 * sc, 20 * sc);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            }
+            // 绘制玩家鱼
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // 鱼身主体（粉色小鱼）
+            const bodyGrad = ctx.createLinearGradient(0, -20 * sc, 0, 20 * sc);
+            bodyGrad.addColorStop(0, '#ff9ecf');
+            bodyGrad.addColorStop(0.5, '#ff69b4');
+            bodyGrad.addColorStop(1, '#ff1493');
+            ctx.fillStyle = bodyGrad;
+            
+            // 鱼身椭圆
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 18 * sc, 25 * sc, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 鱼尾
+            ctx.fillStyle = '#ff69b4';
+            ctx.beginPath();
+            ctx.moveTo(0, 20 * sc);
+            ctx.lineTo(-12 * sc, 35 * sc);
+            ctx.lineTo(0, 28 * sc);
+            ctx.lineTo(12 * sc, 35 * sc);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 背鳕
+            ctx.fillStyle = '#ff69b4';
+            ctx.beginPath();
+            ctx.moveTo(0, -22 * sc);
+            ctx.lineTo(-8 * sc, -30 * sc);
+            ctx.lineTo(8 * sc, -30 * sc);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 侧鳕
+            ctx.beginPath();
+            ctx.moveTo(-16 * sc, 0);
+            ctx.lineTo(-28 * sc, 8 * sc);
+            ctx.lineTo(-16 * sc, 6 * sc);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(16 * sc, 0);
+            ctx.lineTo(28 * sc, 8 * sc);
+            ctx.lineTo(16 * sc, 6 * sc);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 白色条纹
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.ellipse(0, -3 * sc, 10 * sc, 5 * sc, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 眼睛
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-7 * sc, -10 * sc, 6 * sc, 0, Math.PI * 2);
+            ctx.arc(7 * sc, -10 * sc, 6 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(-7 * sc, -10 * sc, 3 * sc, 0, Math.PI * 2);
+            ctx.arc(7 * sc, -10 * sc, 3 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-6 * sc, -11 * sc, 1.5 * sc, 0, Math.PI * 2);
+            ctx.arc(8 * sc, -11 * sc, 1.5 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
 
             // 升级发光轮廓
             if (style.glow) {
@@ -858,25 +865,25 @@
                 ctx.strokeStyle = style.glow;
                 ctx.lineWidth = 2 + lvl * 0.5;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, Math.max(drawW, drawH) / 2 + 2, 0, Math.PI * 2);
+                ctx.arc(player.x, player.y, 32 * sc, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
             }
 
-            // 无敌护盾
+            // 无敌护盾（气泡盾）
             if (gameState.isInvincible) {
                 ctx.save();
                 const shieldGlow = ctx.createRadialGradient(player.x, player.y, 25, player.x, player.y, 45);
-                shieldGlow.addColorStop(0, 'rgba(255, 215, 0, 0)');
-                shieldGlow.addColorStop(0.5, 'rgba(255, 215, 0, 0.3)');
-                shieldGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+                shieldGlow.addColorStop(0, 'rgba(100, 200, 255, 0)');
+                shieldGlow.addColorStop(0.5, 'rgba(100, 200, 255, 0.3)');
+                shieldGlow.addColorStop(1, 'rgba(100, 200, 255, 0)');
                 ctx.fillStyle = shieldGlow;
                 ctx.beginPath();
                 ctx.arc(player.x, player.y, 45, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = '#ffd700';
+                ctx.strokeStyle = '#64c8ff';
                 ctx.lineWidth = 2;
-                ctx.shadowColor = '#ffd700';
+                ctx.shadowColor = '#64c8ff';
                 ctx.shadowBlur = 15;
                 ctx.beginPath();
                 ctx.arc(player.x, player.y, 38, 0, Math.PI * 2);
@@ -885,7 +892,7 @@
             }
         }
 
-        // 绘制子弹（爱心形状）
+        // 绘制子弹（水泡形状）
         function drawBullets() {
             bullets.forEach(bullet => {
                 ctx.save();
@@ -893,43 +900,44 @@
                 
                 if (bullet.type === 'player') {
                     if (bullet.isLaser) {
-                        // 激光束
+                        // 水柱攻击
                         const w = bullet.laserWidth || 8;
                         const grad = ctx.createLinearGradient(0, -30, 0, 10);
-                        grad.addColorStop(0, 'rgba(255,255,255,0.9)');
-                        grad.addColorStop(1, 'rgba(255,105,180,0.9)');
+                        grad.addColorStop(0, 'rgba(100,200,255,0.9)');
+                        grad.addColorStop(1, 'rgba(50,150,255,0.7)');
                         ctx.fillStyle = grad;
                         ctx.fillRect(-w/2, -30, w, 30);
                     } else {
-                        // 爱心子弹
-                        ctx.shadowColor = '#ff69b4';
-                        ctx.shadowBlur = 10;
-                        ctx.fillStyle = '#ff69b4';
-                        ctx.font = '18px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('❤', 0, 0);
+                        // 水泡子弹
+                        const r = 8;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, r, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(100, 200, 255, 0.6)';
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(200, 240, 255, 0.9)';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        // 高光
+                        ctx.beginPath();
+                        ctx.arc(-2, -2, r * 0.3, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fill();
                     }
                 } else {
-                    // 敌人子弹 - 橙黄发光（更醒目）
+                    // 敌人子弹 - 红色水泡
                     const r = 6;
-                    // 外部柔光
-                    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
-                    glow.addColorStop(0.0, 'rgba(255, 244, 189, 0.95)');
-                    glow.addColorStop(0.35, 'rgba(255, 200, 60, 0.85)');
-                    glow.addColorStop(0.7, 'rgba(255, 120, 0, 0.55)');
-                    glow.addColorStop(1.0, 'rgba(255, 60, 0, 0)');
-                    ctx.fillStyle = glow;
-                    ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, Math.PI * 2); ctx.fill();
-
-                    // 环形亮边
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = '#ff8a00';
-                    ctx.beginPath(); ctx.arc(0, 0, r * 0.95, 0, Math.PI * 2); ctx.stroke();
-
-                    // 中心亮点
-                    ctx.fillStyle = '#fff2a8';
-                    ctx.beginPath(); ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 100, 100, 0.7)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255, 150, 150, 0.9)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // 高光
+                    ctx.beginPath();
+                    ctx.arc(-1.5, -1.5, r * 0.25, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.fill();
                 }
                 
                 ctx.shadowBlur = 0;
@@ -937,7 +945,7 @@
             });
         }
 
-        // 绘制聪仔机
+        // 绘制小鱼助手
         function drawDrones() {
             if (!gameState.droneActive || !drones.length) return;
             drones.forEach(d => {
@@ -945,686 +953,247 @@
                 const y = player.y + d.offsetY;
                 ctx.save();
                 
-                // 贴图优先
-                if (droneImgReady) {
-                    const size = 40; // 聪仔机尺寸
-                    // 轻微漂浮动画
-                    d.t = (d.t || 0) + 0.08;
-                    const floatY = Math.sin(d.t) * 2;
-                    ctx.translate(x, y + floatY);
-                    ctx.drawImage(droneImg, -size/2, -size/2, size, size);
-                    
-                    // 柔和光晕
-                    ctx.globalCompositeOperation = 'lighter';
-                    const glow = ctx.createRadialGradient(x, y + floatY, 0, x, y + floatY, 28);
-                    glow.addColorStop(0, 'rgba(0,229,255,0.35)');
-                    glow.addColorStop(1, 'rgba(0,229,255,0)');
-                    ctx.fillStyle = glow;
-                    ctx.beginPath(); ctx.arc(x, y + floatY, 28, 0, Math.PI*2); ctx.fill();
-                    ctx.globalCompositeOperation = 'source-over';
-                } else {
-                    // 矢量占位
-                    ctx.translate(x, y);
-                    const g = ctx.createLinearGradient(0, -12, 0, 12);
-                    g.addColorStop(0, '#00e5ff');
-                    g.addColorStop(1, '#0088ff');
-                    ctx.fillStyle = g;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -12);
-                    ctx.lineTo(-10, 8);
-                    ctx.lineTo(0, 12);
-                    ctx.lineTo(10, 8);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = 'rgba(255,105,180,0.9)';
-                    ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-18, 6); ctx.lineTo(-10, 6); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(18, 6); ctx.lineTo(10, 6); ctx.closePath(); ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
-                }
+                // 小鱼助手（矢量绘制）
+                d.t = (d.t || 0) + 0.1;
+                const floatY = Math.sin(d.t) * 3;
+                ctx.translate(x, y + floatY);
+                
+                const sc = 0.7;
+                // 鱼身（蓝色小鱼）
+                const bodyGrad = ctx.createLinearGradient(0, -15 * sc, 0, 15 * sc);
+                bodyGrad.addColorStop(0, '#4fc3f7');
+                bodyGrad.addColorStop(0.5, '#03a9f4');
+                bodyGrad.addColorStop(1, '#0288d1');
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 14 * sc, 20 * sc, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 鱼尾
+                ctx.beginPath();
+                ctx.moveTo(0, 16 * sc);
+                ctx.lineTo(-9 * sc, 26 * sc);
+                ctx.lineTo(0, 20 * sc);
+                ctx.lineTo(9 * sc, 26 * sc);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 背鳕
+                ctx.beginPath();
+                ctx.moveTo(0, -18 * sc);
+                ctx.lineTo(-6 * sc, -24 * sc);
+                ctx.lineTo(6 * sc, -24 * sc);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 侧鳕
+                ctx.beginPath();
+                ctx.moveTo(-12 * sc, 0);
+                ctx.lineTo(-20 * sc, 5 * sc);
+                ctx.lineTo(-12 * sc, 3 * sc);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(12 * sc, 0);
+                ctx.lineTo(20 * sc, 5 * sc);
+                ctx.lineTo(12 * sc, 3 * sc);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 眼睛
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(-5 * sc, -7 * sc, 4 * sc, 0, Math.PI * 2);
+                ctx.arc(5 * sc, -7 * sc, 4 * sc, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#222';
+                ctx.beginPath();
+                ctx.arc(-5 * sc, -7 * sc, 2 * sc, 0, Math.PI * 2);
+                ctx.arc(5 * sc, -7 * sc, 2 * sc, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // “聪仔”文字
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${8 * sc}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('聪仔', 0, 3 * sc);
+                
                 ctx.restore();
             });
         }
 
-        // 造型绘制工具与绘制函数
-        function enemyGradient(s, colors, hitFlash) {
-            const g = ctx.createLinearGradient(0, -25 * s, 0, 25 * s);
-            if (hitFlash && hitFlash > 0) {
-                g.addColorStop(0, '#ffffff');
-                g.addColorStop(0.5, '#ffeeee');
-                g.addColorStop(1, '#ffffff');
-            } else {
-                g.addColorStop(0, colors[0]);
-                g.addColorStop(0.5, colors[1]);
-                g.addColorStop(1, colors[2]);
-            }
-            return g;
-        }
-
+        // 绘制敌人鱼（矢量绘制）
         function drawEnemySmall(enemy) {
             const s = Math.max(0.9, (enemy.width || 40) / 40);
             const colors = enemy.colors || ['#70a1ff', '#1e90ff', '#3742fa'];
-            ctx.shadowColor = colors[0];
-            ctx.shadowBlur = 12;
-
-            const modelByType = {
-                normal: 'fighter',
-                fast: 'interceptor',
-                tank: 'bomber',
-                sniper: 'sniperJet',
-                splitter: 'splitterJet',
-                mini: 'droneJet'
-            };
-            const model = enemy.shape || modelByType[enemy.type] || 'fighter';
             const isHit = enemy.hitFlash && enemy.hitFlash > 0;
             
-            // 贴图池（就绪的贴图会被加入池中）
-            const spritePool = [];
-            if (enemyImgReady) spritePool.push(enemyImg);
-            if (enemyImg2Ready) spritePool.push(enemyImg2);
-            if (enemyImg3Ready) spritePool.push(enemyImg3);
-            if (enemyImg4Ready) spritePool.push(enemyImg4);
-            if (enemyImg5Ready) spritePool.push(enemyImg5);
-            if (enemyImg6Ready) spritePool.push(enemyImg6);
-            if (enemyImg7Ready) spritePool.push(enemyImg7);
-            if (enemyImg8Ready) spritePool.push(enemyImg8);
-            if (enemyImg9Ready) spritePool.push(enemyImg9);
-            if (enemyImg10Ready) spritePool.push(enemyImg10);
-            if (enemyImg11Ready) spritePool.push(enemyImg11);
+            ctx.shadowColor = colors[0];
+            ctx.shadowBlur = 8;
             
-            // 随机从贴图池选择（首次绘制时确定并缓存）
-            if (spritePool.length > 0) {
-                if (enemy.useSprite === undefined) {
-                    enemy.useSprite = Math.random() < CONFIG.SPRITE_ENEMY_RATIO;
-                }
-                if (enemy.useSprite) {
-                    if (enemy.spriteIdx === undefined) {
-                        // 使用当前位置与随机数混合，确保同一敌机固定贴图
-                        enemy.spriteIdx = Math.floor((Math.random() * 997 + enemy.x + enemy.y)) % spritePool.length;
-                    }
-                    const img = spritePool[enemy.spriteIdx % spritePool.length];
-                    const imgSize = (enemy.width || 40) * 1.2;
-                    // URL图片本身已朝下，需要逆旋转抵消外部的180度旋转
-                    ctx.rotate(Math.PI);
-                    if (isHit) {
-                        ctx.globalAlpha = 0.5;
-                        ctx.fillStyle = '#fff';
-                        ctx.beginPath();
-                        ctx.arc(0, 0, imgSize / 2, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.globalAlpha = 1;
-                    }
-                    ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
-                    ctx.shadowBlur = 0;
-                    return;
-                }
-            }
-            
-            // 机身主色
-            const bodyGrad = ctx.createLinearGradient(0, -28 * s, 0, 28 * s);
+            // 鱼身主色
+            const bodyGrad = ctx.createLinearGradient(0, -20 * s, 0, 20 * s);
             if (isHit) {
                 bodyGrad.addColorStop(0, '#ffffff');
                 bodyGrad.addColorStop(0.5, '#ffdddd');
                 bodyGrad.addColorStop(1, '#ffffff');
             } else {
                 bodyGrad.addColorStop(0, colors[0]);
-                bodyGrad.addColorStop(0.4, colors[1]);
+                bodyGrad.addColorStop(0.5, colors[1]);
                 bodyGrad.addColorStop(1, colors[2]);
             }
             
-            // 机翼颜色（稍深）
-            const wingColor = isHit ? '#ffcccc' : colors[2];
-            // 座舱颜色
-            const cockpitGrad = ctx.createRadialGradient(0, -8*s, 0, 0, -8*s, 8*s);
-            cockpitGrad.addColorStop(0, '#ffffff');
-            cockpitGrad.addColorStop(0.5, '#aaddff');
-            cockpitGrad.addColorStop(1, '#4488cc');
-
-            switch (model) {
-                case 'fighter': // F-16风格战斗机
-                    // 机身（带弧线）
-                    ctx.fillStyle = bodyGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -26 * s); // 机头尖端
-                    ctx.quadraticCurveTo(-4 * s, -20 * s, -6 * s, -8 * s); // 左侧弧线
-                    ctx.lineTo(-8 * s, 10 * s); // 左侧机身
-                    ctx.lineTo(-4 * s, 18 * s); // 左尾部
-                    ctx.lineTo(0, 20 * s); // 尾部中心
-                    ctx.lineTo(4 * s, 18 * s); // 右尾部
-                    ctx.lineTo(8 * s, 10 * s); // 右侧机身
-                    ctx.quadraticCurveTo(4 * s, -20 * s, 0, -26 * s); // 右侧弧线
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-                    // 主机翼（后掠翼）
-                    ctx.fillStyle = wingColor;
-                    ctx.beginPath();
-                    ctx.moveTo(-6 * s, 2 * s);
-                    ctx.lineTo(-28 * s, 14 * s);
-                    ctx.lineTo(-26 * s, 18 * s);
-                    ctx.lineTo(-8 * s, 12 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(6 * s, 2 * s);
-                    ctx.lineTo(28 * s, 14 * s);
-                    ctx.lineTo(26 * s, 18 * s);
-                    ctx.lineTo(8 * s, 12 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 尾翼
-                    ctx.fillStyle = colors[1];
-                    ctx.beginPath();
-                    ctx.moveTo(-3 * s, 14 * s);
-                    ctx.lineTo(-10 * s, 22 * s);
-                    ctx.lineTo(-4 * s, 20 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(3 * s, 14 * s);
-                    ctx.lineTo(10 * s, 22 * s);
-                    ctx.lineTo(4 * s, 20 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 座舱
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -10 * s, 3.5 * s, 8 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    // 进气口
-                    ctx.fillStyle = '#333';
-                    ctx.beginPath();
-                    ctx.ellipse(-5 * s, 6 * s, 2 * s, 4 * s, 0.2, 0, Math.PI * 2);
-                    ctx.ellipse(5 * s, 6 * s, 2 * s, 4 * s, -0.2, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                case 'interceptor': // 高速截击机（类SR-71）
-                    ctx.fillStyle = bodyGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -30 * s); // 尖锐机头
-                    ctx.quadraticCurveTo(-3 * s, -22 * s, -5 * s, -10 * s);
-                    ctx.lineTo(-6 * s, 12 * s);
-                    ctx.lineTo(-3 * s, 18 * s);
-                    ctx.lineTo(0, 16 * s);
-                    ctx.lineTo(3 * s, 18 * s);
-                    ctx.lineTo(6 * s, 12 * s);
-                    ctx.quadraticCurveTo(3 * s, -22 * s, 0, -30 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    // 三角后掠翼
-                    ctx.fillStyle = wingColor;
-                    ctx.beginPath();
-                    ctx.moveTo(-5 * s, -4 * s);
-                    ctx.lineTo(-26 * s, 10 * s);
-                    ctx.lineTo(-22 * s, 14 * s);
-                    ctx.lineTo(-6 * s, 8 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(5 * s, -4 * s);
-                    ctx.lineTo(26 * s, 10 * s);
-                    ctx.lineTo(22 * s, 14 * s);
-                    ctx.lineTo(6 * s, 8 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 双垂尾
-                    ctx.fillStyle = colors[1];
-                    ctx.beginPath();
-                    ctx.moveTo(-4 * s, 10 * s);
-                    ctx.lineTo(-6 * s, 20 * s);
-                    ctx.lineTo(-2 * s, 16 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(4 * s, 10 * s);
-                    ctx.lineTo(6 * s, 20 * s);
-                    ctx.lineTo(2 * s, 16 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 座舱
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -14 * s, 2.5 * s, 6 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    // 发动机火焰
-                    ctx.fillStyle = '#ff6600';
-                    ctx.beginPath();
-                    ctx.moveTo(-3 * s, 18 * s);
-                    ctx.lineTo(0, 26 * s);
-                    ctx.lineTo(3 * s, 18 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    break;
-
-                case 'bomber': // 重型轰炸机（类B-2）
-                    ctx.fillStyle = bodyGrad;
-                    // 飞翼形机身
-                    ctx.beginPath();
-                    ctx.moveTo(0, -20 * s);
-                    ctx.lineTo(-10 * s, -12 * s);
-                    ctx.lineTo(-32 * s, 8 * s);
-                    ctx.lineTo(-28 * s, 14 * s);
-                    ctx.lineTo(-8 * s, 10 * s);
-                    ctx.lineTo(-6 * s, 18 * s);
-                    ctx.lineTo(0, 16 * s);
-                    ctx.lineTo(6 * s, 18 * s);
-                    ctx.lineTo(8 * s, 10 * s);
-                    ctx.lineTo(28 * s, 14 * s);
-                    ctx.lineTo(32 * s, 8 * s);
-                    ctx.lineTo(10 * s, -12 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    // 机身中线
-                    ctx.strokeStyle = colors[2];
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -18 * s);
-                    ctx.lineTo(0, 14 * s);
-                    ctx.stroke();
-                    // 座舱
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -8 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    // 发动机（两侧）
-                    ctx.fillStyle = '#222';
-                    ctx.beginPath();
-                    ctx.ellipse(-14 * s, 6 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
-                    ctx.ellipse(14 * s, 6 * s, 3 * s, 5 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                case 'sniperJet': // 狙击机（细长精准）
-                    ctx.fillStyle = bodyGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -32 * s); // 超长机头
-                    ctx.quadraticCurveTo(-2 * s, -26 * s, -4 * s, -14 * s);
-                    ctx.lineTo(-5 * s, 10 * s);
-                    ctx.lineTo(-3 * s, 16 * s);
-                    ctx.lineTo(0, 14 * s);
-                    ctx.lineTo(3 * s, 16 * s);
-                    ctx.lineTo(5 * s, 10 * s);
-                    ctx.quadraticCurveTo(2 * s, -26 * s, 0, -32 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    // 短小翼
-                    ctx.fillStyle = wingColor;
-                    ctx.beginPath();
-                    ctx.moveTo(-4 * s, 0);
-                    ctx.lineTo(-20 * s, 6 * s);
-                    ctx.lineTo(-18 * s, 10 * s);
-                    ctx.lineTo(-5 * s, 6 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(4 * s, 0);
-                    ctx.lineTo(20 * s, 6 * s);
-                    ctx.lineTo(18 * s, 10 * s);
-                    ctx.lineTo(5 * s, 6 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 座舱（长条形）
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -16 * s, 2 * s, 8 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    // 瞄准镜
-                    ctx.fillStyle = '#ff0000';
-                    ctx.beginPath();
-                    ctx.arc(0, -28 * s, 1.5 * s, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                case 'splitterJet': // 分裂机（前掠翼）
-                    ctx.fillStyle = bodyGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -24 * s);
-                    ctx.quadraticCurveTo(-4 * s, -16 * s, -6 * s, -4 * s);
-                    ctx.lineTo(-7 * s, 12 * s);
-                    ctx.lineTo(-4 * s, 18 * s);
-                    ctx.lineTo(0, 16 * s);
-                    ctx.lineTo(4 * s, 18 * s);
-                    ctx.lineTo(7 * s, 12 * s);
-                    ctx.quadraticCurveTo(4 * s, -16 * s, 0, -24 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    // 前掠翼（向前延伸）
-                    ctx.fillStyle = wingColor;
-                    ctx.beginPath();
-                    ctx.moveTo(-5 * s, -6 * s);
-                    ctx.lineTo(-24 * s, -12 * s);
-                    ctx.lineTo(-22 * s, -6 * s);
-                    ctx.lineTo(-6 * s, 2 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(5 * s, -6 * s);
-                    ctx.lineTo(24 * s, -12 * s);
-                    ctx.lineTo(22 * s, -6 * s);
-                    ctx.lineTo(6 * s, 2 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 小翼（后部）
-                    ctx.beginPath();
-                    ctx.moveTo(-6 * s, 8 * s);
-                    ctx.lineTo(-14 * s, 14 * s);
-                    ctx.lineTo(-7 * s, 14 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(6 * s, 8 * s);
-                    ctx.lineTo(14 * s, 14 * s);
-                    ctx.lineTo(7 * s, 14 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 座舱
-                    ctx.fillStyle = cockpitGrad;
-                    ctx.beginPath();
-                    ctx.ellipse(0, -10 * s, 3 * s, 6 * s, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                case 'droneJet': // 无人侦察机
-                default:
-                    ctx.fillStyle = bodyGrad;
-                    ctx.beginPath();
-                    ctx.moveTo(0, -18 * s);
-                    ctx.quadraticCurveTo(-3 * s, -12 * s, -5 * s, -2 * s);
-                    ctx.lineTo(-6 * s, 10 * s);
-                    ctx.lineTo(-3 * s, 14 * s);
-                    ctx.lineTo(0, 12 * s);
-                    ctx.lineTo(3 * s, 14 * s);
-                    ctx.lineTo(6 * s, 10 * s);
-                    ctx.quadraticCurveTo(3 * s, -12 * s, 0, -18 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    // 小翼
-                    ctx.fillStyle = wingColor;
-                    ctx.beginPath();
-                    ctx.moveTo(-5 * s, 2 * s);
-                    ctx.lineTo(-16 * s, 8 * s);
-                    ctx.lineTo(-14 * s, 12 * s);
-                    ctx.lineTo(-6 * s, 8 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.beginPath();
-                    ctx.moveTo(5 * s, 2 * s);
-                    ctx.lineTo(16 * s, 8 * s);
-                    ctx.lineTo(14 * s, 12 * s);
-                    ctx.lineTo(6 * s, 8 * s);
-                    ctx.closePath();
-                    ctx.fill();
-                    // 摄像头/传感器
-                    ctx.fillStyle = '#333';
-                    ctx.beginPath();
-                    ctx.arc(0, -12 * s, 2.5 * s, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#00ff00';
-                    ctx.beginPath();
-                    ctx.arc(0, -12 * s, 1.5 * s, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-            }
+            // 绘制鱼身
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 14 * s, 20 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 鱼尾
+            ctx.beginPath();
+            ctx.moveTo(0, 16 * s);
+            ctx.lineTo(-10 * s, 28 * s);
+            ctx.lineTo(0, 22 * s);
+            ctx.lineTo(10 * s, 28 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 背鳕
+            ctx.beginPath();
+            ctx.moveTo(0, -18 * s);
+            ctx.lineTo(-6 * s, -26 * s);
+            ctx.lineTo(6 * s, -26 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 侧鳕
+            ctx.beginPath();
+            ctx.moveTo(-12 * s, 0);
+            ctx.lineTo(-22 * s, 6 * s);
+            ctx.lineTo(-12 * s, 4 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(12 * s, 0);
+            ctx.lineTo(22 * s, 6 * s);
+            ctx.lineTo(12 * s, 4 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 眼睛
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-5 * s, -8 * s, 4 * s, 0, Math.PI * 2);
+            ctx.arc(5 * s, -8 * s, 4 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(-5 * s, -8 * s, 2 * s, 0, Math.PI * 2);
+            ctx.arc(5 * s, -8 * s, 2 * s, 0, Math.PI * 2);
+            ctx.fill();
+            
             ctx.shadowBlur = 0;
         }
 
-        // 绘制BOSS（大型飞机）
+        // 绘制BOSS（大型鱼类）
         function drawBossLarge(enemy) {
-            const cfg = enemy.bossConfig || { shape: 'fortress', colors: ['#ff4757', '#c0392b', '#8e0000'] };
+            const cfg = enemy.bossConfig || { shape: 'shark', colors: ['#ff4757', '#c0392b', '#8e0000'] };
             const colors = cfg.colors || enemy.colors || ['#ff4757', '#c0392b', '#8e0000'];
-            const s = (enemy.width || 100) / 80; // 缩放系数
-            ctx.fillStyle = enemyGradient(s, colors, enemy.hitFlash);
-            ctx.shadowColor = colors[0];
-            ctx.shadowBlur = 20;
-
-            const shape = cfg.shape;
-            // 将所有Boss形状映射为“飞机模型”
-            const planeByShape = {
-                heart: 'aceFighter', cupid: 'aceFighter',
-                crescent: 'stealthWing',
-                butterfly: 'interceptorX', bird: 'interceptorX', thunder: 'interceptorX', blade: 'interceptorX',
-                dragon: 'heavyFighter', phoenix: 'heavyFighter', angel: 'heavyFighter', vampire: 'heavyFighter', demon: 'heavyFighter',
-                crystal: 'bomberX', witch: 'bomberX',
-                octopus: 'gunship', giant: 'gunship', eye: 'gunship',
-                sakura: 'stealthWing', rose: 'stealthWing', chaos: 'stealthWing'
-            };
-            const model = planeByShape[shape] || 'aceFighter';
-
-            // 统一飞机绘制（大尺寸）
-            function drawPlane(model) {
-                const bs = Math.max(2.2, s); // Boss缩放
-                // 机身渐变随受击变亮
-                ctx.fillStyle = enemyGradient(bs, colors, enemy.hitFlash);
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                ctx.lineWidth = 2;
-
-                // 座舱渐变
-                const cockpit = ctx.createRadialGradient(0, -12*bs, 0, 0, -12*bs, 14*bs);
-                cockpit.addColorStop(0, '#ffffff');
-                cockpit.addColorStop(0.5, '#aaddff');
-                cockpit.addColorStop(1, '#4488cc');
-
-                switch (model) {
-                    case 'stealthWing': // B-2 类飞翼
-                        ctx.beginPath();
-                        ctx.moveTo(0, -28*bs);
-                        ctx.lineTo(-18*bs, -14*bs);
-                        ctx.lineTo(-72*bs, 12*bs);
-                        ctx.lineTo(-64*bs, 24*bs);
-                        ctx.lineTo(-20*bs, 18*bs);
-                        ctx.lineTo(-10*bs, 30*bs);
-                        ctx.lineTo(10*bs, 30*bs);
-                        ctx.lineTo(20*bs, 18*bs);
-                        ctx.lineTo(64*bs, 24*bs);
-                        ctx.lineTo(72*bs, 12*bs);
-                        ctx.lineTo(18*bs, -14*bs);
-                        ctx.closePath();
-                        ctx.fill(); ctx.stroke();
-                        // 座舱
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -6*bs, 10*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        // 发动机/进气口
-                        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.ellipse(-24*bs, 6*bs, 6*bs, 8*bs, 0, 0, Math.PI*2); ctx.ellipse(24*bs, 6*bs, 6*bs, 8*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                    case 'heavyFighter': // 大型战斗机，双垂尾
-                        ctx.beginPath();
-                        ctx.moveTo(0, -42*bs);
-                        ctx.quadraticCurveTo(-10*bs, -26*bs, -12*bs, -8*bs);
-                        ctx.lineTo(-14*bs, 24*bs);
-                        ctx.lineTo(-6*bs, 34*bs);
-                        ctx.lineTo(0, 30*bs);
-                        ctx.lineTo(6*bs, 34*bs);
-                        ctx.lineTo(14*bs, 24*bs);
-                        ctx.quadraticCurveTo(10*bs, -26*bs, 0, -42*bs);
-                        ctx.closePath();
-                        ctx.fill(); ctx.stroke();
-                        // 大后掠翼
-                        ctx.beginPath(); ctx.moveTo(-10*bs, 0); ctx.lineTo(-68*bs, 26*bs); ctx.lineTo(-40*bs, 34*bs); ctx.lineTo(-14*bs, 18*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(10*bs, 0); ctx.lineTo(68*bs, 26*bs); ctx.lineTo(40*bs, 34*bs); ctx.lineTo(14*bs, 18*bs); ctx.closePath(); ctx.fill();
-                        // 双垂尾
-                        ctx.beginPath(); ctx.moveTo(-8*bs, 16*bs); ctx.lineTo(-18*bs, 40*bs); ctx.lineTo(-4*bs, 30*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(8*bs, 16*bs); ctx.lineTo(18*bs, 40*bs); ctx.lineTo(4*bs, 30*bs); ctx.closePath(); ctx.fill();
-                        // 座舱
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -18*bs, 8*bs, 14*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                    case 'interceptorX': // 细长高速截击机
-                        ctx.beginPath();
-                        ctx.moveTo(0, -48*bs);
-                        ctx.quadraticCurveTo(-8*bs, -30*bs, -10*bs, -10*bs);
-                        ctx.lineTo(-8*bs, 26*bs);
-                        ctx.lineTo(0, 22*bs);
-                        ctx.lineTo(8*bs, 26*bs);
-                        ctx.lineTo(10*bs, -10*bs);
-                        ctx.quadraticCurveTo(8*bs, -30*bs, 0, -48*bs);
-                        ctx.closePath();
-                        ctx.fill(); ctx.stroke();
-                        // 三角翼
-                        ctx.beginPath(); ctx.moveTo(-8*bs, -6*bs); ctx.lineTo(-56*bs, 12*bs); ctx.lineTo(-20*bs, 24*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(8*bs, -6*bs); ctx.lineTo(56*bs, 12*bs); ctx.lineTo(20*bs, 24*bs); ctx.closePath(); ctx.fill();
-                        // 座舱
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -24*bs, 7*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                    case 'bomberX': // 重型轰炸机
-                        ctx.beginPath(); ctx.moveTo(-18*bs, -28*bs); ctx.lineTo(18*bs, -28*bs); ctx.lineTo(24*bs, 30*bs); ctx.lineTo(-24*bs, 30*bs); ctx.closePath(); ctx.fill(); ctx.stroke();
-                        // 大展弦比机翼
-                        ctx.beginPath(); ctx.moveTo(-90*bs, 6*bs); ctx.lineTo(-24*bs, 14*bs); ctx.lineTo(-24*bs, 22*bs); ctx.lineTo(-90*bs, 12*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(90*bs, 6*bs); ctx.lineTo(24*bs, 14*bs); ctx.lineTo(24*bs, 22*bs); ctx.lineTo(90*bs, 12*bs); ctx.closePath(); ctx.fill();
-                        // 座舱 + 发动机
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -10*bs, 8*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.ellipse(-12*bs, 8*bs, 6*bs, 10*bs, 0, 0, Math.PI*2); ctx.ellipse(12*bs, 8*bs, 6*bs, 10*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                    case 'gunship': // 武装炮艇
-                        ctx.beginPath();
-                        ctx.moveTo(-20*bs, -34*bs); ctx.lineTo(20*bs, -34*bs); ctx.lineTo(30*bs, 28*bs); ctx.lineTo(-30*bs, 28*bs); ctx.closePath();
-                        ctx.fill(); ctx.stroke();
-                        // 侧舷炮/舱段
-                        ctx.fillStyle = colors[1];
-                        ctx.beginPath(); ctx.ellipse(-36*bs, 6*bs, 10*bs, 14*bs, 0, 0, Math.PI*2); ctx.ellipse(36*bs, 6*bs, 10*bs, 14*bs, 0, 0, Math.PI*2); ctx.fill();
-                        // 机翼
-                        ctx.fillStyle = enemyGradient(bs, colors, enemy.hitFlash);
-                        ctx.beginPath(); ctx.moveTo(-14*bs, -4*bs); ctx.lineTo(-80*bs, 18*bs); ctx.lineTo(-40*bs, 28*bs); ctx.lineTo(-16*bs, 12*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(14*bs, -4*bs); ctx.lineTo(80*bs, 18*bs); ctx.lineTo(40*bs, 28*bs); ctx.lineTo(16*bs, 12*bs); ctx.closePath(); ctx.fill();
-                        // 座舱
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -8*bs, 9*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                    case 'aceFighter':
-                    default:
-                        ctx.beginPath();
-                        ctx.moveTo(0, -40*bs);
-                        ctx.quadraticCurveTo(-8*bs, -26*bs, -10*bs, -6*bs);
-                        ctx.lineTo(-12*bs, 26*bs);
-                        ctx.lineTo(-6*bs, 34*bs);
-                        ctx.lineTo(0, 30*bs);
-                        ctx.lineTo(6*bs, 34*bs);
-                        ctx.lineTo(12*bs, 26*bs);
-                        ctx.quadraticCurveTo(8*bs, -26*bs, 0, -40*bs);
-                        ctx.closePath();
-                        ctx.fill(); ctx.stroke();
-                        // 后掠翼
-                        ctx.beginPath(); ctx.moveTo(-10*bs, 2*bs); ctx.lineTo(-64*bs, 20*bs); ctx.lineTo(-32*bs, 30*bs); ctx.lineTo(-12*bs, 16*bs); ctx.closePath(); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(10*bs, 2*bs); ctx.lineTo(64*bs, 20*bs); ctx.lineTo(32*bs, 30*bs); ctx.lineTo(12*bs, 16*bs); ctx.closePath(); ctx.fill();
-                        // 座舱
-                        ctx.fillStyle = cockpit; ctx.beginPath(); ctx.ellipse(0, -16*bs, 7*bs, 12*bs, 0, 0, Math.PI*2); ctx.fill();
-                        break;
-                }
-            }
-
-            drawPlane(model);
-        }
-
-        // === Boss命中路径（与绘制造型一致，用于像素级命中）===
-        function getBossModelByShape(shape) {
-            const planeByShape = {
-                heart: 'aceFighter', cupid: 'aceFighter',
-                crescent: 'stealthWing',
-                butterfly: 'interceptorX', bird: 'interceptorX', thunder: 'interceptorX', blade: 'interceptorX',
-                dragon: 'heavyFighter', phoenix: 'heavyFighter', angel: 'heavyFighter', vampire: 'heavyFighter', demon: 'heavyFighter',
-                crystal: 'bomberX', witch: 'bomberX',
-                octopus: 'gunship', giant: 'gunship', eye: 'gunship',
-                sakura: 'stealthWing', rose: 'stealthWing', chaos: 'stealthWing'
-            };
-            return planeByShape[shape] || 'aceFighter';
-        }
-
-        function buildBossHitPath(enemy) {
-            const cfg = enemy.bossConfig || { shape: 'fighter' };
-            const model = getBossModelByShape(cfg.shape);
             const s = (enemy.width || 100) / 80;
-            const bs = Math.max(2.2, s);
-            const p = new Path2D();
-            switch (model) {
-                case 'stealthWing':
-                    p.moveTo(0, -28*bs);
-                    p.lineTo(-18*bs, -14*bs);
-                    p.lineTo(-72*bs, 12*bs);
-                    p.lineTo(-64*bs, 24*bs);
-                    p.lineTo(-20*bs, 18*bs);
-                    p.lineTo(-10*bs, 30*bs);
-                    p.lineTo(10*bs, 30*bs);
-                    p.lineTo(20*bs, 18*bs);
-                    p.lineTo(64*bs, 24*bs);
-                    p.lineTo(72*bs, 12*bs);
-                    p.lineTo(18*bs, -14*bs);
-                    p.closePath();
-                    break;
-                case 'heavyFighter':
-                    // 机身
-                    p.moveTo(0, -42*bs);
-                    p.lineTo(-12*bs, -8*bs);
-                    p.lineTo(-14*bs, 24*bs);
-                    p.lineTo(-6*bs, 34*bs);
-                    p.lineTo(0, 30*bs);
-                    p.lineTo(6*bs, 34*bs);
-                    p.lineTo(14*bs, 24*bs);
-                    p.lineTo(12*bs, -8*bs);
-                    p.closePath();
-                    // 大后掠翼
-                    p.moveTo(-10*bs, 0); p.lineTo(-68*bs, 26*bs); p.lineTo(-40*bs, 34*bs); p.lineTo(-14*bs, 18*bs); p.closePath();
-                    p.moveTo(10*bs, 0); p.lineTo(68*bs, 26*bs); p.lineTo(40*bs, 34*bs); p.lineTo(14*bs, 18*bs); p.closePath();
-                    // 双垂尾
-                    p.moveTo(-8*bs, 16*bs); p.lineTo(-18*bs, 40*bs); p.lineTo(-4*bs, 30*bs); p.closePath();
-                    p.moveTo(8*bs, 16*bs); p.lineTo(18*bs, 40*bs); p.lineTo(4*bs, 30*bs); p.closePath();
-                    break;
-                case 'interceptorX':
-                    // 机身
-                    p.moveTo(0, -48*bs);
-                    p.lineTo(-10*bs, -10*bs);
-                    p.lineTo(-8*bs, 26*bs);
-                    p.lineTo(8*bs, 26*bs);
-                    p.lineTo(10*bs, -10*bs);
-                    p.closePath();
-                    // 三角翼
-                    p.moveTo(-8*bs, -6*bs); p.lineTo(-56*bs, 12*bs); p.lineTo(-20*bs, 24*bs); p.closePath();
-                    p.moveTo(8*bs, -6*bs); p.lineTo(56*bs, 12*bs); p.lineTo(20*bs, 24*bs); p.closePath();
-                    break;
-                case 'bomberX':
-                    // 机身
-                    p.moveTo(-18*bs, -28*bs); p.lineTo(18*bs, -28*bs); p.lineTo(24*bs, 30*bs); p.lineTo(-24*bs, 30*bs); p.closePath();
-                    // 大机翼（外展宽）
-                    p.moveTo(-90*bs, 6*bs); p.lineTo(-24*bs, 14*bs); p.lineTo(-24*bs, 22*bs); p.lineTo(-90*bs, 12*bs); p.closePath();
-                    p.moveTo(90*bs, 6*bs); p.lineTo(24*bs, 14*bs); p.lineTo(24*bs, 22*bs); p.lineTo(90*bs, 12*bs); p.closePath();
-                    break;
-                case 'gunship':
-                    // 机身
-                    p.moveTo(-20*bs, -34*bs); p.lineTo(20*bs, -34*bs); p.lineTo(30*bs, 28*bs); p.lineTo(-30*bs, 28*bs); p.closePath();
-                    // 机翼
-                    p.moveTo(-14*bs, -4*bs); p.lineTo(-80*bs, 18*bs); p.lineTo(-40*bs, 28*bs); p.lineTo(-16*bs, 12*bs); p.closePath();
-                    p.moveTo(14*bs, -4*bs); p.lineTo(80*bs, 18*bs); p.lineTo(40*bs, 28*bs); p.lineTo(16*bs, 12*bs); p.closePath();
-                    break;
-                case 'aceFighter':
-                default:
-                    // 机身
-                    p.moveTo(0, -40*bs);
-                    p.lineTo(-10*bs, -6*bs);
-                    p.lineTo(-12*bs, 26*bs);
-                    p.lineTo(-6*bs, 34*bs);
-                    p.lineTo(0, 30*bs);
-                    p.lineTo(6*bs, 34*bs);
-                    p.lineTo(12*bs, 26*bs);
-                    p.lineTo(10*bs, -6*bs);
-                    p.closePath();
-                    // 后掠翼
-                    p.moveTo(-10*bs, 2*bs); p.lineTo(-64*bs, 20*bs); p.lineTo(-32*bs, 30*bs); p.lineTo(-12*bs, 16*bs); p.closePath();
-                    p.moveTo(10*bs, 2*bs); p.lineTo(64*bs, 20*bs); p.lineTo(32*bs, 30*bs); p.lineTo(12*bs, 16*bs); p.closePath();
-                    break;
+            const isHit = enemy.hitFlash && enemy.hitFlash > 0;
+            
+            ctx.shadowColor = colors[0];
+            ctx.shadowBlur = 15;
+            
+            // Boss鱼身主色
+            const bodyGrad = ctx.createLinearGradient(0, -40 * s, 0, 40 * s);
+            if (isHit) {
+                bodyGrad.addColorStop(0, '#ffffff');
+                bodyGrad.addColorStop(0.5, '#ffdddd');
+                bodyGrad.addColorStop(1, '#ffffff');
+            } else {
+                bodyGrad.addColorStop(0, colors[0]);
+                bodyGrad.addColorStop(0.5, colors[1]);
+                bodyGrad.addColorStop(1, colors[2]);
             }
+            
+            // 大鱼身体
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 35 * s, 50 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 大鱼尾
+            ctx.beginPath();
+            ctx.moveTo(0, 40 * s);
+            ctx.lineTo(-25 * s, 70 * s);
+            ctx.lineTo(0, 55 * s);
+            ctx.lineTo(25 * s, 70 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 大背鳕
+            ctx.beginPath();
+            ctx.moveTo(0, -45 * s);
+            ctx.lineTo(-15 * s, -65 * s);
+            ctx.lineTo(15 * s, -65 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 大侧鳕
+            ctx.beginPath();
+            ctx.moveTo(-30 * s, 0);
+            ctx.lineTo(-55 * s, 15 * s);
+            ctx.lineTo(-30 * s, 10 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(30 * s, 0);
+            ctx.lineTo(55 * s, 15 * s);
+            ctx.lineTo(30 * s, 10 * s);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 腹部白色
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.ellipse(0, 10 * s, 25 * s, 30 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 大眼睛
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-15 * s, -20 * s, 12 * s, 0, Math.PI * 2);
+            ctx.arc(15 * s, -20 * s, 12 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#880000';
+            ctx.beginPath();
+            ctx.arc(-15 * s, -20 * s, 6 * s, 0, Math.PI * 2);
+            ctx.arc(15 * s, -20 * s, 6 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-13 * s, -22 * s, 3 * s, 0, Math.PI * 2);
+            ctx.arc(17 * s, -22 * s, 3 * s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 嘴巴
+            ctx.strokeStyle = isHit ? '#faa' : colors[2];
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, -35 * s, 10 * s, 0.2 * Math.PI, 0.8 * Math.PI);
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // === Boss命中路径（简化为椭圆形）===
+        function buildBossHitPath(enemy) {
+            const s = (enemy.width || 100) / 80;
+            const p = new Path2D();
+            // 简化为椭圆形鱼身
+            p.ellipse(0, 0, 35 * s, 50 * s, 0, 0, Math.PI * 2);
             return p;
         }
 
@@ -1633,7 +1202,7 @@
             enemies.forEach(enemy => {
                 ctx.save();
                 ctx.translate(enemy.x, enemy.y);
-                // 敌机旋转180度，使机头朝下（朝向玩家）
+                // 敌人鱼旋转180度，使头朝下（朝向玩家）
                 ctx.rotate(Math.PI);
                 if (enemy.type === 'boss') {
                     drawBossLarge(enemy);
@@ -1835,37 +1404,40 @@
             const defaultByType = { normal:'fighter', fast:'interceptor', tank:'bomber', sniper:'sniperJet', splitter:'splitterJet', mini:'droneJet' };
             const shape = (theme.shapesByType && theme.shapesByType[type]) || defaultByType[type] || 'triangle';
             
-            // 按类型设定属性
+            // 按类型设定属性 - 射速和速度随关卡递增
+            const shootMult = 1 + diffMult * ENEMY_SHOOT_MAX_MULT; // 第1关×1, 第20关×11
+            // 速度倍率：第1关基础速度0.4倍，第20关达到1.0倍
+            const speedMult = 0.4 + diffMult * 0.6; // 0.4 ~ 1.0
             switch(type) {
                 case 'fast':
                     hp = 1;
-                    speed = 1.5 + diffMult * 2.5;
-                    shootRate = ENEMY_SHOOT_BASE.fast + diffMult * ENEMY_SHOOT_BASE.fast;
+                    speed = (1.5 + diffMult * 2.5) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.fast * shootMult;
                     width = 35; height = 30; break;
                 case 'tank':
                     hp = 1 + Math.floor(stage / 4);
-                    speed = 1 + diffMult * 1.3;
-                    shootRate = ENEMY_SHOOT_BASE.tank + diffMult * ENEMY_SHOOT_BASE.tank;
+                    speed = (1 + diffMult * 1.3) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.tank * shootMult;
                     width = 50; height = 45; break;
                 case 'sniper':
                     hp = 1;
-                    speed = 1 + diffMult * 1.4;
-                    shootRate = ENEMY_SHOOT_BASE.sniper + diffMult * ENEMY_SHOOT_BASE.sniper;
+                    speed = (1 + diffMult * 1.4) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.sniper * shootMult;
                     width = 40; height = 35; break;
                 case 'splitter':
                     hp = 1 + Math.floor(stage / 6);
-                    speed = 1.2 + diffMult * 1.8;
-                    shootRate = ENEMY_SHOOT_BASE.splitter + diffMult * ENEMY_SHOOT_BASE.splitter;
+                    speed = (1.2 + diffMult * 1.8) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.splitter * shootMult;
                     width = 45; height = 40; break;
                 case 'mini':
                     hp = 1;
-                    speed = 1.8 + diffMult * 2.0;
-                    shootRate = ENEMY_SHOOT_BASE.mini + diffMult * ENEMY_SHOOT_BASE.mini;
+                    speed = (1.8 + diffMult * 2.0) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.mini * shootMult;
                     width = 25; height = 22; break;
                 default: // normal
                     hp = 1 + Math.floor(stage / 8);
-                    speed = 1.3 + diffMult * 1.5;
-                    shootRate = ENEMY_SHOOT_BASE.normal + diffMult * ENEMY_SHOOT_BASE.normal;
+                    speed = (1.3 + diffMult * 1.5) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.normal * shootMult;
                     width = 40; height = 35; break;
             }
             
@@ -1885,9 +1457,9 @@
             });
         }
         
-        // 关卡主题：每关不同敌机组合与配色（20关循环）
+        // 关卡主题：每关不同敌机组合与配色（20关循环）- 避免使用粉色（玩家鱼颜色）
         const STAGE_THEMES = [
-            { name: '樱粉之境',  types: ['normal','mini'], palette: ['#ff9acb','#ff6fb3','#ff3e9e'], shapesByType: {normal:'fighter', mini:'droneJet'} },
+            { name: '深海暗流',  types: ['normal','mini'], palette: ['#5c6bc0','#3949ab','#283593'], shapesByType: {normal:'fighter', mini:'droneJet'} },
             { name: '湛蓝之海',  types: ['fast','normal'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter'} },
             { name: '琥珀荒原',  types: ['tank','normal'], palette: ['#ffb74d','#fb8c00','#ef6c00'], shapesByType: {tank:'bomber', normal:'fighter'} },
             { name: '紫晶秘域',  types: ['sniper','mini'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {sniper:'sniperJet', mini:'droneJet'} },
@@ -1899,19 +1471,19 @@
             { name: '沙海遗迹',  types: ['tank','sniper'], palette: ['#ffd166','#f8b400','#e09f3e'], shapesByType: {tank:'bomber', sniper:'sniperJet'} },
             { name: '幽冥深渊',  types: ['splitter','mini'], palette: ['#00d1b2','#00a896','#05668d'], shapesByType: {splitter:'splitterJet', mini:'droneJet'} },
             { name: '雷霆高原',  types: ['fast','tank'], palette: ['#ffd54f','#ffca28','#ffa000'], shapesByType: {fast:'interceptor', tank:'bomber'} },
-            { name: '蔷薇花园',  types: ['normal','sniper'], palette: ['#ff85a1','#ff5c8a','#ff2d6f'], shapesByType: {normal:'fighter', sniper:'sniperJet'} },
+            { name: '珊瑚礁岩',  types: ['normal','sniper'], palette: ['#ff8a65','#ff7043','#f4511e'], shapesByType: {normal:'fighter', sniper:'sniperJet'} },
             { name: '磁暴城墙',  types: ['splitter','sniper'], palette: ['#8fd3fe','#69bff8','#4098d7'], shapesByType: {splitter:'splitterJet', sniper:'sniperJet'} },
             { name: '暮色海湾',  types: ['mini','normal'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {mini:'droneJet', normal:'fighter'} },
             { name: '黑曜峡谷',  types: ['tank','mini'], palette: ['#95a5a6','#7f8c8d','#566573'], shapesByType: {tank:'bomber', mini:'droneJet'} },
             { name: '疾风荒岭',  types: ['fast','splitter'], palette: ['#a8e6cf','#56c7c2','#2fb7b0'], shapesByType: {fast:'interceptor', splitter:'splitterJet'} },
-            { name: '霓虹码头',  types: ['fast','sniper','mini'], palette: ['#ff6ec7','#ff3ea5','#d10fd1'], shapesByType: {fast:'interceptor', sniper:'sniperJet', mini:'droneJet'} },
+            { name: '紫电码头',  types: ['fast','sniper','mini'], palette: ['#9575cd','#7e57c2','#5e35b1'], shapesByType: {fast:'interceptor', sniper:'sniperJet', mini:'droneJet'} },
             { name: '青雷竹海',  types: ['tank','normal','splitter'], palette: ['#a7ff83','#17b978','#086972'], shapesByType: {tank:'bomber', normal:'fighter', splitter:'splitterJet'} },
             { name: '月光天穹',  types: ['normal','fast','sniper'], palette: ['#c5b3ff','#9d7dff','#6b4eff'], shapesByType: {normal:'fighter', fast:'interceptor', sniper:'sniperJet'} }
         ];
 
         // Boss配置 - 20种独特Boss
         const BOSS_CONFIGS = [
-            { name: 'BASS', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
+            { name: '珊瑚守卫', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
             { name: '玄月', color: '#9b59b6', shape: 'crescent', bulletPattern: 'spiral' },
             { name: '暗夜玄鸿', color: '#2c3e50', shape: 'bird', bulletPattern: 'wave' },
             { name: '烈焰凤凰', color: '#e74c3c', shape: 'phoenix', bulletPattern: 'burst' },
@@ -2044,8 +1616,12 @@
             }
         }
 
-        // 敌人射击
+        // 敌人射击 - 子弹速度随关卡递增
         function enemyShoot(enemy) {
+            // 计算子弹速度倍率：第1关基础速度0.4倍，第20关达到1.0倍
+            const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
+            const bulletSpeedMult = 0.4 + (Math.min(stage, 20) - 1) * 0.032; // 0.4 ~ 1.0
+            
             if (enemy.type === 'boss' && enemy.bossConfig) {
                 // Boss特殊弹道
                 enemy.shootTimer = (enemy.shootTimer || 0) + 1;
@@ -2056,25 +1632,26 @@
                 const pattern = enemy.bossConfig.bulletPattern;
                 const cx = enemy.x;
                 const cy = enemy.y + ((enemy.hitH || enemy.height) / 2);
+                const spd = bulletSpeedMult; // Boss子弹速度倍率
                 
                 switch(pattern) {
                     case 'spread3': // 3路扩散
                         if (enemy.shootTimer % 30 === 0) {
                             for (let i = -1; i <= 1; i++) {
-                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 2, vy: 6, type: 'enemy' });
+                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 2 * spd, vy: 6 * spd, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'spiral': // 螂旋
+                    case 'spiral': // 蟂旋
                         if (enemy.shootTimer % 10 === 0) {
                             const angle = enemy.shootTimer * 0.15;
-                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 4, vy: Math.sin(angle) * 2 + 4, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 4 * spd, vy: (Math.sin(angle) * 2 + 4) * spd, type: 'enemy' });
                         }
                         break;
                     case 'wave': // 波动
                         if (enemy.shootTimer % 25 === 0) {
                             for (let i = 0; i < 5; i++) {
-                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 5, type: 'enemy', wave: true, waveOffset: i });
+                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 5 * spd, type: 'enemy', wave: true, waveOffset: i });
                             }
                         }
                         break;
@@ -2082,7 +1659,7 @@
                         if (enemy.shootTimer % 80 === 0) {
                             for (let i = 0; i < 8; i++) {
                                 const a = (i / 8) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 + 2, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 4 * spd, vy: (Math.sin(a) * 4 + 2) * spd, type: 'enemy' });
                             }
                         }
                         break;
@@ -2090,33 +1667,33 @@
                         if (enemy.shootTimer % 60 === 0) {
                             for (let i = 0; i < 12; i++) {
                                 const a = (i / 12) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 + 1, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3 * spd, vy: (Math.sin(a) * 3 + 1) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'zigzag': // 之字形
                         if (enemy.shootTimer % 20 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 5, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 5 * spd, vy: 5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'tentacle': // 触手
                         if (enemy.shootTimer % 15 === 0) {
                             const side = (enemy.shootTimer / 15) % 2 === 0 ? -1 : 1;
-                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1 * spd, vy: 5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'scatter': // 散射
                         if (enemy.shootTimer % 40 === 0) {
                             for (let i = 0; i < 6; i++) {
-                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 4, vy: 4 + Math.random() * 2, type: 'enemy' });
+                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 4 * spd, vy: (4 + Math.random() * 2) * spd, type: 'enemy' });
                             }
                         }
                         break;
                     case 'cross': // 十字
                         if (enemy.shootTimer % 50 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: 4, vy: 4, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: -4, vy: 4, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 4 * spd, vy: 4 * spd, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: -4 * spd, vy: 4 * spd, type: 'enemy' });
                         }
                         break;
                     case 'homing': // 追踪
@@ -2124,25 +1701,100 @@
                             const dx = player.x - cx;
                             const dy = player.y - cy;
                             const dist = Math.sqrt(dx * dx + dy * dy);
-                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 5, vy: (dy / dist) * 5, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 5 * spd, vy: (dy / dist) * 5 * spd, type: 'enemy' });
                         }
                         break;
                     case 'breath': // 龙息
                         if (enemy.shootTimer % 5 === 0 && enemy.shootTimer % 100 < 30) {
-                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2, vy: 7, type: 'enemy' });
+                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2 * spd, vy: 7 * spd, type: 'enemy' });
                         }
                         break;
                     case 'petal': // 花瓣
                         if (enemy.shootTimer % 45 === 0) {
                             for (let i = 0; i < 5; i++) {
                                 const a = (i / 5) * Math.PI * 2 + enemy.shootTimer * 0.02;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: 4, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3 * spd, vy: 4 * spd, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'slash': // 斩击 - 快速三连击
+                        if (enemy.shootTimer % 60 < 15 && enemy.shootTimer % 5 === 0) {
+                            const offset = (enemy.shootTimer % 60) / 5 - 1;
+                            bullets.push({ x: cx + offset * 40, y: cy, vx: offset * 3 * spd, vy: 8 * spd, type: 'enemy' });
+                        }
+                        break;
+                    case 'meteor': // 流星 - 从天而降的大弹幕
+                        if (enemy.shootTimer % 70 === 0) {
+                            for (let i = 0; i < 7; i++) {
+                                const startX = Math.random() * CONFIG.CANVAS_WIDTH;
+                                bullets.push({ x: startX, y: cy - 50, vx: (Math.random() - 0.5) * 2 * spd, vy: (5 + Math.random() * 3) * spd, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'thorn': // 荆棘 - 两侧交叉射击
+                        if (enemy.shootTimer % 25 === 0) {
+                            const side = (enemy.shootTimer / 25) % 2;
+                            for (let i = 0; i < 3; i++) {
+                                const angle = (side ? 0.3 : -0.3) + (i - 1) * 0.15;
+                                bullets.push({ x: cx + (side ? 60 : -60), y: cy, vx: Math.sin(angle) * 4 * spd, vy: Math.cos(angle) * 5 * spd, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'tornado': // 龙卷 - 旋转扩散
+                        if (enemy.shootTimer % 8 === 0) {
+                            const a = enemy.shootTimer * 0.2;
+                            const r = 30 + (enemy.shootTimer % 80) * 0.5;
+                            bullets.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.3, vx: Math.cos(a) * 2 * spd, vy: 5 * spd, type: 'enemy' });
+                        }
+                        break;
+                    case 'inferno': // 地狱火 - 密集火焰弹幕
+                        if (enemy.shootTimer % 4 === 0 && enemy.shootTimer % 120 < 60) {
+                            const spread = Math.sin(enemy.shootTimer * 0.1) * 80;
+                            bullets.push({ x: cx + spread, y: cy, vx: (Math.random() - 0.5) * 3 * spd, vy: (6 + Math.random() * 2) * spd, type: 'enemy' });
+                        }
+                        break;
+                    case 'feather': // 羽毛 - 飘落式弹幕
+                        if (enemy.shootTimer % 35 === 0) {
+                            for (let i = 0; i < 4; i++) {
+                                const x = cx - 60 + i * 40;
+                                bullets.push({ x: x, y: cy, vx: Math.sin(i + enemy.shootTimer * 0.05) * 2 * spd, vy: 4 * spd, type: 'enemy', wave: true, waveOffset: i * 0.5 });
+                            }
+                        }
+                        break;
+                    case 'random': // 混沌 - 随机组合攻击
+                        if (enemy.shootTimer % 20 === 0) {
+                            const mode = Math.floor(Math.random() * 4);
+                            if (mode === 0) { // 直线
+                                bullets.push({ x: cx, y: cy, vx: 0, vy: 7 * spd, type: 'enemy' });
+                            } else if (mode === 1) { // 双发
+                                bullets.push({ x: cx - 30, y: cy, vx: -1 * spd, vy: 6 * spd, type: 'enemy' });
+                                bullets.push({ x: cx + 30, y: cy, vx: 1 * spd, vy: 6 * spd, type: 'enemy' });
+                            } else if (mode === 2) { // 追踪
+                                const dx = player.x - cx, dy = player.y - cy;
+                                const d = Math.sqrt(dx*dx + dy*dy) || 1;
+                                bullets.push({ x: cx, y: cy, vx: (dx/d) * 5 * spd, vy: (dy/d) * 5 * spd, type: 'enemy' });
+                            } else { // 散射
+                                for (let i = 0; i < 3; i++) {
+                                    bullets.push({ x: cx, y: cy, vx: (Math.random() - 0.5) * 6 * spd, vy: (4 + Math.random() * 3) * spd, type: 'enemy' });
+                                }
+                            }
+                        }
+                        break;
+                    case 'heart': // 爱心 - 心形弹幕
+                        if (enemy.shootTimer % 50 === 0) {
+                            // 绘制心形轮廓的子弹
+                            for (let i = 0; i < 16; i++) {
+                                const t = (i / 16) * Math.PI * 2;
+                                // 心形参数方程
+                                const hx = 16 * Math.pow(Math.sin(t), 3);
+                                const hy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                                bullets.push({ x: cx, y: cy, vx: hx * 0.2 * spd, vy: -hy * 0.2 * spd + 3 * spd, type: 'enemy' });
                             }
                         }
                         break;
                     default: // 默认
                         if (enemy.shootTimer % 35 === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
                         }
                 }
             } else if (Math.random() < enemy.shootRate) {
@@ -2150,7 +1802,7 @@
                     x: enemy.x,
                     y: enemy.y + 20,
                     vx: 0,
-                    vy: 5,
+                    vy: 5 * bulletSpeedMult,
                     type: 'enemy'
                 });
             }
@@ -2348,7 +2000,9 @@
                                 }
                                 
                                 if (gameState.gameMode === 'stage') {
-                                    // 闯关模式：进入下一关
+                                    // 闯关模式：保存当前关卡分数
+                                    const isNewRecord = saveStageScore(gameState.currentStage, gameState.score);
+                                    
                                     // 解锁下一关
                                     saveUnlockedStage(gameState.currentStage + 1);
                                     
@@ -2512,18 +2166,22 @@
             gameState.isRunning = false;
             document.getElementById('finalScore').textContent = gameState.score;
             
-            // 记录失败关卡用于“再次守护”
+            // 记录失败关卡用于"再次守护"
             if (gameState.gameMode === 'stage') {
                 localStorage.setItem('resumeStage', String(gameState.currentStage));
             }
             
-            // 显示关卡信息
+            // 显示关卡信息和最高分
             const stageInfo = document.getElementById('stageInfo');
             if (gameState.gameMode === 'stage') {
-                stageInfo.textContent = `到达第 ${gameState.currentStage} 关`;
+                const highScore = getStageHighScore(gameState.currentStage);
+                stageInfo.innerHTML = `第 ${gameState.currentStage} 关 | 最高分: <span style="color:#ffd700">${highScore}</span>`;
             } else {
-                const bossCount = Math.floor(gameState.score / 1000);
-                stageInfo.textContent = `击败了 ${bossCount} 个 Boss`;
+                const isNewRecord = saveEndlessScore(gameState.score);
+                const highScore = getEndlessHighScore();
+                stageInfo.innerHTML = isNewRecord 
+                    ? `🎉 新纪录! 最高分: <span style="color:#ffd700">${highScore}</span>`
+                    : `最高分: <span style="color:#ffd700">${highScore}</span>`;
             }
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
@@ -2532,20 +2190,46 @@
         // 游戏通关
         function gameWin() {
             gameState.isRunning = false;
+            // 保存最后一关分数
+            saveStageScore(gameState.currentStage, gameState.score);
             document.getElementById('winScore').textContent = gameState.score;
             document.getElementById('winScreen').classList.remove('hidden');
         }
 
         // 绘制
         function draw() {
-            // 清空画布 - 浪漫渐变背景
-            const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
-            gradient.addColorStop(0, '#1a0a2e');
-            gradient.addColorStop(0.3, '#2d1b4e');
-            gradient.addColorStop(0.6, '#4a2c6a');
-            gradient.addColorStop(1, '#1e3a5f');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            // 绘制背景
+            if (bgImageReady) {
+                // 使用背景图，按比例缩放覆盖整个画布
+                const imgRatio = bgImage.width / bgImage.height;
+                const canvasRatio = CONFIG.CANVAS_WIDTH / CONFIG.CANVAS_HEIGHT;
+                let drawWidth, drawHeight, offsetX, offsetY;
+                
+                if (canvasRatio > imgRatio) {
+                    // 画布更宽，以宽度为准
+                    drawWidth = CONFIG.CANVAS_WIDTH;
+                    drawHeight = CONFIG.CANVAS_WIDTH / imgRatio;
+                    offsetX = 0;
+                    offsetY = (CONFIG.CANVAS_HEIGHT - drawHeight) / 2;
+                } else {
+                    // 画布更高，以高度为准
+                    drawHeight = CONFIG.CANVAS_HEIGHT;
+                    drawWidth = CONFIG.CANVAS_HEIGHT * imgRatio;
+                    offsetX = (CONFIG.CANVAS_WIDTH - drawWidth) / 2;
+                    offsetY = 0;
+                }
+                
+                ctx.drawImage(bgImage, offsetX, offsetY, drawWidth, drawHeight);
+            } else {
+                // 备用：海底渐变背景
+                const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.CANVAS_HEIGHT);
+                gradient.addColorStop(0, '#001a33');
+                gradient.addColorStop(0.3, '#003366');
+                gradient.addColorStop(0.6, '#004080');
+                gradient.addColorStop(1, '#001a4d');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            }
             
             // 绘制各元素
             drawStars();
@@ -2614,7 +2298,7 @@
             isTouching = true;
         }, { passive: false });
         
-        // 触摸移动 - 飞机跟随手指
+        // 触摸移动 - 鱼跟随手指
         canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (!isTouching) return;
@@ -2643,6 +2327,416 @@
         // 初始化
         initGame();
         draw();
+        
+        // ============ 首页 Canvas 动画系统 ============
+        const hpCanvas = document.getElementById('homepageCanvas');
+        const hpCtx = hpCanvas.getContext('2d');
+        let hpFrame = 0;
+        let homepageBubbles = [];
+        let homepageFish = [];
+        let lightRays = [];
+        let hpAnimationId = null;
+        
+        // 气泡类
+        class HomepageBubble {
+            constructor(w, h) {
+                this.w = w;
+                this.h = h;
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * this.w;
+                this.y = this.h + Math.random() * 50;
+                this.r = Math.random() * 10 + 4;
+                this.speed = Math.random() * 1.5 + 0.8;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.drift = (Math.random() - 0.5) * 0.8;
+            }
+            update() {
+                this.y -= this.speed;
+                this.x += this.drift + Math.sin(hpFrame * 0.03 + this.x * 0.01) * 0.3;
+                this.r += 0.01;
+                this.opacity = Math.max(0.1, this.opacity - 0.001);
+                if (this.y < -30 || this.opacity <= 0.1) this.reset();
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                // 气泡外圈
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(72, 202, 228, 0.2)';
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fill();
+                // 气泡高光
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                // 气泡边框
+                ctx.strokeStyle = 'rgba(72, 202, 228, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        // 光斑类
+        class LightRay {
+            constructor(w, h) {
+                this.w = w;
+                this.h = h;
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * this.w;
+                this.y = Math.random() * this.h;
+                this.size = Math.random() * 120 + 60;
+                this.opacity = Math.random() * 0.25 + 0.08;
+                this.speed = Math.random() * 0.4 + 0.15;
+                this.angle = Math.random() * Math.PI * 2;
+            }
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.opacity += Math.sin(hpFrame * 0.03 + this.x * 0.01) * 0.03;
+                this.opacity = Math.max(0.05, Math.min(0.35, this.opacity));
+                if (this.x < -this.size || this.x > this.w + this.size ||
+                    this.y < -this.size || this.y > this.h + this.size) {
+                    this.reset();
+                }
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                grad.addColorStop(0, 'rgba(72, 202, 228, 0.5)');
+                grad.addColorStop(0.5, 'rgba(0, 119, 182, 0.2)');
+                grad.addColorStop(1, 'rgba(0, 119, 182, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        // 首页鱼类
+        class HomepageFish {
+            constructor(w, h) {
+                this.w = w;
+                this.h = h;
+                this.reset();
+            }
+            reset() {
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.x = this.direction > 0 ? -50 : this.w + 50;
+                this.y = Math.random() * this.h * 0.8 + this.h * 0.1;
+                this.r = Math.random() * 15 + 10;
+                this.speed = (Math.random() * 1.5 + 0.8) * this.direction;
+                this.opacity = Math.random() * 0.4 + 0.4;
+                // 随机鱼类型：热带鱼、小丑鱼、金鱼、海豚、海龟、水母、章鱼、鲸鱼
+                const types = ['tropical', 'clownfish', 'goldfish', 'dolphin', 'turtle', 'jellyfish', 'octopus', 'whale'];
+                this.type = types[Math.floor(Math.random() * types.length)];
+                this.yOffset = 0;
+                // 在reset时固定颜色，避免每帧闪烁
+                this.assignColors();
+            }
+            assignColors() {
+                switch(this.type) {
+                    case 'tropical':
+                        this.bodyColor = `hsl(${180 + Math.random() * 60}, 70%, 60%)`;
+                        this.finColor = `hsl(${200 + Math.random() * 40}, 80%, 70%)`;
+                        break;
+                    case 'clownfish':
+                        this.bodyColor = '#ff7f50';
+                        this.finColor = '#fff';
+                        break;
+                    case 'goldfish':
+                        this.bodyColor = '#ffd700';
+                        this.finColor = '#ffb347';
+                        break;
+                    case 'dolphin':
+                        this.bodyColor = '#4a90d9';
+                        this.finColor = '#6bb3e0';
+                        break;
+                    case 'turtle':
+                        this.bodyColor = '#228b22';
+                        this.finColor = '#32cd32';
+                        break;
+                    case 'jellyfish':
+                        this.bodyColor = `hsla(${280 + Math.random() * 40}, 60%, 75%, 0.7)`;
+                        this.finColor = `hsla(${300 + Math.random() * 30}, 50%, 80%, 0.5)`;
+                        break;
+                    case 'octopus':
+                        this.bodyColor = `hsl(${340 + Math.random() * 30}, 50%, 55%)`;
+                        this.finColor = `hsl(${350 + Math.random() * 20}, 60%, 65%)`;
+                        break;
+                    case 'whale':
+                        this.bodyColor = '#36648b';
+                        this.finColor = '#5cacee';
+                        break;
+                    default:
+                        this.bodyColor = '#48cae4';
+                        this.finColor = '#90e0ef';
+                }
+            }
+            update() {
+                this.x += this.speed;
+                this.yOffset = Math.sin(hpFrame * 0.04 + this.x * 0.02) * 3;
+                if ((this.direction > 0 && this.x > this.w + 60) ||
+                    (this.direction < 0 && this.x < -60)) {
+                    this.reset();
+                }
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.translate(this.x, this.y + this.yOffset);
+                if (this.direction < 0) ctx.scale(-1, 1);
+                this.drawFishShape(ctx);
+                ctx.restore();
+            }
+            drawFishShape(ctx) {
+                const r = this.r;
+                const bodyColor = this.bodyColor;
+                const finColor = this.finColor;
+                const eyeColor = '#fff';
+                
+                // 根据鱼类型绘制不同形状
+                if (this.type === 'jellyfish') {
+                    this.drawJellyfish(ctx, r, bodyColor, finColor);
+                    return;
+                }
+                if (this.type === 'octopus') {
+                    this.drawOctopus(ctx, r, bodyColor, finColor);
+                    return;
+                }
+                if (this.type === 'whale') {
+                    this.drawWhale(ctx, r, bodyColor, finColor);
+                    return;
+                }
+                
+                // 尾巴
+                ctx.beginPath();
+                ctx.fillStyle = finColor;
+                ctx.moveTo(-r * 1.2, 0);
+                ctx.lineTo(-r * 2, -r * 0.6);
+                ctx.lineTo(-r * 2, r * 0.6);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 身体
+                ctx.beginPath();
+                ctx.fillStyle = bodyColor;
+                ctx.ellipse(0, 0, r * 1.2, r * 0.8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 背鳍
+                ctx.beginPath();
+                ctx.fillStyle = finColor;
+                ctx.moveTo(-r * 0.3, -r * 0.7);
+                ctx.quadraticCurveTo(0, -r * 1.3, r * 0.5, -r * 0.7);
+                ctx.lineTo(r * 0.3, -r * 0.7);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 眼睛
+                ctx.beginPath();
+                ctx.fillStyle = eyeColor;
+                ctx.arc(r * 0.5, -r * 0.1, r * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.fillStyle = '#000';
+                ctx.arc(r * 0.55, -r * 0.1, r * 0.12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 小丑鱼特有条纹
+                if (this.type === 'clownfish') {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = r * 0.15;
+                    ctx.beginPath();
+                    ctx.moveTo(-r * 0.3, -r * 0.7);
+                    ctx.lineTo(-r * 0.3, r * 0.7);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(r * 0.3, -r * 0.6);
+                    ctx.lineTo(r * 0.3, r * 0.6);
+                    ctx.stroke();
+                }
+            }
+            // 绘制水母
+            drawJellyfish(ctx, r, bodyColor, finColor) {
+                // 伞盖
+                ctx.beginPath();
+                ctx.fillStyle = bodyColor;
+                ctx.arc(0, 0, r, Math.PI, 0, false);
+                ctx.closePath();
+                ctx.fill();
+                // 触须（飘动）
+                ctx.strokeStyle = finColor;
+                ctx.lineWidth = r * 0.1;
+                for (let i = 0; i < 5; i++) {
+                    const x = (i - 2) * r * 0.4;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    const wave = Math.sin(hpFrame * 0.08 + i) * r * 0.3;
+                    ctx.quadraticCurveTo(x + wave, r * 0.8, x, r * 1.5);
+                    ctx.stroke();
+                }
+            }
+            // 绘制章鱼
+            drawOctopus(ctx, r, bodyColor, finColor) {
+                // 头部
+                ctx.beginPath();
+                ctx.fillStyle = bodyColor;
+                ctx.ellipse(0, -r * 0.3, r * 0.9, r * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // 触手
+                ctx.fillStyle = finColor;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i - 2.5) * 0.4;
+                    const baseX = Math.sin(angle) * r * 0.6;
+                    ctx.beginPath();
+                    ctx.moveTo(baseX, r * 0.2);
+                    const wave = Math.sin(hpFrame * 0.06 + i) * r * 0.2;
+                    ctx.quadraticCurveTo(baseX + wave, r * 0.8, baseX * 0.5, r * 1.3);
+                    ctx.lineWidth = r * 0.2;
+                    ctx.strokeStyle = finColor;
+                    ctx.stroke();
+                }
+                // 眼睛
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(-r * 0.3, -r * 0.4, r * 0.2, 0, Math.PI * 2);
+                ctx.arc(r * 0.3, -r * 0.4, r * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(-r * 0.25, -r * 0.4, r * 0.1, 0, Math.PI * 2);
+                ctx.arc(r * 0.35, -r * 0.4, r * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // 绘制鲸鱼
+            drawWhale(ctx, r, bodyColor, finColor) {
+                // 身体
+                ctx.beginPath();
+                ctx.fillStyle = bodyColor;
+                ctx.ellipse(0, 0, r * 1.5, r * 0.9, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // 尾巴
+                ctx.beginPath();
+                ctx.fillStyle = finColor;
+                ctx.moveTo(-r * 1.4, 0);
+                ctx.lineTo(-r * 2.2, -r * 0.7);
+                ctx.quadraticCurveTo(-r * 1.8, 0, -r * 2.2, r * 0.7);
+                ctx.closePath();
+                ctx.fill();
+                // 背鳍
+                ctx.beginPath();
+                ctx.fillStyle = finColor;
+                ctx.moveTo(-r * 0.2, -r * 0.85);
+                ctx.quadraticCurveTo(r * 0.3, -r * 1.4, r * 0.8, -r * 0.85);
+                ctx.closePath();
+                ctx.fill();
+                // 眼睛
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(r * 0.8, -r * 0.2, r * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(r * 0.85, -r * 0.2, r * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+                // 肌腹
+                ctx.beginPath();
+                ctx.fillStyle = '#b0d4e8';
+                ctx.ellipse(r * 0.2, r * 0.3, r * 0.9, r * 0.4, 0, 0, Math.PI);
+                ctx.fill();
+            }
+        }
+        
+        // 初始化首页动画
+        function initHomepageAnimation() {
+            hpCanvas.width = window.innerWidth;
+            hpCanvas.height = window.innerHeight;
+            const w = hpCanvas.width;
+            const h = hpCanvas.height;
+            
+            homepageBubbles = [];
+            for (let i = 0; i < 35; i++) {
+                homepageBubbles.push(new HomepageBubble(w, h));
+            }
+            
+            lightRays = [];
+            for (let i = 0; i < 6; i++) {
+                lightRays.push(new LightRay(w, h));
+            }
+            
+            homepageFish = [];
+            for (let i = 0; i < 12; i++) {
+                homepageFish.push(new HomepageFish(w, h));
+            }
+            
+            startHomepageAnimation();
+        }
+        
+        // 首页动画循环
+        function homepageAnimationLoop() {
+            hpFrame++;
+            hpCtx.clearRect(0, 0, hpCanvas.width, hpCanvas.height);
+            
+            // 绘制光斑
+            for (let ray of lightRays) {
+                ray.update();
+                ray.draw(hpCtx);
+            }
+            
+            // 绘制气泡
+            for (let bubble of homepageBubbles) {
+                bubble.update();
+                bubble.draw(hpCtx);
+            }
+            
+            // 绘制鱼
+            for (let fish of homepageFish) {
+                fish.update();
+                fish.draw(hpCtx);
+            }
+            
+            hpAnimationId = requestAnimationFrame(homepageAnimationLoop);
+        }
+        
+        function startHomepageAnimation() {
+            if (!hpAnimationId) {
+                homepageAnimationLoop();
+            }
+        }
+        
+        function stopHomepageAnimation() {
+            if (hpAnimationId) {
+                cancelAnimationFrame(hpAnimationId);
+                hpAnimationId = null;
+            }
+        }
+        
+        // 监听窗口大小变化
+        window.addEventListener('resize', () => {
+            if (!gameState.isRunning) {
+                hpCanvas.width = window.innerWidth;
+                hpCanvas.height = window.innerHeight;
+                const w = hpCanvas.width;
+                const h = hpCanvas.height;
+                // 重置所有元素的尺寸引用
+                homepageBubbles.forEach(b => { b.w = w; b.h = h; });
+                lightRays.forEach(r => { r.w = w; r.h = h; });
+                homepageFish.forEach(f => { f.w = w; f.h = h; });
+            }
+        });
+        
+        // 启动首页动画
+        initHomepageAnimation();
     </script>
 </body>
 </html>
