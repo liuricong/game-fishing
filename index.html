@@ -281,13 +281,14 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 36px;
+            font-size: 24px;
             font-weight: 800;
             color: #fff;
             text-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
             opacity: 0;
             z-index: 5;
             pointer-events: none;
+            white-space: nowrap;
         }
 
         .wave-display.show {
@@ -2312,9 +2313,9 @@
             // 显示Boss警告
             const waveDisplay = document.getElementById('waveDisplay');
             if (gameState.gameMode === 'stage') {
-                waveDisplay.textContent = `⚠️ ${bossConfig.name} 来袭! ⚠️`;
+                waveDisplay.textContent = `⚠️ ${bossConfig.name}`;
             } else {
-                waveDisplay.textContent = `⚠️ ${bossConfig.name} Lv.${bossLevel} ⚠️`;
+                waveDisplay.textContent = `⚠️ ${bossConfig.name} Lv.${bossLevel}`;
             }
             waveDisplay.classList.remove('show');
             void waveDisplay.offsetWidth;
