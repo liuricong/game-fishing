@@ -245,15 +245,35 @@
             font-weight: 600;
         }
 
-        .combo-display {
+        .powerup-status {
             position: absolute;
             top: 45px;
             left: 15px;
-            color: #ff69b4;
-            font-size: 18px;
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8);
+            display: flex;
+            gap: 8px;
             z-index: 5;
+        }
+        .powerup-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .powerup-icon .timer-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: #ffd700;
+            border-radius: 0 0 6px 6px;
+            transition: width 0.1s linear;
         }
 
         .wave-display {
@@ -322,7 +342,7 @@
             <div class="hud-score" id="scoreDisplay">0</div>
         </div>
         
-        <div class="combo-display" id="comboDisplay"></div>
+        <div class="powerup-status" id="powerupStatus"></div>
         <div class="wave-display" id="waveDisplay"></div>
         
         <!-- 开始界面 -->
@@ -427,17 +447,17 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机基础射击率（第一关适度开火）===
+        // === 敌机基础射击率（每帧概率，第一关适度开火）===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.004,
-            tank: 0.005,
-            sniper: 0.006,
-            splitter: 0.003,
-            mini: 0.003,
-            normal: 0.005
+            fast: 0.012,
+            tank: 0.015,
+            sniper: 0.018,
+            splitter: 0.010,
+            mini: 0.008,
+            normal: 0.015
         };
         // 敌机射速随关卡递增的最大倍率
-        const ENEMY_SHOOT_MAX_MULT = 5;
+        const ENEMY_SHOOT_MAX_MULT = 3;
         
         // 设置canvas实际尺寸
         canvas.width = CONFIG.CANVAS_WIDTH;
@@ -713,12 +733,45 @@
         function updateUI() {
             document.getElementById('scoreDisplay').textContent = gameState.score;
             
-            const comboDisplay = document.getElementById('comboDisplay');
-            if (gameState.combo >= 3) {
-                comboDisplay.textContent = `🔥 x${gameState.combo}`;
-            } else {
-                comboDisplay.textContent = '';
+            // 更新道具状态显示
+            updatePowerupStatus();
+        }
+        
+        // 更新道具状态图标
+        function updatePowerupStatus() {
+            const container = document.getElementById('powerupStatus');
+            let html = '';
+            
+            // 武器道具
+            if (gameState.powerUpType !== 'none' && gameState.powerUpTime > 0) {
+                const icons = { rapid: '⚡', double: '❇️', triple: '🔱', spread: '🌟', laser: '💎' };
+                const icon = icons[gameState.powerUpType] || '✨';
+                const percent = (gameState.powerUpTime / CONFIG.POWERUP_DURATION) * 100;
+                html += `<div class="powerup-icon" style="border-color: #ffd700;">
+                    ${icon}
+                    <div class="timer-bar" style="width: ${percent}%;"></div>
+                </div>`;
             }
+            
+            // 护盾
+            if (gameState.isInvincible && gameState.invincibleTime > 0) {
+                const percent = (gameState.invincibleTime / CONFIG.SHIELD_DURATION) * 100;
+                html += `<div class="powerup-icon" style="border-color: #64c8ff;">
+                    🛡️
+                    <div class="timer-bar" style="width: ${percent}%; background: #64c8ff;"></div>
+                </div>`;
+            }
+            
+            // 聪仔机
+            if (gameState.droneActive && gameState.droneTime > 0) {
+                const percent = (gameState.droneTime / CONFIG.DRONE_DURATION) * 100;
+                html += `<div class="powerup-icon" style="border-color: #00e5ff;">
+                    🛰️
+                    <div class="timer-bar" style="width: ${percent}%; background: #00e5ff;"></div>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
         }
 
         // 绘制气泡背景（海底风格）
@@ -753,11 +806,18 @@
             });
         }
 
-        // 绘制玩家鱼（矢量绘制）
+        // 绘制玩家鱼（矢量绘制 - 美化版）
+        let playerAnimTime = 0;
         function drawPlayer() {
             if (player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0) {
                 return;
             }
+            
+            // 动画计时
+            playerAnimTime += 0.12;
+            const swimWave = Math.sin(playerAnimTime) * 0.08; // 摆尾
+            const breathe = 1 + Math.sin(playerAnimTime * 0.6) * 0.025; // 呼吸
+            const finWave = Math.sin(playerAnimTime * 1.8) * 0.25; // 鳍摆动
             
             // 根据武器等级确定缩放/发光
             const lvl = gameState.powerUpLevel || 0;
@@ -772,14 +832,14 @@
             const sc = style.scale;
 
             // 气泡尾迹
-            player.trail.push({ x: player.x, y: player.y + 20 * sc, alpha: 1 });
-            if (player.trail.length > 8) player.trail.shift();
+            player.trail.push({ x: player.x, y: player.y + 22 * sc, alpha: 1 });
+            if (player.trail.length > 10) player.trail.shift();
             player.trail.forEach((t, i) => {
-                const alpha = (i / player.trail.length) * 0.4;
-                const size = 3 + (i / player.trail.length) * 5;
+                const alpha = (i / player.trail.length) * 0.5;
+                const size = 2 + (i / player.trail.length) * 6;
                 ctx.beginPath();
-                ctx.arc(t.x + (Math.random() - 0.5) * 4, t.y, size * sc, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(200, 230, 255, ${alpha})`;
+                ctx.arc(t.x + (Math.random() - 0.5) * 5, t.y + (Math.random() - 0.5) * 3, size * sc, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 200, 230, ${alpha})`;
                 ctx.fill();
             });
 
@@ -787,73 +847,118 @@
             ctx.save();
             ctx.translate(player.x, player.y);
             
-            // 鱼身主体（粉色小鱼）
-            const bodyGrad = ctx.createLinearGradient(0, -20 * sc, 0, 20 * sc);
-            bodyGrad.addColorStop(0, '#ff9ecf');
-            bodyGrad.addColorStop(0.5, '#ff69b4');
-            bodyGrad.addColorStop(1, '#ff1493');
+            // 外层光晕
+            ctx.shadowColor = '#ff69b4';
+            ctx.shadowBlur = 15;
+            
+            // 鱼身主体渐变（粉色小鱼）
+            const bodyGrad = ctx.createRadialGradient(0, -8 * sc, 0, 0, 0, 28 * sc);
+            bodyGrad.addColorStop(0, '#ffb6d9');
+            bodyGrad.addColorStop(0.3, '#ff69b4');
+            bodyGrad.addColorStop(0.7, '#ff1493');
+            bodyGrad.addColorStop(1, '#c71585');
+            
+            // 鱼尾（带摆动）
+            ctx.save();
+            ctx.rotate(swimWave);
             ctx.fillStyle = bodyGrad;
-            
-            // 鱼身椭圆
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 18 * sc, 25 * sc, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 鱼尾
-            ctx.fillStyle = '#ff69b4';
             ctx.beginPath();
             ctx.moveTo(0, 20 * sc);
-            ctx.lineTo(-12 * sc, 35 * sc);
-            ctx.lineTo(0, 28 * sc);
-            ctx.lineTo(12 * sc, 35 * sc);
-            ctx.closePath();
+            ctx.quadraticCurveTo(-10 * sc, 28 * sc, -15 * sc, 40 * sc);
+            ctx.quadraticCurveTo(0, 34 * sc, 15 * sc, 40 * sc);
+            ctx.quadraticCurveTo(10 * sc, 28 * sc, 0, 20 * sc);
+            ctx.fill();
+            ctx.restore();
+            
+            // 鱼身椭圆（带呼吸）
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 18 * sc * breathe, 26 * sc, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 背鳕
-            ctx.fillStyle = '#ff69b4';
+            // 腹部高光
+            ctx.fillStyle = 'rgba(255,220,240,0.5)';
             ctx.beginPath();
-            ctx.moveTo(0, -22 * sc);
-            ctx.lineTo(-8 * sc, -30 * sc);
-            ctx.lineTo(8 * sc, -30 * sc);
-            ctx.closePath();
+            ctx.ellipse(3 * sc, 8 * sc, 10 * sc, 14 * sc, 0.15, 0, Math.PI * 2);
             ctx.fill();
             
-            // 侧鳕
+            // 侧鳍（带摆动）
+            ctx.fillStyle = bodyGrad;
+            // 左侧鳍
+            ctx.save();
+            ctx.translate(-16 * sc, 3 * sc);
+            ctx.rotate(-0.4 + finWave);
             ctx.beginPath();
-            ctx.moveTo(-16 * sc, 0);
-            ctx.lineTo(-28 * sc, 8 * sc);
-            ctx.lineTo(-16 * sc, 6 * sc);
-            ctx.closePath();
+            ctx.ellipse(0, 0, 14 * sc, 5 * sc, -0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            // 右侧鳍
+            ctx.save();
+            ctx.translate(16 * sc, 3 * sc);
+            ctx.rotate(0.4 - finWave);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 14 * sc, 5 * sc, 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // 小丑鱼条纹（白色）
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.beginPath();
+            ctx.ellipse(-6 * sc, -2 * sc, 2.5 * sc, 18 * sc, -0.1, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(16 * sc, 0);
-            ctx.lineTo(28 * sc, 8 * sc);
-            ctx.lineTo(16 * sc, 6 * sc);
-            ctx.closePath();
+            ctx.ellipse(6 * sc, -2 * sc, 2.5 * sc, 18 * sc, 0.1, 0, Math.PI * 2);
             ctx.fill();
             
-            // 白色条纹
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.beginPath();
-            ctx.ellipse(0, -3 * sc, 10 * sc, 5 * sc, 0, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.shadowBlur = 0;
             
-            // 眼睛
+            // 眼睛外框
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-7 * sc, -10 * sc, 6 * sc, 0, Math.PI * 2);
-            ctx.arc(7 * sc, -10 * sc, 6 * sc, 0, Math.PI * 2);
+            ctx.ellipse(-7 * sc, -10 * sc, 7 * sc, 6 * sc, 0, 0, Math.PI * 2);
+            ctx.ellipse(7 * sc, -10 * sc, 7 * sc, 6 * sc, 0, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = '#222';
+            // 眼球
+            ctx.fillStyle = '#1a1a2e';
             ctx.beginPath();
-            ctx.arc(-7 * sc, -10 * sc, 3 * sc, 0, Math.PI * 2);
-            ctx.arc(7 * sc, -10 * sc, 3 * sc, 0, Math.PI * 2);
+            ctx.arc(-7 * sc, -9 * sc, 3.5 * sc, 0, Math.PI * 2);
+            ctx.arc(7 * sc, -9 * sc, 3.5 * sc, 0, Math.PI * 2);
             ctx.fill();
+            // 眼睛高光
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-6 * sc, -11 * sc, 1.5 * sc, 0, Math.PI * 2);
-            ctx.arc(8 * sc, -11 * sc, 1.5 * sc, 0, Math.PI * 2);
+            ctx.arc(-8.5 * sc, -11 * sc, 2 * sc, 0, Math.PI * 2);
+            ctx.arc(5.5 * sc, -11 * sc, 2 * sc, 0, Math.PI * 2);
             ctx.fill();
+            // 第二层高光
+            ctx.beginPath();
+            ctx.arc(-5.5 * sc, -8 * sc, 1 * sc, 0, Math.PI * 2);
+            ctx.arc(8.5 * sc, -8 * sc, 1 * sc, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 嘴巴（微笑）
+            ctx.strokeStyle = '#c71585';
+            ctx.lineWidth = 2 * sc;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(0, -16 * sc, 4 * sc, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.stroke();
+            
+            // 脸颚红晕
+            ctx.fillStyle = 'rgba(255,100,150,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(-14 * sc, -6 * sc, 4 * sc, 2.5 * sc, 0, 0, Math.PI * 2);
+            ctx.ellipse(14 * sc, -6 * sc, 4 * sc, 2.5 * sc, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 鳞片纹理
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 0.8 * sc;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.arc(0, (2 + i * 5) * sc, (12 - i * 2) * sc, 0.65 * Math.PI, 0.35 * Math.PI, true);
+                ctx.stroke();
+            }
             
             ctx.restore();
 
@@ -861,11 +966,11 @@
             if (style.glow) {
                 ctx.save();
                 ctx.shadowColor = style.glow;
-                ctx.shadowBlur = 18 + lvl * 4;
+                ctx.shadowBlur = 20 + lvl * 5;
                 ctx.strokeStyle = style.glow;
-                ctx.lineWidth = 2 + lvl * 0.5;
+                ctx.lineWidth = 2.5 + lvl * 0.5;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, 32 * sc, 0, Math.PI * 2);
+                ctx.arc(player.x, player.y, 35 * sc, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
             }
@@ -873,20 +978,20 @@
             // 无敌护盾（气泡盾）
             if (gameState.isInvincible) {
                 ctx.save();
-                const shieldGlow = ctx.createRadialGradient(player.x, player.y, 25, player.x, player.y, 45);
+                const shieldGlow = ctx.createRadialGradient(player.x, player.y, 28, player.x, player.y, 50);
                 shieldGlow.addColorStop(0, 'rgba(100, 200, 255, 0)');
-                shieldGlow.addColorStop(0.5, 'rgba(100, 200, 255, 0.3)');
+                shieldGlow.addColorStop(0.5, 'rgba(100, 200, 255, 0.35)');
                 shieldGlow.addColorStop(1, 'rgba(100, 200, 255, 0)');
                 ctx.fillStyle = shieldGlow;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, 45, 0, Math.PI * 2);
+                ctx.arc(player.x, player.y, 50, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.strokeStyle = '#64c8ff';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.shadowColor = '#64c8ff';
-                ctx.shadowBlur = 15;
+                ctx.shadowBlur = 18;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, 38, 0, Math.PI * 2);
+                ctx.arc(player.x, player.y, 42, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
             }
@@ -1023,77 +1128,114 @@
             });
         }
 
-        // 绘制敌人鱼（矢量绘制）
+        // 绘制敌人鱼（矢量绘制 - 美化版）
         function drawEnemySmall(enemy) {
             const s = Math.max(0.9, (enemy.width || 40) / 40);
             const colors = enemy.colors || ['#70a1ff', '#1e90ff', '#3742fa'];
             const isHit = enemy.hitFlash && enemy.hitFlash > 0;
             
-            ctx.shadowColor = colors[0];
-            ctx.shadowBlur = 8;
+            // 动画计时器
+            enemy.animTime = (enemy.animTime || Math.random() * 100) + 0.15;
+            const swimWave = Math.sin(enemy.animTime) * 0.1; // 摆尾动画
+            const breathe = 1 + Math.sin(enemy.animTime * 0.5) * 0.03; // 呼吸效果
             
-            // 鱼身主色
-            const bodyGrad = ctx.createLinearGradient(0, -20 * s, 0, 20 * s);
+            ctx.shadowColor = colors[0];
+            ctx.shadowBlur = 10;
+            
+            // 鱼身主色渐变
+            const bodyGrad = ctx.createRadialGradient(0, -5 * s, 0, 0, 0, 22 * s);
             if (isHit) {
                 bodyGrad.addColorStop(0, '#ffffff');
-                bodyGrad.addColorStop(0.5, '#ffdddd');
-                bodyGrad.addColorStop(1, '#ffffff');
+                bodyGrad.addColorStop(0.5, '#ffeeee');
+                bodyGrad.addColorStop(1, '#ffcccc');
             } else {
                 bodyGrad.addColorStop(0, colors[0]);
-                bodyGrad.addColorStop(0.5, colors[1]);
+                bodyGrad.addColorStop(0.4, colors[1]);
                 bodyGrad.addColorStop(1, colors[2]);
             }
             
-            // 绘制鱼身
+            // 鱼尾（带摆动）
+            ctx.save();
+            ctx.rotate(swimWave);
             ctx.fillStyle = bodyGrad;
             ctx.beginPath();
-            ctx.ellipse(0, 0, 14 * s, 20 * s, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 鱼尾
-            ctx.beginPath();
             ctx.moveTo(0, 16 * s);
-            ctx.lineTo(-10 * s, 28 * s);
-            ctx.lineTo(0, 22 * s);
-            ctx.lineTo(10 * s, 28 * s);
-            ctx.closePath();
+            ctx.quadraticCurveTo(-8 * s, 22 * s, -12 * s, 30 * s);
+            ctx.quadraticCurveTo(0, 26 * s, 12 * s, 30 * s);
+            ctx.quadraticCurveTo(8 * s, 22 * s, 0, 16 * s);
+            ctx.fill();
+            ctx.restore();
+            
+            // 鱼身（带呼吸）
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 14 * s * breathe, 20 * s, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // 背鳕
+            // 腹部高光
+            ctx.fillStyle = isHit ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.35)';
             ctx.beginPath();
-            ctx.moveTo(0, -18 * s);
-            ctx.lineTo(-6 * s, -26 * s);
-            ctx.lineTo(6 * s, -26 * s);
-            ctx.closePath();
+            ctx.ellipse(2 * s, 5 * s, 8 * s, 12 * s, 0.2, 0, Math.PI * 2);
             ctx.fill();
             
-            // 侧鳕
+            // 侧鳍（带摆动）
+            const finWave = Math.sin(enemy.animTime * 1.5) * 0.2;
+            ctx.save();
+            ctx.fillStyle = bodyGrad;
+            // 左侧鳍
+            ctx.save();
+            ctx.translate(-12 * s, 2 * s);
+            ctx.rotate(-0.3 + finWave);
             ctx.beginPath();
-            ctx.moveTo(-12 * s, 0);
-            ctx.lineTo(-22 * s, 6 * s);
-            ctx.lineTo(-12 * s, 4 * s);
-            ctx.closePath();
+            ctx.ellipse(0, 0, 10 * s, 4 * s, -0.5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+            // 右侧鳍
+            ctx.save();
+            ctx.translate(12 * s, 2 * s);
+            ctx.rotate(0.3 - finWave);
             ctx.beginPath();
-            ctx.moveTo(12 * s, 0);
-            ctx.lineTo(22 * s, 6 * s);
-            ctx.lineTo(12 * s, 4 * s);
-            ctx.closePath();
+            ctx.ellipse(0, 0, 10 * s, 4 * s, 0.5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+            ctx.restore();
             
-            // 眼睛
+            // 眼睛外框
+            ctx.fillStyle = '#fff';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.ellipse(-5 * s, -8 * s, 5 * s, 4.5 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(5 * s, -8 * s, 5 * s, 4.5 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 眼球
+            ctx.fillStyle = '#1a1a2e';
+            ctx.beginPath();
+            ctx.arc(-5 * s, -7.5 * s, 2.5 * s, 0, Math.PI * 2);
+            ctx.arc(5 * s, -7.5 * s, 2.5 * s, 0, Math.PI * 2);
+            ctx.fill();
+            // 眼睛高光
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-5 * s, -8 * s, 4 * s, 0, Math.PI * 2);
-            ctx.arc(5 * s, -8 * s, 4 * s, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#222';
-            ctx.beginPath();
-            ctx.arc(-5 * s, -8 * s, 2 * s, 0, Math.PI * 2);
-            ctx.arc(5 * s, -8 * s, 2 * s, 0, Math.PI * 2);
+            ctx.arc(-6 * s, -9 * s, 1.2 * s, 0, Math.PI * 2);
+            ctx.arc(4 * s, -9 * s, 1.2 * s, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.shadowBlur = 0;
+            // 嘴巴
+            ctx.strokeStyle = isHit ? '#faa' : colors[2];
+            ctx.lineWidth = 1.5 * s;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(0, -14 * s, 3 * s, 0.2 * Math.PI, 0.8 * Math.PI);
+            ctx.stroke();
+            
+            // 鳞片纹理（微妙）
+            ctx.strokeStyle = `rgba(255,255,255,${isHit ? 0.4 : 0.15})`;
+            ctx.lineWidth = 0.5 * s;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(0, (-2 + i * 6) * s, (10 - i * 2) * s, 0.7 * Math.PI, 0.3 * Math.PI, true);
+                ctx.stroke();
+            }
         }
 
         // 绘制BOSS（大型鱼类）- 头朝下绘制
