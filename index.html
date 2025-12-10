@@ -102,7 +102,7 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
-            width: min(80vw, 360px);
+            width: min(85vw, 380px);
             z-index: 1;
         }
         .menu-btn {
@@ -147,7 +147,7 @@
             line-height: 1.8;
             padding: 12px 18px;
             background: rgba(0, 0, 0, 0.35);
-            border-radius: 15px;
+            border-radius: 14px;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
@@ -156,6 +156,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            box-sizing: border-box;
         }
 
         .game-title {
@@ -868,14 +869,14 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机基础射击率（每帧概率，第一关很少开火）===
+        // === 敌机基础射击率（每帧概率）===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.003,
-            tank: 0.004,
-            sniper: 0.005,
-            splitter: 0.003,
-            mini: 0.002,
-            normal: 0.004
+            fast: 0.008,
+            tank: 0.012,
+            sniper: 0.015,
+            splitter: 0.010,
+            mini: 0.006,
+            normal: 0.010
         };
         // 敌机射速随关卡递增的最大倍率
         const ENEMY_SHOOT_MAX_MULT = 1.5;
