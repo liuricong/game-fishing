@@ -436,6 +436,121 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
         
+        /* 首页右上角图标按钮 */
+        .top-right-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 2;
+        }
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(6px);
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .icon-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 11;
+        }
+        .close-btn:hover {
+            background: rgba(255,100,100,0.3);
+            border-color: rgba(255,100,100,0.6);
+        }
+        
+        /* 排行榜样式 */
+        #leaderboardScreen {
+            background: linear-gradient(180deg, rgba(0,26,51,0.98), rgba(0,51,102,0.98));
+        }
+        .leaderboard-list {
+            width: min(90vw, 350px);
+            max-height: 50vh;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .leaderboard-item.top1 {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+            border-color: rgba(255,215,0,0.5);
+        }
+        .leaderboard-item.top2 {
+            background: linear-gradient(135deg, rgba(192,192,192,0.15), rgba(169,169,169,0.1));
+            border-color: rgba(192,192,192,0.4);
+        }
+        .leaderboard-item.top3 {
+            background: linear-gradient(135deg, rgba(205,127,50,0.15), rgba(184,115,51,0.1));
+            border-color: rgba(205,127,50,0.4);
+        }
+        .leaderboard-rank {
+            font-size: 20px;
+            font-weight: 700;
+            width: 40px;
+            text-align: center;
+        }
+        .leaderboard-rank.gold { color: #ffd700; }
+        .leaderboard-rank.silver { color: #c0c0c0; }
+        .leaderboard-rank.bronze { color: #cd7f32; }
+        .leaderboard-score {
+            flex: 1;
+            text-align: right;
+            font-size: 22px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .leaderboard-date {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-left: 12px;
+            min-width: 70px;
+            text-align: right;
+        }
+        .leaderboard-empty {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            padding: 30px;
+            text-align: center;
+        }
+        
         /* 横屏旋转提示 - 平板适配 */
         #rotateWarning {
             position: fixed;
@@ -509,10 +624,13 @@
             <div style="font-size: 60px; margin-bottom: 6px; text-shadow:0 10px 30px rgba(255,105,180,.5); z-index: 1;">💖</div>
             <div class="game-title" style="z-index: 1;">爱的守护者</div>
             <div class="game-subtitle" style="z-index: 1;">LOVE GUARDIAN</div>
+            <div class="top-right-buttons">
+                <button class="icon-btn" onclick="showAchievements()" title="成就">🏆</button>
+                <button class="icon-btn" onclick="showLeaderboard()" title="排行榜">📊</button>
+            </div>
             <div class="menu-buttons" style="margin: 24px 0;">
                 <button class="menu-btn" onclick="showStageSelect()">🎯 闯关模式</button>
                 <button class="menu-btn secondary" onclick="startGame('endless')">♾️ 无尽模式</button>
-                <button class="menu-btn" onclick="showAchievements()" style="background: linear-gradient(180deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); border-color: rgba(255,215,0,0.4);">🏆 成就</button>
             </div>
             <div class="start-desc">
                 🐟 触摸屏幕控制小鱼 · 💧 自动发射气泡 · ✨ 收集道具增强火力
@@ -539,11 +657,11 @@
         
         <!-- 成就界面 -->
         <div class="overlay hidden" id="achievementScreen">
+            <button class="close-btn" onclick="hideAchievements()">×</button>
             <div style="font-size: 50px; margin-bottom: 10px;">🏆</div>
             <div class="game-title" style="font-size: 32px; margin-bottom: 5px;">成就</div>
             <div class="achievement-progress" id="achievementProgress">0 / 0</div>
             <div class="achievement-grid" id="achievementGrid"></div>
-            <button class="btn" onclick="hideAchievements()" style="background: linear-gradient(135deg, #666 0%, #444 100%); padding: 12px 40px; font-size: 16px;">🔙 返回</button>
         </div>
         
         <!-- 成就解锁弹窗 -->
@@ -553,6 +671,15 @@
                 <div class="popup-title">成就解锁!</div>
                 <div class="popup-name" id="popupName">成就名称</div>
             </div>
+        </div>
+        
+        <!-- 排行榜界面 -->
+        <div class="overlay hidden" id="leaderboardScreen">
+            <button class="close-btn" onclick="hideLeaderboard()">×</button>
+            <div style="font-size: 50px; margin-bottom: 10px;">📊</div>
+            <div class="game-title" style="font-size: 32px; margin-bottom: 5px;">无尽模式排行榜</div>
+            <div style="color: rgba(255,255,255,0.5); font-size: 13px;">TOP 10 最高分</div>
+            <div class="leaderboard-list" id="leaderboardList"></div>
         </div>
         
         <!-- 通关界面 -->
@@ -840,9 +967,82 @@
             const current = getEndlessHighScore();
             if (score > current) {
                 localStorage.setItem('endlessHighScore', score.toString());
-                return true;
             }
-            return false;
+            // 同时保存到排行榜
+            return addToLeaderboard(score);
+        }
+        
+        // === 排行榜系统 ===
+        const LEADERBOARD_MAX = 10; // 最多保存10条记录
+        
+        // 获取排行榜
+        function getLeaderboard() {
+            return JSON.parse(localStorage.getItem('endlessLeaderboard') || '[]');
+        }
+        
+        // 保存排行榜
+        function saveLeaderboard(leaderboard) {
+            localStorage.setItem('endlessLeaderboard', JSON.stringify(leaderboard));
+        }
+        
+        // 添加分数到排行榜
+        function addToLeaderboard(score) {
+            if (score <= 0) return false;
+            
+            const leaderboard = getLeaderboard();
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}/${now.getDate()}`;
+            
+            // 添加新记录
+            leaderboard.push({ score, date: dateStr });
+            
+            // 按分数排序
+            leaderboard.sort((a, b) => b.score - a.score);
+            
+            // 只保留前N名
+            const trimmed = leaderboard.slice(0, LEADERBOARD_MAX);
+            saveLeaderboard(trimmed);
+            
+            // 检查是否进入排行榜
+            return trimmed.some(item => item.score === score && item.date === dateStr);
+        }
+        
+        // 显示排行榜界面
+        function showLeaderboard() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('leaderboardScreen').classList.remove('hidden');
+            renderLeaderboard();
+        }
+        
+        // 隐藏排行榜界面
+        function hideLeaderboard() {
+            document.getElementById('leaderboardScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+        
+        // 渲染排行榜
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            const leaderboard = getLeaderboard();
+            
+            if (leaderboard.length === 0) {
+                list.innerHTML = '<div class="leaderboard-empty">还没有记录，去无尽模式创造传奇吧！</div>';
+                return;
+            }
+            
+            list.innerHTML = leaderboard.map((item, index) => {
+                const rankClass = index === 0 ? 'top1' : (index === 1 ? 'top2' : (index === 2 ? 'top3' : ''));
+                const rankColorClass = index === 0 ? 'gold' : (index === 1 ? 'silver' : (index === 2 ? 'bronze' : ''));
+                const rankIcon = index === 0 ? '🥇' : (index === 1 ? '🥈' : (index === 2 ? '🥉' : `${index + 1}`));
+                
+                return `
+                    <div class="leaderboard-item ${rankClass}">
+                        <div class="leaderboard-rank ${rankColorClass}">${rankIcon}</div>
+                        <div class="leaderboard-score">${item.score.toLocaleString()}</div>
+                        <div class="leaderboard-date">${item.date}</div>
+                    </div>
+                `;
+            }).join('');
         }
         
         // === 成就系统 ===
@@ -1169,8 +1369,10 @@
         // 绘制玩家鱼（矢量绘制 - 美化版）
         let playerAnimTime = 0;
         function drawPlayer() {
-            if (player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0) {
-                return;
+            // 无敌闪烁效果：用透明度实现
+            const isBlinking = player.invincible > 0 && Math.floor(player.invincible / 5) % 2 === 0;
+            if (isBlinking) {
+                ctx.globalAlpha = 0.3;
             }
             
             // 动画计时
@@ -1355,6 +1557,9 @@
                 ctx.stroke();
                 ctx.restore();
             }
+            
+            // 恢复透明度
+            ctx.globalAlpha = 1;
         }
 
         // 绘制子弹（水泡形状）
@@ -2384,6 +2589,9 @@
             playerShoot();
             if (player.shootCooldown > 0) player.shootCooldown--;
             
+            // 受伤无敌时间递减
+            if (player.invincible > 0) player.invincible--;
+            
             // 道具时间
             if (gameState.powerUpTime > 0) {
                 gameState.powerUpTime--;
@@ -2616,7 +2824,7 @@
             });
 
             // 碰撞检测：敌人子弹 vs 玩家（无敌时免疫）
-            if (!gameState.isInvincible) {
+            if (!gameState.isInvincible && player.invincible <= 0) {
                 bullets.forEach((bullet, bIndex) => {
                     if (bullet.type !== 'enemy') return;
                     
@@ -2768,11 +2976,18 @@
                 const highScore = getStageHighScore(gameState.currentStage);
                 stageInfo.innerHTML = `第 ${gameState.currentStage} 关 | 最高分: <span style="color:#ffd700">${highScore}</span>`;
             } else {
-                const isNewRecord = saveEndlessScore(gameState.score);
+                const enteredLeaderboard = saveEndlessScore(gameState.score);
                 const highScore = getEndlessHighScore();
-                stageInfo.innerHTML = isNewRecord 
-                    ? `🎉 新纪录! 最高分: <span style="color:#ffd700">${highScore}</span>`
-                    : `最高分: <span style="color:#ffd700">${highScore}</span>`;
+                const leaderboard = getLeaderboard();
+                const rank = leaderboard.findIndex(item => item.score === gameState.score) + 1;
+                
+                if (gameState.score === highScore && gameState.score > 0) {
+                    stageInfo.innerHTML = `🎉 新纪录! 排行榜第${rank}名!`;
+                } else if (enteredLeaderboard && rank > 0) {
+                    stageInfo.innerHTML = `🏅 进入排行榜第${rank}名! 最高分: <span style="color:#ffd700">${highScore}</span>`;
+                } else {
+                    stageInfo.innerHTML = `最高分: <span style="color:#ffd700">${highScore}</span>`;
+                }
             }
             
             document.getElementById('gameOverScreen').classList.remove('hidden');
@@ -3277,6 +3492,16 @@
         function homepageAnimationLoop() {
             hpFrame++;
             hpCtx.clearRect(0, 0, hpCanvas.width, hpCanvas.height);
+            
+            // 绘制背景图
+            if (bgImageReady) {
+                const scale = Math.max(hpCanvas.width / bgImage.width, hpCanvas.height / bgImage.height);
+                const w = bgImage.width * scale;
+                const h = bgImage.height * scale;
+                const x = (hpCanvas.width - w) / 2;
+                const y = (hpCanvas.height - h) / 2;
+                hpCtx.drawImage(bgImage, x, y, w, h);
+            }
             
             // 绘制光斑
             for (let ray of lightRays) {
