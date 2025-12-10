@@ -331,10 +331,167 @@
                 display: block;
             }
         }
+        
+        /* 成就系统样式 */
+        #achievementScreen {
+            background: linear-gradient(180deg, rgba(0,26,51,0.98), rgba(0,51,102,0.98));
+        }
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 400px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .achievement-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .achievement-card.unlocked {
+            background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1));
+            border-color: rgba(255,215,0,0.5);
+            box-shadow: 0 0 15px rgba(255,215,0,0.2);
+        }
+        .achievement-card.locked {
+            opacity: 0.5;
+            filter: grayscale(0.5);
+        }
+        .achievement-icon {
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+        .achievement-name {
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .achievement-desc {
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            line-height: 1.3;
+        }
+        .achievement-card.unlocked .achievement-name {
+            color: #ffd700;
+        }
+        /* 成就解锁弹窗 */
+        .achievement-popup {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, rgba(255,215,0,0.9), rgba(255,165,0,0.9));
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 30px rgba(255,215,0,0.4);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+        }
+        .achievement-popup.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .achievement-popup .popup-icon {
+            font-size: 36px;
+        }
+        .achievement-popup .popup-text {
+            text-align: left;
+        }
+        .achievement-popup .popup-title {
+            color: #333;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .achievement-popup .popup-name {
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .achievement-progress {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* 生命显示 */
+        .lives-display {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            z-index: 5;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* 横屏旋转提示 - 平板适配 */
+        #rotateWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #001a33 0%, #003366 50%, #004080 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .rotate-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: rotate-phone 2s ease-in-out infinite;
+        }
+        @keyframes rotate-phone {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-30deg); }
+            75% { transform: rotate(30deg); }
+        }
+        .rotate-text {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .rotate-hint {
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            text-align: center;
+        }
+        /* 只在触屏设备横屏时显示旋转提示 */
+        @media (pointer: coarse) and (orientation: landscape) and (min-width: 600px) {
+            #rotateWarning {
+                display: flex;
+            }
+            .game-container {
+                display: none;
+            }
+        }
     </style>
     <script src="static/bg-base64.js"></script>
 </head>
 <body>
+    <!-- 横屏旋转提示 -->
+    <div id="rotateWarning">
+        <div class="rotate-icon">📱</div>
+        <div class="rotate-text">请旋转设备</div>
+        <div class="rotate-hint">竖屏游戏体验更佳</div>
+    </div>
+    
     <div class="game-container">
         <canvas id="gameCanvas" width="480" height="640"></canvas>
         
@@ -343,6 +500,7 @@
         </div>
         
         <div class="powerup-status" id="powerupStatus"></div>
+        <div class="lives-display" id="livesDisplay"></div>
         <div class="wave-display" id="waveDisplay"></div>
         
         <!-- 开始界面 -->
@@ -354,6 +512,7 @@
             <div class="menu-buttons" style="margin: 24px 0;">
                 <button class="menu-btn" onclick="showStageSelect()">🎯 闯关模式</button>
                 <button class="menu-btn secondary" onclick="startGame('endless')">♾️ 无尽模式</button>
+                <button class="menu-btn" onclick="showAchievements()" style="background: linear-gradient(180deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1)); border-color: rgba(255,215,0,0.4);">🏆 成就</button>
             </div>
             <div class="start-desc">
                 🐟 触摸屏幕控制小鱼 · 💧 自动发射气泡 · ✨ 收集道具增强火力
@@ -376,6 +535,24 @@
             <div id="stageInfo" style="color: #ff69b4; font-size: 18px; margin: 10px 0;"></div>
             <button class="btn btn-restart" onclick="restartGame()">💕 再次守护</button>
             <button class="btn" onclick="backToMenu()" style="background: linear-gradient(135deg, #666 0%, #444 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">🏠 返回菜单</button>
+        </div>
+        
+        <!-- 成就界面 -->
+        <div class="overlay hidden" id="achievementScreen">
+            <div style="font-size: 50px; margin-bottom: 10px;">🏆</div>
+            <div class="game-title" style="font-size: 32px; margin-bottom: 5px;">成就</div>
+            <div class="achievement-progress" id="achievementProgress">0 / 0</div>
+            <div class="achievement-grid" id="achievementGrid"></div>
+            <button class="btn" onclick="hideAchievements()" style="background: linear-gradient(135deg, #666 0%, #444 100%); padding: 12px 40px; font-size: 16px;">🔙 返回</button>
+        </div>
+        
+        <!-- 成就解锁弹窗 -->
+        <div class="achievement-popup" id="achievementPopup">
+            <div class="popup-icon" id="popupIcon">🏆</div>
+            <div class="popup-text">
+                <div class="popup-title">成就解锁!</div>
+                <div class="popup-name" id="popupName">成就名称</div>
+            </div>
         </div>
         
         <!-- 通关界面 -->
@@ -434,7 +611,14 @@
             ENDLESS_FIRST_BOSS_SCORE: 2200,
             ENDLESS_NEXT_BOSS_ADD: 2500,
             // 无尽模式：相邻两次Boss之间至少间隔的时间（帧）
-            BOSS_MIN_TIME_ENDLESS: 35 * 60   // 35秒
+            BOSS_MIN_TIME_ENDLESS: 35 * 60,   // 35秒
+            
+            // 无尽模式生命数
+            ENDLESS_LIVES: 3,
+            // 受击后无敌时间（帧）
+            RESPAWN_INVINCIBLE: 120,   // 2秒
+            // 彩蛋Boss强化持续时间（帧）
+            SECRET_BUFF_DURATION: 1800  // 30秒
         };
         
         // === 武器冷却/发数/间距配置（方案A）===
@@ -549,7 +733,10 @@
                 stageEnemyCount: 0,
                 stageBossSpawned: false,
                 elapsedFrames: 0,
-                lastBossEndFrame: -99999
+                lastBossEndFrame: -99999,
+                lives: mode === 'endless' ? CONFIG.ENDLESS_LIVES : 1,  // 无尽模式3条命
+                secretBuff: false,      // 彩蛋Boss强化状态
+                secretBuffTime: 0       // 强化剩余时间
             };
             
             initStars();
@@ -658,6 +845,162 @@
             return false;
         }
         
+        // === 成就系统 ===
+        const ACHIEVEMENTS = [
+            // 基础成就
+            { id: 'first_blood', icon: '🎉', name: '初次出击', desc: '击败第一个敌人', check: (stats) => stats.totalKills >= 1 },
+            { id: 'killer_10', icon: '🗡️', name: '小试牛刀', desc: '累计击败10个敌人', check: (stats) => stats.totalKills >= 10 },
+            { id: 'killer_100', icon: '⚔️', name: '杀手', desc: '累计击败100个敌人', check: (stats) => stats.totalKills >= 100 },
+            { id: 'killer_500', icon: '💀', name: '死神', desc: '累计击败500个敌人', check: (stats) => stats.totalKills >= 500 },
+            
+            // Boss成就
+            { id: 'boss_slayer', icon: '🐉', name: '屠龙者', desc: '击败第一个Boss', check: (stats) => stats.bossKills >= 1 },
+            { id: 'boss_hunter', icon: '🤺', name: 'Boss猎人', desc: '累计击败5个Boss', check: (stats) => stats.bossKills >= 5 },
+            { id: 'boss_master', icon: '👑', name: 'Boss大师', desc: '累计击败20个Boss', check: (stats) => stats.bossKills >= 20 },
+            
+            // 分数成就
+            { id: 'score_1000', icon: '💰', name: '千分达人', desc: '单局达到1000分', check: (stats) => stats.highScore >= 1000 },
+            { id: 'score_5000', icon: '💎', name: '分数大师', desc: '单局达到5000分', check: (stats) => stats.highScore >= 5000 },
+            { id: 'score_10000', icon: '🏆', name: '万分传说', desc: '单局达到10000分', check: (stats) => stats.highScore >= 10000 },
+            
+            // 连击成就
+            { id: 'combo_10', icon: '🔥', name: '连击新手', desc: '达成10连击', check: (stats) => stats.maxCombo >= 10 },
+            { id: 'combo_30', icon: '💥', name: '连击高手', desc: '达成30连击', check: (stats) => stats.maxCombo >= 30 },
+            { id: 'combo_50', icon: '☄️', name: '连击大师', desc: '达成50连击', check: (stats) => stats.maxCombo >= 50 },
+            
+            // 通关成就
+            { id: 'stage_5', icon: '⭐', name: '新手毕业', desc: '通关第5关', check: (stats) => stats.maxStage >= 5 },
+            { id: 'stage_10', icon: '🌟', name: '中级守护者', desc: '通关第10关', check: (stats) => stats.maxStage >= 10 },
+            { id: 'stage_15', icon: '💫', name: '高级守护者', desc: '通关第15关', check: (stats) => stats.maxStage >= 15 },
+            { id: 'stage_20', icon: '💖', name: '爱的守护者', desc: '通关全20关', check: (stats) => stats.maxStage >= 20 },
+            
+            // 特殊成就
+            { id: 'powerup_collector', icon: '✨', name: '道具收集者', desc: '累计拾取50个道具', check: (stats) => stats.powerupsCollected >= 50 },
+            { id: 'survivor', icon: '🛡️', name: '生存专家', desc: '累计游戏10次', check: (stats) => stats.gamesPlayed >= 10 },
+            { id: 'veteran', icon: '🎖️', name: '老兵', desc: '累计游戏50次', check: (stats) => stats.gamesPlayed >= 50 }
+        ];
+        
+        // 获取统计数据
+        function getGameStats() {
+            return JSON.parse(localStorage.getItem('gameStats') || JSON.stringify({
+                totalKills: 0,
+                bossKills: 0,
+                highScore: 0,
+                maxCombo: 0,
+                maxStage: 0,
+                powerupsCollected: 0,
+                gamesPlayed: 0
+            }));
+        }
+        
+        // 保存统计数据
+        function saveGameStats(stats) {
+            localStorage.setItem('gameStats', JSON.stringify(stats));
+        }
+        
+        // 获取已解锁成就
+        function getUnlockedAchievements() {
+            return JSON.parse(localStorage.getItem('unlockedAchievements') || '[]');
+        }
+        
+        // 保存解锁成就
+        function saveUnlockedAchievements(achievements) {
+            localStorage.setItem('unlockedAchievements', JSON.stringify(achievements));
+        }
+        
+        // 检查并解锁成就
+        function checkAchievements() {
+            const stats = getGameStats();
+            const unlocked = getUnlockedAchievements();
+            let newUnlocks = [];
+            
+            ACHIEVEMENTS.forEach(ach => {
+                if (!unlocked.includes(ach.id) && ach.check(stats)) {
+                    unlocked.push(ach.id);
+                    newUnlocks.push(ach);
+                }
+            });
+            
+            if (newUnlocks.length > 0) {
+                saveUnlockedAchievements(unlocked);
+                // 不再显示弹窗，避免遮挡游戏画面
+            }
+        }
+        
+        // 显示成就解锁弹窗
+        function showAchievementPopup(achievement) {
+            const popup = document.getElementById('achievementPopup');
+            document.getElementById('popupIcon').textContent = achievement.icon;
+            document.getElementById('popupName').textContent = achievement.name;
+            popup.classList.add('show');
+            
+            setTimeout(() => {
+                popup.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 显示成就界面
+        function showAchievements() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('achievementScreen').classList.remove('hidden');
+            renderAchievementGrid();
+        }
+        
+        // 隐藏成就界面
+        function hideAchievements() {
+            document.getElementById('achievementScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+        
+        // 渲染成就列表
+        function renderAchievementGrid() {
+            const grid = document.getElementById('achievementGrid');
+            const unlocked = getUnlockedAchievements();
+            
+            document.getElementById('achievementProgress').textContent = `${unlocked.length} / ${ACHIEVEMENTS.length}`;
+            
+            grid.innerHTML = ACHIEVEMENTS.map(ach => {
+                const isUnlocked = unlocked.includes(ach.id);
+                return `
+                    <div class="achievement-card ${isUnlocked ? 'unlocked' : 'locked'}">
+                        <div class="achievement-icon">${ach.icon}</div>
+                        <div class="achievement-name">${ach.name}</div>
+                        <div class="achievement-desc">${ach.desc}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 更新统计数据
+        function updateStats(type, value) {
+            const stats = getGameStats();
+            switch(type) {
+                case 'kill':
+                    stats.totalKills += value;
+                    break;
+                case 'bossKill':
+                    stats.bossKills += value;
+                    break;
+                case 'score':
+                    if (value > stats.highScore) stats.highScore = value;
+                    break;
+                case 'combo':
+                    if (value > stats.maxCombo) stats.maxCombo = value;
+                    break;
+                case 'stage':
+                    if (value > stats.maxStage) stats.maxStage = value;
+                    break;
+                case 'powerup':
+                    stats.powerupsCollected += value;
+                    break;
+                case 'game':
+                    stats.gamesPlayed += value;
+                    break;
+            }
+            saveGameStats(stats);
+            checkAchievements();
+        }
+        
         // 显示关卡选择界面
         function showStageSelect() {
             document.getElementById('startScreen').classList.add('hidden');
@@ -735,6 +1078,14 @@
             
             // 更新道具状态显示
             updatePowerupStatus();
+            
+            // 更新生命显示（仅无尽模式）
+            const livesDisplay = document.getElementById('livesDisplay');
+            if (gameState.gameMode === 'endless') {
+                livesDisplay.textContent = '❤️'.repeat(gameState.lives);
+            } else {
+                livesDisplay.textContent = '';
+            }
         }
         
         // 更新道具状态图标
@@ -768,6 +1119,15 @@
                 html += `<div class="powerup-icon" style="border-color: #00e5ff;">
                     🛰️
                     <div class="timer-bar" style="width: ${percent}%; background: #00e5ff;"></div>
+                </div>`;
+            }
+            
+            // 彩蛋Boss强化
+            if (gameState.secretBuff && gameState.secretBuffTime > 0) {
+                const percent = (gameState.secretBuffTime / CONFIG.SECRET_BUFF_DURATION) * 100;
+                html += `<div class="powerup-icon" style="border-color: #ff4500;">
+                    🔥
+                    <div class="timer-bar" style="width: ${percent}%; background: #ff4500;"></div>
                 </div>`;
             }
             
@@ -1497,6 +1857,11 @@
             const cfg = WEAPON_CONFIG[type] || WEAPON_CONFIG.none;
             let cooldown = cfg.cd[idx] ?? cfg.cd[0];
             
+            // 彩蛋Boss强化：攻速+50%
+            if (gameState.secretBuff) {
+                cooldown = Math.floor(cooldown * 0.5);
+            }
+            
             function shoot(x, y, vx, vy, extra = {}) {
                 bullets.push(Object.assign({ x, y, vx, vy, type: 'player' }, extra));
             }
@@ -1642,6 +2007,14 @@
             { name: '爱神丘比特', color: '#ff69b4', shape: 'cupid', bulletPattern: 'heart' }
         ];
         
+        // 彩蛋 Boss 配置 - 5%概率替代普通 Boss
+        const SECRET_BOSS_CONFIGS = [
+            { name: '🧙‍♀️ 海洋美人鱼', color: '#ff69b4', shape: 'mermaid', bulletPattern: 'heart', hpMult: 1.5, rewardMult: 3 },
+            { name: '🐲 海龙王', color: '#ffd700', shape: 'seadragon', bulletPattern: 'breath', hpMult: 2, rewardMult: 5 },
+            { name: '🦑 远古巨鱸', color: '#4a69bd', shape: 'whale', bulletPattern: 'wave', hpMult: 1.8, rewardMult: 4 }
+        ];
+        const SECRET_BOSS_CHANCE = 0.05; // 5%概率
+        
         // 生成Boss
         function spawnBoss() {
             if (gameState.bossActive) return;
@@ -1657,11 +2030,26 @@
                 if (bossLevel > 20) bossLevel = ((bossLevel - 1) % 20) + 1;
             }
             
-            const bossConfig = BOSS_CONFIGS[(bossLevel - 1) % 20];
+            // 判断是否触发彩蛋Boss
+            const isSecretBoss = Math.random() < SECRET_BOSS_CHANCE;
+            let bossConfig;
+            let hpMultiplier = 1;
+            let rewardMultiplier = 1;
+            
+            if (isSecretBoss) {
+                // 随机选择一个彩蛋Boss
+                const secretBoss = SECRET_BOSS_CONFIGS[Math.floor(Math.random() * SECRET_BOSS_CONFIGS.length)];
+                bossConfig = secretBoss;
+                hpMultiplier = secretBoss.hpMult || 1;
+                rewardMultiplier = secretBoss.rewardMult || 1;
+            } else {
+                bossConfig = BOSS_CONFIGS[(bossLevel - 1) % 20];
+            }
             
             // Boss属性随关卡递增 - 提高耐久
-            const hp = 150 + bossLevel * 50; // 第1关:200HP, 第20关:1150HP
-            const size = 220 + bossLevel * 8; // 更大尺寸：第1关≈228，第20关≈380
+            const baseHp = 150 + bossLevel * 50; // 第1关:200HP, 第20关:1150HP
+            const hp = Math.floor(baseHp * hpMultiplier);
+            const size = 220 + bossLevel * 8; // 更大尺寸：第1关≈2
             
             // 根据Boss造型映射到飞机模型（与绘制保持一致），用于估算更贴合的判定框
             const planeByShape = {
@@ -1710,7 +2098,9 @@
                 bossLevel: bossLevel,
                 bossConfig: bossConfig,
                 shootTimer: 0,
-                animTimer: 0
+                animTimer: 0,
+                isSecretBoss: isSecretBoss,
+                rewardMultiplier: rewardMultiplier
             };
             enemies.push(bossObj);
             
@@ -1734,13 +2124,21 @@
             { type: 'spread', icon: '🌟', name: '散射', color: '#e74c3c' },
             { type: 'laser', icon: '💠', name: '激光', color: '#00ff88' },
             { type: 'shield', icon: '🛡️', name: '无敌护盾', color: '#ffd700' },
-            { type: 'drone', icon: '🛰️', name: '聪仔机', color: '#00e5ff' }
+            { type: 'drone', icon: '🛰️', name: '聪仔机', color: '#00e5ff' },
+            { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', endlessOnly: true }
         ];
         
         // 生成道具
         function spawnPowerUp(x, y) {
             if (Math.random() < CONFIG.POWERUP_DROP_RATE) {
-                const powerType = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                // 过滤道具：无尽模式才能掉落爱心，且生命未满时才掉落
+                let availableTypes = POWERUP_TYPES.filter(p => {
+                    if (p.type === 'heart') {
+                        return gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES;
+                    }
+                    return !p.endlessOnly || gameState.gameMode === 'endless';
+                });
+                const powerType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
                 powerUps.push({
                     x: x,
                     y: y,
@@ -2012,6 +2410,14 @@
                     drones = [];
                 }
             }
+            
+            // 彩蛋Boss强化时间
+            if (gameState.secretBuff && gameState.secretBuffTime > 0) {
+                gameState.secretBuffTime--;
+                if (gameState.secretBuffTime === 0) {
+                    gameState.secretBuff = false;
+                }
+            }
 
             // 聪仔机跟随与开火
             if (gameState.droneActive && drones.length) {
@@ -2128,11 +2534,13 @@
                             // Boss被击败
                             if (enemy.type === 'boss') {
                                 gameState.bossActive = false;
+                                updateStats('bossKill', 1); // 成就: Boss击杀
                                 
-                                // Boss掉落多个道具
-                                for (let i = 0; i < 3; i++) {
+                                // Boss掉落多个道具（彩蛋Boss掉落更多）
+                                const dropCount = enemy.isSecretBoss ? 6 : 3;
+                                for (let i = 0; i < dropCount; i++) {
                                     setTimeout(() => {
-                                        spawnPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y);
+                                        spawnPowerUp(enemy.x + (Math.random() - 0.5) * 80, enemy.y);
                                     }, i * 100);
                                 }
                                 
@@ -2142,6 +2550,7 @@
                                     
                                     // 解锁下一关
                                     saveUnlockedStage(gameState.currentStage + 1);
+                                    updateStats('stage', gameState.currentStage); // 成就: 通关
                                     
                                     if (gameState.currentStage >= gameState.maxStage) {
                                         // 通关了!
@@ -2159,6 +2568,18 @@
                                     gameState.endlessBossCount++;
                                     gameState.nextBossScore += CONFIG.ENDLESS_NEXT_BOSS_ADD; // 提高下一次Boss分数阈值
                                     gameState.lastBossEndFrame = gameState.elapsedFrames;     // 记录Boss结束时间
+                                    
+                                    // 彩蛋Boss奖励：激活攻速强化
+                                    if (enemy.isSecretBoss) {
+                                        gameState.secretBuff = true;
+                                        gameState.secretBuffTime = CONFIG.SECRET_BUFF_DURATION;
+                                        // 显示强化提示
+                                        const waveDisplay = document.getElementById('waveDisplay');
+                                        waveDisplay.textContent = '🔥 攻速强化 30秒!';
+                                        waveDisplay.classList.remove('show');
+                                        void waveDisplay.offsetWidth;
+                                        waveDisplay.classList.add('show');
+                                    }
                                 }
                             } else {
                                 spawnPowerUp(enemy.x, enemy.y);
@@ -2168,11 +2589,12 @@
                                 }
                             }
                             enemies.splice(eIndex, 1);
+                            updateStats('kill', 1); // 成就: 击杀敌人
                             
                             // 计分（降分 + 连击封顶）
                             let points;
                             switch(enemy.type) {
-                                case 'boss': points = 400; break;
+                                case 'boss': points = 400 * (enemy.rewardMultiplier || 1); break;
                                 case 'tank': points = 60; break;
                                 case 'sniper': points = 50; break;
                                 case 'splitter': points = 40; break;
@@ -2183,9 +2605,11 @@
                             gameState.combo++;
                             if (gameState.combo > gameState.maxCombo) {
                                 gameState.maxCombo = gameState.combo;
+                                updateStats('combo', gameState.combo); // 成就: 连击
                             }
                             const comboMult = 1 + Math.min(gameState.combo, 10) * 0.05; // 最高1.5x
                             gameState.score += Math.floor(points * comboMult);
+                            updateStats('score', gameState.score); // 成就: 分数
                         }
                     }
                 });
@@ -2228,6 +2652,12 @@
                         gameState.droneActive = true;
                         gameState.droneTime = CONFIG.DRONE_DURATION;
                         summonDrones();
+                    } else if (p.powerType === 'heart') {
+                        // 爱心 - 恢复生命（仅无尽模式）
+                        if (gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES) {
+                            gameState.lives++;
+                            showLivesHint();
+                        }
                     } else {
                         // 武器道具 - 同类叠加升级（最多3级），不同则切换为1级
                         if (gameState.powerUpType === p.powerType) {
@@ -2239,6 +2669,7 @@
                         gameState.powerUpTime = CONFIG.POWERUP_DURATION;
                     }
                     powerUps.splice(index, 1);
+                    updateStats('powerup', 1); // 成就: 拾取道具
                 }
             });
 
@@ -2293,15 +2724,37 @@
             updateUI();
         }
 
-        // 玩家受击 - 直接死亡
+        // 玩家受击
         function playerHit() {
             createExplosion(player.x, player.y, 1.5);
-            gameOver();
+            
+            // 无尽模式有多条命
+            if (gameState.gameMode === 'endless' && gameState.lives > 1) {
+                gameState.lives--;
+                // 给予短暂无敌时间
+                player.invincible = CONFIG.RESPAWN_INVINCIBLE;
+                // 重置连击
+                gameState.combo = 0;
+                // 显示剩余生命提示
+                showLivesHint();
+            } else {
+                gameOver();
+            }
+        }
+        
+        // 显示剩余生命提示
+        function showLivesHint() {
+            const waveDisplay = document.getElementById('waveDisplay');
+            waveDisplay.textContent = '❤️'.repeat(gameState.lives);
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
         }
 
         // 游戏结束
         function gameOver() {
             gameState.isRunning = false;
+            updateStats('game', 1); // 成就: 游戏次数
             document.getElementById('finalScore').textContent = gameState.score;
             
             // 记录失败关卡用于"再次守护"
@@ -2872,6 +3325,35 @@
                 homepageFish.forEach(f => { f.w = w; f.h = h; });
             }
         });
+        
+        // 检测是否为平板横屏
+        function isTabletLandscape() {
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const isTabletSize = window.innerWidth >= 600;
+            return isTouchDevice && isLandscape && isTabletSize;
+        }
+        
+        // 屏幕方向变化时检查
+        function checkOrientation() {
+            if (isTabletLandscape()) {
+                // 横屏时暂停游戏
+                if (gameState.isRunning && !gameState.isPaused) {
+                    gameState.isPaused = true;
+                }
+            } else {
+                // 竖屏时恢复游戏
+                if (gameState.isPaused) {
+                    gameState.isPaused = false;
+                }
+            }
+        }
+        
+        // 监听屏幕方向变化
+        window.addEventListener('orientationchange', () => {
+            setTimeout(checkOrientation, 100);
+        });
+        window.addEventListener('resize', checkOrientation);
         
         // 启动首页动画
         initHomepageAnimation();
