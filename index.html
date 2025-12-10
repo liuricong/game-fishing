@@ -826,9 +826,9 @@
             ENEMY_BASE_SPEED: 3,
             STAR_COUNT: 150,
             // === 方案A：道具持续时长（帧 @60fps）===
-            POWERUP_DURATION: 480,      // 武器道具持续8秒
-            SHIELD_DURATION: 180,       // 护盾持续3秒
-            DRONE_DURATION: 600,        // 聪仔机持续10秒
+            POWERUP_DURATION: 600,      // 武器道具持续10秒
+            SHIELD_DURATION: 360,       // 护盾持续6秒
+            DRONE_DURATION: 720,        // 聪仔鱼持续12秒
             // === 道具掉落率 ===
             POWERUP_DROP_RATE: 0.20,    // 20%掉落几率
             // === 小鱼射速 ===
@@ -3125,9 +3125,9 @@
                         gameState.isInvincible = true;
                         gameState.invincibleTime = CONFIG.SHIELD_DURATION;
                     } else if (p.powerType === 'drone') {
-                        // 聪仔鱼 - 可叠加，最多2只
+                        // 聪仔鱼 - 可叠加，最多2只，时间重置
                         gameState.droneActive = true;
-                        gameState.droneTime = CONFIG.DRONE_DURATION;
+                        gameState.droneTime = CONFIG.DRONE_DURATION; // 重置时间
                         addDrone();
                     } else if (p.powerType === 'heart') {
                         // 爱心 - 恢复生命（仅无尽模式）
@@ -3139,14 +3139,14 @@
                         // 黑洞 - 在顶部中央生成黑洞
                         spawnBlackhole(CONFIG.CANVAS_WIDTH / 2, 150);
                     } else {
-                        // 武器道具 - 同类叠加升级（最多3级），不同则切换为1级
+                        // 武器道具 - 同类叠加升级（最多3级），时间重置
                         if (gameState.powerUpType === p.powerType) {
                             gameState.powerUpLevel = Math.min(3, (gameState.powerUpLevel || 0) + 1);
                         } else {
                             gameState.powerUpType = p.powerType;
                             gameState.powerUpLevel = 1;
                         }
-                        gameState.powerUpTime = CONFIG.POWERUP_DURATION;
+                        gameState.powerUpTime = CONFIG.POWERUP_DURATION; // 重置时间
                     }
                     powerUps.splice(index, 1);
                     updateStats('powerup', 1); // 成就: 拾取道具
