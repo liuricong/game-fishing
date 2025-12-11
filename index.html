@@ -1422,15 +1422,11 @@
             document.getElementById('stageClearScreen').classList.add('hidden');
             
             if (gameState.gameMode === 'stage') {
-                // 从失败的关卡继续
+                // 从失败的关卡继续：复用 startGame('stage') 以统一处理所有UI（含暂停按钮显示）
                 const resume = parseInt(localStorage.getItem('resumeStage') || `${gameState.currentStage || 1}`);
-                initGame('stage');
+                startGame('stage');
                 gameState.currentStage = Math.max(1, Math.min(resume, gameState.maxStage));
-                gameState.isRunning = true;
-                // 显示暂停按钮（之前遗漏，导致看不到）
-                document.getElementById('pauseBtn').classList.remove('hidden');
                 showStage();
-                gameLoop();
             } else {
                 startGame('endless');
             }
