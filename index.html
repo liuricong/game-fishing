@@ -334,6 +334,102 @@
             80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
         }
+        
+        /* Boss血条UI */
+        .boss-hp-container {
+            position: absolute;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            z-index: 6;
+            pointer-events: none;
+            width: 50%;
+            min-width: 180px;
+            max-width: 280px;
+        }
+        .boss-hp-container.show {
+            display: flex;
+            animation: boss-hp-appear 0.5s ease-out;
+        }
+        @keyframes boss-hp-appear {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        .boss-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .boss-name .phase-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b, #d63031);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+            vertical-align: middle;
+            box-shadow: 0 2px 6px rgba(214, 48, 49, 0.5);
+        }
+        .boss-hp-bar-outer {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4), inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .boss-hp-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc66);
+            border-radius: 4px;
+            transition: width 0.15s ease-out;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+        .boss-hp-bar-inner.low {
+            background: linear-gradient(90deg, #ff6b6b, #d63031);
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+            animation: hp-low-pulse 0.5s ease-in-out infinite;
+        }
+        .boss-hp-bar-inner.medium {
+            background: linear-gradient(90deg, #ffd93d, #ff9f1a);
+            box-shadow: 0 0 10px rgba(255, 217, 61, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+        @keyframes hp-low-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .boss-phase-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 2px;
+        }
+        .boss-phase-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: all 0.3s ease;
+        }
+        .boss-phase-dot.active {
+            background: #ffd700;
+            border-color: #ffd700;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        }
+        .boss-phase-dot.completed {
+            background: #00ff88;
+            border-color: #00ff88;
+            box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+        }
 
         /* 移动端适配 */
         @media (max-width: 520px) {
@@ -718,6 +814,15 @@
         <div class="lives-display" id="livesDisplay"></div>
         <div class="wave-display" id="waveDisplay"></div>
         
+        <!-- Boss血条 -->
+        <div class="boss-hp-container" id="bossHpContainer">
+            <div class="boss-name" id="bossName">Boss名称</div>
+            <div class="boss-hp-bar-outer">
+                <div class="boss-hp-bar-inner" id="bossHpBar" style="width: 100%;"></div>
+            </div>
+            <div class="boss-phase-dots" id="bossPhaseDots"></div>
+        </div>
+        
         <!-- 开始界面 -->
         <div class="overlay" id="startScreen">
             <canvas id="homepageCanvas"></canvas>
@@ -1039,6 +1144,7 @@
             document.getElementById('pauseScreen').classList.add('hidden');
             document.getElementById('pauseBtn').classList.add('hidden');
             document.getElementById('startScreen').classList.remove('hidden');
+            hideBossHpBar(); // 隐藏Boss血条
             initHomepageAnimation(); // 重新启动首页动画
             showRandomQuote(); // 显示随机文案
         }
@@ -1128,6 +1234,86 @@
             waveDisplay.classList.remove('show');
             void waveDisplay.offsetWidth;
             waveDisplay.classList.add('show');
+        }
+        
+        // === Boss血条控制 ===
+        function showBossHpBar(boss) {
+            const container = document.getElementById('bossHpContainer');
+            const nameEl = document.getElementById('bossName');
+            const barEl = document.getElementById('bossHpBar');
+            const dotsEl = document.getElementById('bossPhaseDots');
+            
+            // 设置Boss名称
+            let nameHtml = boss.bossConfig.name;
+            if (boss.isMultiPhase) {
+                nameHtml += `<span class="phase-badge">阶段 ${boss.currentPhase}/3</span>`;
+            }
+            nameEl.innerHTML = nameHtml;
+            
+            // 设置血条
+            barEl.style.width = '100%';
+            barEl.classList.remove('low', 'medium');
+            
+            // 设置阶段指示点（三阶段Boss）
+            if (boss.isMultiPhase) {
+                dotsEl.innerHTML = `
+                    <div class="boss-phase-dot active"></div>
+                    <div class="boss-phase-dot"></div>
+                    <div class="boss-phase-dot"></div>
+                `;
+                dotsEl.style.display = 'flex';
+            } else {
+                dotsEl.style.display = 'none';
+            }
+            
+            // 显示容器
+            container.classList.add('show');
+        }
+        
+        function updateBossHpBar(boss) {
+            const container = document.getElementById('bossHpContainer');
+            if (!container.classList.contains('show')) return;
+            
+            const nameEl = document.getElementById('bossName');
+            const barEl = document.getElementById('bossHpBar');
+            const dotsEl = document.getElementById('bossPhaseDots');
+            
+            const hpPercent = Math.max(0, boss.hp / boss.maxHp);
+            barEl.style.width = (hpPercent * 100) + '%';
+            
+            // 根据血量设置颜色
+            barEl.classList.remove('low', 'medium');
+            if (hpPercent <= 0.25) {
+                barEl.classList.add('low');
+            } else if (hpPercent <= 0.5) {
+                barEl.classList.add('medium');
+            }
+            
+            // 更新三阶段Boss信息
+            if (boss.isMultiPhase) {
+                // 更新名称和阶段标记
+                let nameHtml = boss.multiPhaseConfig.name;
+                const phaseNames = ['Ⅰ', 'Ⅱ', 'Ⅲ'];
+                nameHtml += ` ${phaseNames[boss.currentPhase - 1]}`;
+                nameHtml += `<span class="phase-badge">阶段 ${boss.currentPhase}/3</span>`;
+                nameEl.innerHTML = nameHtml;
+                
+                // 更新阶段点
+                const dots = dotsEl.querySelectorAll('.boss-phase-dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.remove('active', 'completed');
+                    if (i < boss.currentPhase - 1) {
+                        dot.classList.add('completed');
+                    } else if (i === boss.currentPhase - 1) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+        }
+        
+        function hideBossHpBar() {
+            const container = document.getElementById('bossHpContainer');
+            container.classList.remove('show');
         }
         
         // 获取已解锁关卡
@@ -3723,6 +3909,11 @@
             waveDisplay.classList.remove('show');
             void waveDisplay.offsetWidth;
             waveDisplay.classList.add('show');
+            
+            // 延迟显示Boss血条（等Boss进入画面）
+            setTimeout(() => {
+                showBossHpBar(bossObj);
+            }, 1500);
         }
 
         // 三阶段Boss阶段转换
@@ -4270,6 +4461,11 @@
                             spawnBossPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y + 50);
                         }
                         
+                        // 更新Boss血条
+                        if (enemy.type === 'boss') {
+                            updateBossHpBar(enemy);
+                        }
+                        
                         // 三阶段Boss阶段转换检查
                         if (enemy.type === 'boss' && enemy.isMultiPhase && !enemy.phaseTransitioning) {
                             const config = enemy.multiPhaseConfig;
@@ -4292,6 +4488,7 @@
                             // Boss被击败
                             if (enemy.type === 'boss') {
                                 gameState.bossActive = false;
+                                hideBossHpBar(); // 隐藏Boss血条
                                 updateStats('bossKill', 1); // 成就: Boss击杀
                                 
                                 // Boss掉落多个道具（三阶段Boss和彩蛋Boss掉落更多）
@@ -4521,6 +4718,7 @@
         function gameOver() {
             gameState.isRunning = false;
             document.getElementById('pauseBtn').classList.add('hidden');
+            hideBossHpBar(); // 隐藏Boss血条
             updateStats('game', 1); // 成就: 游戏次数
             document.getElementById('finalScore').textContent = gameState.score;
             
@@ -4556,6 +4754,7 @@
         function gameWin() {
             gameState.isRunning = false;
             document.getElementById('pauseBtn').classList.add('hidden');
+            hideBossHpBar(); // 隐藏Boss血条
             // 保存最后一关分数
             saveStageScore(gameState.currentStage, gameState.score);
             document.getElementById('winScore').textContent = gameState.score;
