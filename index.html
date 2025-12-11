@@ -876,17 +876,17 @@
             none:   { cd: [25], desc: '普通' }
         };
         
-        // === 敌机基础射击率（每帧概率）===
+        // === 敌机基础射击率（每帧概率）- 降低难度 ===
         const ENEMY_SHOOT_BASE = {
-            fast: 0.008,
-            tank: 0.012,
-            sniper: 0.015,
-            splitter: 0.010,
-            mini: 0.006,
-            normal: 0.010
+            fast: 0.002,
+            tank: 0.003,
+            sniper: 0.004,
+            splitter: 0.002,
+            mini: 0.001,
+            normal: 0.003
         };
         // 敌机射速随关卡递增的最大倍率
-        const ENEMY_SHOOT_MAX_MULT = 1.5;
+        const ENEMY_SHOOT_MAX_MULT = 1.0;
         
         // 设置canvas实际尺寸
         canvas.width = CONFIG.CANVAS_WIDTH;
@@ -1989,35 +1989,116 @@
             }
         }
 
-        // 绘制BOSS（大型鱼类）- 头朝下绘制
+        // 绘制BOSS（根据不同造型绘制）
         function drawBossLarge(enemy) {
-            const cfg = enemy.bossConfig || { shape: 'shark', colors: ['#ff4757', '#c0392b', '#8e0000'] };
-            const colors = cfg.colors || enemy.colors || ['#ff4757', '#c0392b', '#8e0000'];
+            const cfg = enemy.bossConfig || { shape: 'fighter', color: '#ff4757' };
+            const mainColor = cfg.color || '#ff4757';
             const s = (enemy.width || 100) / 80;
             const isHit = enemy.hitFlash && enemy.hitFlash > 0;
+            const shape = cfg.shape || 'fighter';
             
-            ctx.shadowColor = colors[0];
-            ctx.shadowBlur = 15;
+            // 动画计时
+            enemy.animTimer = (enemy.animTimer || 0) + 0.05;
+            const pulse = 1 + Math.sin(enemy.animTimer * 2) * 0.05;
+            const wave = Math.sin(enemy.animTimer * 3) * 0.1;
             
-            // Boss鱼身主色
-            const bodyGrad = ctx.createLinearGradient(0, -50 * s, 0, 50 * s);
-            if (isHit) {
-                bodyGrad.addColorStop(0, '#ffffff');
-                bodyGrad.addColorStop(0.5, '#ffdddd');
-                bodyGrad.addColorStop(1, '#ffffff');
-            } else {
-                bodyGrad.addColorStop(0, colors[0]);
-                bodyGrad.addColorStop(0.5, colors[1]);
-                bodyGrad.addColorStop(1, colors[2]);
+            // 生成颜色变体
+            const lighterColor = isHit ? '#ffffff' : lightenColor(mainColor, 40);
+            const darkerColor = isHit ? '#ffdddd' : darkenColor(mainColor, 30);
+            
+            ctx.shadowColor = mainColor;
+            ctx.shadowBlur = 20;
+            
+            // 主体渐变
+            const bodyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 50 * s);
+            bodyGrad.addColorStop(0, lighterColor);
+            bodyGrad.addColorStop(0.5, mainColor);
+            bodyGrad.addColorStop(1, darkerColor);
+            
+            // 根据不同造型绘制
+            switch(shape) {
+                case 'crescent': // 玄月 - 新月形
+                    drawBossCrescent(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'bird': // 暗夜玄鸿 - 鸟形
+                case 'phoenix': // 烈焰凤凰
+                    drawBossPhoenix(s, bodyGrad, mainColor, isHit, wave, shape === 'phoenix');
+                    break;
+                case 'crystal': // 冰霜女王 - 水晶形
+                    drawBossCrystal(s, bodyGrad, mainColor, isHit, pulse);
+                    break;
+                case 'thunder': // 雷电之主 - 闪电形
+                    drawBossThunder(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'octopus': // 深海巨兽 - 章鱼形
+                    drawBossOctopus(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'butterfly': // 毒刺玄蝶 - 蝴蝶形
+                    drawBossButterfly(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'vampire': // 血月魔君 - 血腹螠蛇
+                case 'demon': // 地狱火焰
+                    drawBossDemon(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'witch': // 幻影魔女 - 帽子形
+                    drawBossWitch(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'dragon': // 黄金帝龙 - 龙形
+                    drawBossDragon(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'sakura': // 樱花精灵 - 花瓣形
+                case 'rose': // 花园守护者
+                    drawBossFlower(s, bodyGrad, mainColor, isHit, pulse);
+                    break;
+                case 'blade': // 暗影刃 - 剑形
+                    drawBossBlade(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'giant': // 星空巨人 - 巨人形
+                    drawBossGiant(s, bodyGrad, mainColor, isHit, pulse);
+                    break;
+                case 'eye': // 风暴之眼 - 眼睛形
+                    drawBossEye(s, bodyGrad, mainColor, isHit, pulse);
+                    break;
+                case 'angel': // 天使之翼 - 天使形
+                    drawBossAngel(s, bodyGrad, mainColor, isHit, wave);
+                    break;
+                case 'chaos': // 混沌之心 - 混沌形
+                    drawBossChaos(s, bodyGrad, mainColor, isHit, wave, enemy.animTimer);
+                    break;
+                case 'cupid': // 爱神丘比特 - 爱心形
+                case 'fighter': // 珊瑩守卫 - 默认鱼形
+                default:
+                    drawBossFish(s, bodyGrad, mainColor, isHit, wave);
+                    break;
             }
             
-            // 大鱼身体
-            ctx.fillStyle = bodyGrad;
+            ctx.shadowBlur = 0;
+        }
+        
+        // 颜色辅助函数
+        function lightenColor(color, percent) {
+            const num = parseInt(color.slice(1), 16);
+            const r = Math.min(255, (num >> 16) + Math.floor(255 * percent / 100));
+            const g = Math.min(255, ((num >> 8) & 0x00FF) + Math.floor(255 * percent / 100));
+            const b = Math.min(255, (num & 0x0000FF) + Math.floor(255 * percent / 100));
+            return `rgb(${r},${g},${b})`;
+        }
+        function darkenColor(color, percent) {
+            const num = parseInt(color.slice(1), 16);
+            const r = Math.max(0, (num >> 16) - Math.floor(255 * percent / 100));
+            const g = Math.max(0, ((num >> 8) & 0x00FF) - Math.floor(255 * percent / 100));
+            const b = Math.max(0, (num & 0x0000FF) - Math.floor(255 * percent / 100));
+            return `rgb(${r},${g},${b})`;
+        }
+        
+        // Boss造型: 默认鱼形
+        function drawBossFish(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 身体
             ctx.beginPath();
             ctx.ellipse(0, 0, 35 * s, 50 * s, 0, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 鱼尾（在上方，y负方向）
+            // 尾巴
             ctx.beginPath();
             ctx.moveTo(0, -40 * s);
             ctx.lineTo(-25 * s, -70 * s);
@@ -2025,10 +2106,7 @@
             ctx.lineTo(25 * s, -70 * s);
             ctx.closePath();
             ctx.fill();
-            
-            // 背鳍（鱼头朝下时不显示，因为背鳍在背部）
-            
-            // 侧鳍（左右）
+            // 侧鳍
             ctx.beginPath();
             ctx.moveTo(-30 * s, 0);
             ctx.lineTo(-55 * s, -10 * s);
@@ -2041,38 +2119,484 @@
             ctx.lineTo(30 * s, -5 * s);
             ctx.closePath();
             ctx.fill();
-            
-            // 腹部白色（在下方）
+            // 眼睛
+            drawBossEyes(s, 25, isHit);
+        }
+        
+        // Boss造型: 新月形
+        function drawBossCrescent(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, 45 * s, 0.3 * Math.PI, 1.7 * Math.PI);
+            ctx.arc(15 * s, 0, 35 * s, 1.7 * Math.PI, 0.3 * Math.PI, true);
+            ctx.closePath();
+            ctx.fill();
+            // 月牙装饰
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,200,0.6)';
+            for (let i = 0; i < 5; i++) {
+                const angle = 0.5 * Math.PI + i * 0.25;
+                ctx.beginPath();
+                ctx.arc(Math.cos(angle) * 35 * s, Math.sin(angle) * 35 * s, 5 * s, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            drawBossEyes(s, 15, isHit);
+        }
+        
+        // Boss造型: 凤凰/鸟形
+        function drawBossPhoenix(s, grad, color, isHit, wave, isPhoenix) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.ellipse(0, 10 * s, 25 * s, 35 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 翅膀
+            ctx.save();
+            ctx.rotate(wave);
+            ctx.beginPath();
+            ctx.moveTo(-20 * s, 0);
+            ctx.quadraticCurveTo(-70 * s, -20 * s, -60 * s, 30 * s);
+            ctx.quadraticCurveTo(-40 * s, 10 * s, -20 * s, 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(20 * s, 0);
+            ctx.quadraticCurveTo(70 * s, -20 * s, 60 * s, 30 * s);
+            ctx.quadraticCurveTo(40 * s, 10 * s, 20 * s, 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            // 尾羽
+            if (isPhoenix) {
+                for (let i = -2; i <= 2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * 8 * s, -25 * s);
+                    ctx.quadraticCurveTo(i * 15 * s, -60 * s, i * 10 * s, -80 * s);
+                    ctx.lineWidth = 4 * s;
+                    ctx.strokeStyle = grad;
+                    ctx.stroke();
+                }
+            }
+            // 头
+            ctx.beginPath();
+            ctx.arc(0, 35 * s, 15 * s, 0, Math.PI * 2);
+            ctx.fill();
+            drawBossEyes(s, 35, isHit, 8);
+        }
+        
+        // Boss造型: 水晶形
+        function drawBossCrystal(s, grad, color, isHit, pulse) {
+            ctx.fillStyle = grad;
+            // 六边形水晶
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3 - Math.PI / 2;
+                const r = 45 * s * pulse;
+                const x = Math.cos(angle) * r;
+                const y = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            // 内部反光
             ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,255,0.4)';
             ctx.beginPath();
-            ctx.ellipse(0, 15 * s, 25 * s, 28 * s, 0, 0, Math.PI * 2);
+            for (let i = 0; i < 6; i++) {
+                const angle = i * Math.PI / 3 - Math.PI / 2;
+                const r = 25 * s;
+                const x = Math.cos(angle) * r;
+                const y = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
             ctx.fill();
-            
-            // 大眼睛（在下方，朝向玩家）
-            ctx.fillStyle = '#fff';
+            drawBossEyes(s, 10, isHit, 10);
+        }
+        
+        // Boss造型: 闪电形
+        function drawBossThunder(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
             ctx.beginPath();
-            ctx.arc(-15 * s, 25 * s, 12 * s, 0, Math.PI * 2);
-            ctx.arc(15 * s, 25 * s, 12 * s, 0, Math.PI * 2);
+            ctx.moveTo(0, -50 * s);
+            ctx.lineTo(20 * s, -15 * s);
+            ctx.lineTo(5 * s, -15 * s);
+            ctx.lineTo(25 * s, 50 * s);
+            ctx.lineTo(-5 * s, 5 * s);
+            ctx.lineTo(10 * s, 5 * s);
+            ctx.lineTo(-20 * s, -50 * s);
+            ctx.closePath();
             ctx.fill();
-            ctx.fillStyle = '#880000';
-            ctx.beginPath();
-            ctx.arc(-15 * s, 25 * s, 6 * s, 0, Math.PI * 2);
-            ctx.arc(15 * s, 25 * s, 6 * s, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(-13 * s, 23 * s, 3 * s, 0, Math.PI * 2);
-            ctx.arc(17 * s, 23 * s, 3 * s, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 嘴巴（在最下方）
-            ctx.strokeStyle = isHit ? '#faa' : colors[2];
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(0, 40 * s, 10 * s, 1.2 * Math.PI, 1.8 * Math.PI);
+            // 电光效果
+            ctx.strokeStyle = isHit ? '#fff' : 'rgba(255,255,150,0.8)';
+            ctx.lineWidth = 3 * s;
             ctx.stroke();
-            
-            ctx.shadowBlur = 0;
+        }
+        
+        // Boss造型: 章鱼形
+        function drawBossOctopus(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 头部
+            ctx.beginPath();
+            ctx.ellipse(0, 15 * s, 35 * s, 30 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 触手
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + wave;
+                const startX = Math.cos(angle) * 25 * s;
+                const startY = 15 * s + Math.sin(angle) * 20 * s;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                const wiggle = Math.sin(wave * 3 + i) * 10 * s;
+                ctx.quadraticCurveTo(
+                    startX + Math.cos(angle) * 30 * s + wiggle,
+                    startY + Math.sin(angle) * 30 * s,
+                    startX + Math.cos(angle) * 50 * s,
+                    startY + Math.sin(angle) * 40 * s
+                );
+                ctx.lineWidth = 8 * s;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = grad;
+                ctx.stroke();
+            }
+            drawBossEyes(s, 25, isHit, 12);
+        }
+        
+        // Boss造型: 蝴蝶形
+        function drawBossButterfly(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 8 * s, 40 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 翅膀
+            ctx.save();
+            ctx.rotate(wave * 0.5);
+            // 左翅
+            ctx.beginPath();
+            ctx.ellipse(-35 * s, 0, 30 * s, 45 * s, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.save();
+            ctx.rotate(-wave * 0.5);
+            // 右翅
+            ctx.beginPath();
+            ctx.ellipse(35 * s, 0, 30 * s, 45 * s, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            // 翅膀花纹
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.arc(-35 * s, 5 * s, 15 * s, 0, Math.PI * 2);
+            ctx.arc(35 * s, 5 * s, 15 * s, 0, Math.PI * 2);
+            ctx.fill();
+            // 触角
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 3 * s;
+            ctx.beginPath();
+            ctx.moveTo(-5 * s, 35 * s);
+            ctx.quadraticCurveTo(-15 * s, 55 * s, -10 * s, 65 * s);
+            ctx.moveTo(5 * s, 35 * s);
+            ctx.quadraticCurveTo(15 * s, 55 * s, 10 * s, 65 * s);
+            ctx.stroke();
+            drawBossEyes(s, 30, isHit, 6);
+        }
+        
+        // Boss造型: 恶魔形
+        function drawBossDemon(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 35 * s, 45 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 犬牙角
+            ctx.beginPath();
+            ctx.moveTo(-25 * s, -30 * s);
+            ctx.lineTo(-35 * s, -60 * s);
+            ctx.lineTo(-15 * s, -35 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(25 * s, -30 * s);
+            ctx.lineTo(35 * s, -60 * s);
+            ctx.lineTo(15 * s, -35 * s);
+            ctx.closePath();
+            ctx.fill();
+            // 翅膀
+            ctx.beginPath();
+            ctx.moveTo(-30 * s, -10 * s);
+            ctx.quadraticCurveTo(-70 * s, -30 * s, -55 * s, 20 * s);
+            ctx.lineTo(-30 * s, 5 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(30 * s, -10 * s);
+            ctx.quadraticCurveTo(70 * s, -30 * s, 55 * s, 20 * s);
+            ctx.lineTo(30 * s, 5 * s);
+            ctx.closePath();
+            ctx.fill();
+            drawBossEyes(s, 15, isHit, 12, true);
+        }
+        
+        // Boss造型: 女巫形
+        function drawBossWitch(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 帽子
+            ctx.beginPath();
+            ctx.moveTo(0, -70 * s);
+            ctx.lineTo(-35 * s, -10 * s);
+            ctx.lineTo(35 * s, -10 * s);
+            ctx.closePath();
+            ctx.fill();
+            // 帽櫂
+            ctx.beginPath();
+            ctx.ellipse(0, -10 * s, 50 * s, 12 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 脸
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,220,200,0.9)';
+            ctx.beginPath();
+            ctx.arc(0, 20 * s, 25 * s, 0, Math.PI * 2);
+            ctx.fill();
+            drawBossEyes(s, 15, isHit, 8);
+        }
+        
+        // Boss造型: 龙形
+        function drawBossDragon(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 30 * s, 50 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 龙角
+            ctx.beginPath();
+            ctx.moveTo(-15 * s, -40 * s);
+            ctx.lineTo(-25 * s, -70 * s);
+            ctx.lineTo(-10 * s, -45 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(15 * s, -40 * s);
+            ctx.lineTo(25 * s, -70 * s);
+            ctx.lineTo(10 * s, -45 * s);
+            ctx.closePath();
+            ctx.fill();
+            // 龙翅
+            ctx.save();
+            ctx.rotate(wave);
+            ctx.beginPath();
+            ctx.moveTo(-25 * s, -10 * s);
+            ctx.lineTo(-70 * s, -40 * s);
+            ctx.lineTo(-60 * s, 0);
+            ctx.lineTo(-70 * s, 30 * s);
+            ctx.lineTo(-25 * s, 10 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(25 * s, -10 * s);
+            ctx.lineTo(70 * s, -40 * s);
+            ctx.lineTo(60 * s, 0);
+            ctx.lineTo(70 * s, 30 * s);
+            ctx.lineTo(25 * s, 10 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            // 龙鳞
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,215,0,0.6)';
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(0, (-30 + i * 15) * s, 8 * s, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            drawBossEyes(s, 30, isHit, 10, true);
+        }
+        
+        // Boss造型: 花朵形
+        function drawBossFlower(s, grad, color, isHit, pulse) {
+            // 花瓣
+            ctx.fillStyle = grad;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                ctx.save();
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.ellipse(0, -35 * s * pulse, 18 * s, 30 * s, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            // 花心
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,255,100,0.9)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 20 * s, 0, Math.PI * 2);
+            ctx.fill();
+            drawBossEyes(s, 0, isHit, 6);
+        }
+        
+        // Boss造型: 剑刃形
+        function drawBossBlade(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 剑身
+            ctx.beginPath();
+            ctx.moveTo(0, -60 * s);
+            ctx.lineTo(15 * s, 20 * s);
+            ctx.lineTo(0, 50 * s);
+            ctx.lineTo(-15 * s, 20 * s);
+            ctx.closePath();
+            ctx.fill();
+            // 剑格
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,215,0,0.8)';
+            ctx.beginPath();
+            ctx.ellipse(0, 20 * s, 30 * s, 8 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 剑柄
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.rect(-8 * s, 25 * s, 16 * s, 30 * s);
+            ctx.fill();
+        }
+        
+        // Boss造型: 巨人形
+        function drawBossGiant(s, grad, color, isHit, pulse) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.rect(-30 * s, -20 * s, 60 * s, 70 * s);
+            ctx.fill();
+            // 头
+            ctx.beginPath();
+            ctx.arc(0, -35 * s, 25 * s * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            // 胳膊
+            ctx.beginPath();
+            ctx.rect(-55 * s, -15 * s, 20 * s, 50 * s);
+            ctx.rect(35 * s, -15 * s, 20 * s, 50 * s);
+            ctx.fill();
+            drawBossEyes(s, -35, isHit, 8);
+        }
+        
+        // Boss造型: 眼睛形
+        function drawBossEye(s, grad, color, isHit, pulse) {
+            // 外眉
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 50 * s, 35 * s * pulse, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 眼白
+            ctx.fillStyle = isHit ? '#fff' : '#f0f0f0';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 35 * s, 25 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 眵孔
+            ctx.fillStyle = isHit ? '#888' : color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 18 * s * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            // 高光
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-8 * s, -8 * s, 6 * s, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Boss造型: 天使形
+        function drawBossAngel(s, grad, color, isHit, wave) {
+            ctx.fillStyle = grad;
+            // 身体
+            ctx.beginPath();
+            ctx.ellipse(0, 10 * s, 20 * s, 35 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // 翅膀
+            ctx.save();
+            ctx.rotate(wave * 0.3);
+            ctx.beginPath();
+            ctx.moveTo(-15 * s, 0);
+            ctx.quadraticCurveTo(-50 * s, -40 * s, -70 * s, 0);
+            ctx.quadraticCurveTo(-50 * s, 20 * s, -15 * s, 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            ctx.save();
+            ctx.rotate(-wave * 0.3);
+            ctx.beginPath();
+            ctx.moveTo(15 * s, 0);
+            ctx.quadraticCurveTo(50 * s, -40 * s, 70 * s, 0);
+            ctx.quadraticCurveTo(50 * s, 20 * s, 15 * s, 15 * s);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            // 光环
+            ctx.strokeStyle = isHit ? '#fff' : 'rgba(255,215,0,0.8)';
+            ctx.lineWidth = 4 * s;
+            ctx.beginPath();
+            ctx.ellipse(0, -45 * s, 18 * s, 6 * s, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            // 头
+            ctx.fillStyle = isHit ? '#fff' : 'rgba(255,220,200,0.9)';
+            ctx.beginPath();
+            ctx.arc(0, -25 * s, 15 * s, 0, Math.PI * 2);
+            ctx.fill();
+            drawBossEyes(s, -25, isHit, 5);
+        }
+        
+        // Boss造型: 混沌形
+        function drawBossChaos(s, grad, color, isHit, wave, time) {
+            ctx.fillStyle = grad;
+            // 不规则形状
+            ctx.beginPath();
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2 + time;
+                const r = (35 + Math.sin(time * 3 + i) * 15) * s;
+                const x = Math.cos(angle) * r;
+                const y = Math.sin(angle) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            // 混沌纹路
+            ctx.strokeStyle = isHit ? '#fff' : 'rgba(100,0,100,0.5)';
+            ctx.lineWidth = 2 * s;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.cos(time + i) * 15 * s, Math.sin(time * 1.5 + i) * 15 * s, (10 + i * 5) * s, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            // 多眼
+            for (let i = 0; i < 3; i++) {
+                const ex = Math.cos(time * 0.5 + i * 2) * 15 * s;
+                const ey = Math.sin(time * 0.7 + i * 2) * 15 * s;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ex, ey, 8 * s, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = isHit ? '#888' : '#200020';
+                ctx.beginPath();
+                ctx.arc(ex, ey, 4 * s, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // 通用Boss眼睛绘制
+        function drawBossEyes(s, yOffset, isHit, size = 12, evil = false) {
+            const eyeSize = size * s;
+            const y = yOffset * s;
+            // 眼白
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-15 * s, y, eyeSize, 0, Math.PI * 2);
+            ctx.arc(15 * s, y, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+            // 眼球
+            ctx.fillStyle = isHit ? '#888' : (evil ? '#880000' : '#1a1a2e');
+            ctx.beginPath();
+            ctx.arc(-15 * s, y, eyeSize * 0.5, 0, Math.PI * 2);
+            ctx.arc(15 * s, y, eyeSize * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            // 高光
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-13 * s, y - 3 * s, eyeSize * 0.25, 0, Math.PI * 2);
+            ctx.arc(17 * s, y - 3 * s, eyeSize * 0.25, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         // === Boss命中路径（简化为椭圆形）===
@@ -2531,10 +3055,10 @@
                 bossConfig = BOSS_CONFIGS[(bossLevel - 1) % 20];
             }
             
-            // Boss属性随关卡递增 - 提高耐久
-            const baseHp = 150 + bossLevel * 50; // 第1关:200HP, 第20关:1150HP
+            // Boss属性 - 统一生命值，难度体现在弹道上
+            const baseHp = 500; // 所有Boss统一500HP，延长战斗时间
             const hp = Math.floor(baseHp * hpMultiplier);
-            const size = 220 + bossLevel * 8; // 更大尺寸：第1关≈2
+            const size = 220; // 统一尺寸
             
             // 根据Boss造型映射到飞机模型（与绘制保持一致），用于估算更贴合的判定框
             const planeByShape = {
@@ -2576,8 +3100,8 @@
                 type: 'boss',
                 hp: hp,
                 maxHp: hp,
-                speed: 0.8 + bossLevel * 0.04, // 第1关慢，第20关快
-                shootRate: 0.005 + bossLevel * 0.003, // 第1关很少射击
+                speed: 2.0, // 提高移动速度，增加压迫感
+                shootRate: 0.01, // 统一射击率
                 movePattern: 10,
                 moveDir: 1,
                 bossLevel: bossLevel,
@@ -2666,188 +3190,193 @@
             });
         }
 
-        // 敌人射击 - 子弹速度随关卡递增
+        // 敌人射击
         function enemyShoot(enemy) {
-            // 计算子弹速度倍率：第1关基础速度0.4倍，第20关达到1.0倍
-            const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
-            const bulletSpeedMult = 0.4 + (Math.min(stage, 20) - 1) * 0.032; // 0.4 ~ 1.0
+            // 统一子弹速度
+            const spd = 1;
             
             if (enemy.type === 'boss' && enemy.bossConfig) {
-                // Boss特殊弹道
+                // Boss特殊弹道 - 每种弹道有固定节奏，有规律可躲
                 enemy.shootTimer = (enemy.shootTimer || 0) + 1;
-                // Boss进入后延迟开火，低等级延迟更长
-                const delay = 180 - (enemy.bossLevel || 1) * 6;
-                if (enemy.shootTimer < delay) return;
+                // Boss进入后统一延迟120帧开火
+                if (enemy.shootTimer < 120) return;
                 
                 const pattern = enemy.bossConfig.bulletPattern;
                 const cx = enemy.x;
                 const cy = enemy.y + ((enemy.hitH || enemy.height) / 2);
-                const spd = bulletSpeedMult; // Boss子弹速度倍率
-                
-                // 低等级Boss射击间隔更长
-                const shootInterval = Math.max(1, 1.8 - (enemy.bossLevel || 1) * 0.05); // 第1关1.75倍间隔，第20关1.0倍
                 
                 switch(pattern) {
-                    case 'spread3': // 3路扩散
-                        if (enemy.shootTimer % Math.floor(45 * shootInterval) === 0) {
+                    case 'spread3': // 3路扩散 - 每45帧一波，三发子弹向下扩散
+                        if (enemy.shootTimer % 45 === 0) {
                             for (let i = -1; i <= 1; i++) {
-                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 1.5 * spd, vy: 5 * spd, type: 'enemy' });
+                                bullets.push({ x: cx + i * 30, y: cy, vx: i * 2.5, vy: 5, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'spiral': // 蟂旋
-                        if (enemy.shootTimer % Math.floor(15 * shootInterval) === 0) {
-                            const angle = enemy.shootTimer * 0.15;
-                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 3.5 * spd, vy: (Math.sin(angle) * 2 + 4) * spd, type: 'enemy' });
+                    case 'spiral': // 螺旋 - 每8帧一发，旋转发射，形成密集螺旋
+                        if (enemy.shootTimer % 8 === 0) {
+                            const angle = enemy.shootTimer * 0.18;
+                            bullets.push({ x: cx, y: cy, vx: Math.cos(angle) * 4, vy: Math.sin(angle) * 2 + 4, type: 'enemy' });
                         }
                         break;
-                    case 'wave': // 波动
-                        if (enemy.shootTimer % Math.floor(35 * shootInterval) === 0) {
+                    case 'wave': // 波动 - 每40帧一波5发波形子弹
+                        if (enemy.shootTimer % 40 === 0) {
                             for (let i = 0; i < 5; i++) {
-                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 4.5 * spd, type: 'enemy', wave: true, waveOffset: i });
+                                bullets.push({ x: cx - 80 + i * 40, y: cy, vx: 0, vy: 5, type: 'enemy', wave: true, waveOffset: i });
                             }
                         }
                         break;
-                    case 'burst': // 爆裂
-                        if (enemy.shootTimer % Math.floor(100 * shootInterval) === 0) {
-                            for (let i = 0; i < 8; i++) {
-                                const a = (i / 8) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3.5 * spd, vy: (Math.sin(a) * 3.5 + 2) * spd, type: 'enemy' });
+                    case 'burst': // 爆裂 - 每60帧10发圆形爆发
+                        if (enemy.shootTimer % 60 === 0) {
+                            for (let i = 0; i < 10; i++) {
+                                const a = (i / 10) * Math.PI * 2;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5 + 2, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'ring': // 圆环
-                        if (enemy.shootTimer % Math.floor(80 * shootInterval) === 0) {
-                            for (let i = 0; i < 12; i++) {
-                                const a = (i / 12) * Math.PI * 2;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 2.5 * spd, vy: (Math.sin(a) * 2.5 + 1) * spd, type: 'enemy' });
+                    case 'ring': // 圆环 - 每55帧16发圆环，每次旋转偏移
+                        if (enemy.shootTimer % 55 === 0) {
+                            const offset = (enemy.shootTimer / 55) * 0.15;
+                            for (let i = 0; i < 16; i++) {
+                                const a = (i / 16) * Math.PI * 2 + offset;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 + 2, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'zigzag': // 之字形
-                        if (enemy.shootTimer % Math.floor(30 * shootInterval) === 0) {
-                            bullets.push({ x: cx, y: cy, vx: Math.sin(enemy.shootTimer * 0.1) * 4 * spd, vy: 4.5 * spd, type: 'enemy' });
+                    case 'zigzag': // 之字形 - 每18帧一发，左右交替，形成密集之字
+                        if (enemy.shootTimer % 18 === 0) {
+                            const dir = (enemy.shootTimer / 18) % 2 === 0 ? -1 : 1;
+                            bullets.push({ x: cx, y: cy, vx: dir * 4, vy: 5, type: 'enemy' });
                         }
                         break;
-                    case 'tentacle': // 触手
-                        if (enemy.shootTimer % Math.floor(22 * shootInterval) === 0) {
-                            const side = (enemy.shootTimer / 15) % 2 === 0 ? -1 : 1;
-                            bullets.push({ x: cx + side * 50, y: cy, vx: side * 1 * spd, vy: 4.5 * spd, type: 'enemy' });
+                    case 'tentacle': // 触手 - 每20帧双发，左右同时
+                        if (enemy.shootTimer % 20 === 0) {
+                            bullets.push({ x: cx - 50, y: cy, vx: -2, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx + 50, y: cy, vx: 2, vy: 5, type: 'enemy' });
                         }
                         break;
-                    case 'scatter': // 散射
-                        if (enemy.shootTimer % Math.floor(55 * shootInterval) === 0) {
-                            for (let i = 0; i < 5; i++) {
-                                bullets.push({ x: cx + (Math.random() - 0.5) * 100, y: cy, vx: (Math.random() - 0.5) * 3.5 * spd, vy: (4 + Math.random() * 2) * spd, type: 'enemy' });
+                    case 'scatter': // 散射 - 每50帧7发扩散
+                        if (enemy.shootTimer % 50 === 0) {
+                            for (let i = -3; i <= 3; i++) {
+                                bullets.push({ x: cx + i * 20, y: cy, vx: i * 1.5, vy: 5, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'cross': // 十字
-                        if (enemy.shootTimer % Math.floor(65 * shootInterval) === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 5.5 * spd, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: 3.5 * spd, vy: 3.5 * spd, type: 'enemy' });
-                            bullets.push({ x: cx, y: cy, vx: -3.5 * spd, vy: 3.5 * spd, type: 'enemy' });
+                    case 'cross': // 十字 - 每40帧5发十字形
+                        if (enemy.shootTimer % 40 === 0) {
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 4, vy: 4, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: -4, vy: 4, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 2, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: -2, vy: 5, type: 'enemy' });
                         }
                         break;
-                    case 'homing': // 追踪
-                        if (enemy.shootTimer % Math.floor(80 * shootInterval) === 0) {
+                    case 'homing': // 追踪 - 每70帧双发追踪弹
+                        if (enemy.shootTimer % 70 === 0) {
                             const dx = player.x - cx;
                             const dy = player.y - cy;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            bullets.push({ x: cx, y: cy, vx: (dx / dist) * 4.5 * spd, vy: (dy / dist) * 4.5 * spd, type: 'enemy' });
+                            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                            bullets.push({ x: cx - 30, y: cy, vx: (dx / dist) * 5, vy: (dy / dist) * 5, type: 'enemy' });
+                            bullets.push({ x: cx + 30, y: cy, vx: (dx / dist) * 5, vy: (dy / dist) * 5, type: 'enemy' });
                         }
                         break;
-                    case 'breath': // 龙息
-                        if (enemy.shootTimer % Math.floor(8 * shootInterval) === 0 && enemy.shootTimer % Math.floor(120 * shootInterval) < Math.floor(35 * shootInterval)) {
-                            bullets.push({ x: cx + (Math.random() - 0.5) * 60, y: cy, vx: (Math.random() - 0.5) * 2 * spd, vy: 6 * spd, type: 'enemy' });
+                    case 'breath': // 龙息 - 每70帧一波，持续35帧的密集火焰
+                        if (enemy.shootTimer % 70 < 35 && enemy.shootTimer % 4 === 0) {
+                            const spread = (enemy.shootTimer % 70 - 17) * 5;
+                            bullets.push({ x: cx + spread, y: cy, vx: spread * 0.06, vy: 6, type: 'enemy' });
                         }
                         break;
-                    case 'petal': // 花瓣
-                        if (enemy.shootTimer % Math.floor(60 * shootInterval) === 0) {
-                            for (let i = 0; i < 5; i++) {
-                                const a = (i / 5) * Math.PI * 2 + enemy.shootTimer * 0.02;
-                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 2.5 * spd, vy: 3.5 * spd, type: 'enemy' });
-                            }
-                        }
-                        break;
-                    case 'slash': // 斩击 - 快速三连击
-                        if (enemy.shootTimer % Math.floor(80 * shootInterval) < Math.floor(18 * shootInterval) && enemy.shootTimer % Math.floor(6 * shootInterval) === 0) {
-                            const offset = (enemy.shootTimer % Math.floor(80 * shootInterval)) / Math.floor(6 * shootInterval) - 1;
-                            bullets.push({ x: cx + offset * 40, y: cy, vx: offset * 2.5 * spd, vy: 7 * spd, type: 'enemy' });
-                        }
-                        break;
-                    case 'meteor': // 流星 - 从天而降的大弹幕
-                        if (enemy.shootTimer % Math.floor(90 * shootInterval) === 0) {
+                    case 'petal': // 花瓣 - 每50帧6发旋转花瓣
+                        if (enemy.shootTimer % 50 === 0) {
+                            const baseAngle = enemy.shootTimer * 0.05;
                             for (let i = 0; i < 6; i++) {
-                                const startX = Math.random() * CONFIG.CANVAS_WIDTH;
-                                bullets.push({ x: startX, y: cy - 50, vx: (Math.random() - 0.5) * 2 * spd, vy: (4.5 + Math.random() * 2.5) * spd, type: 'enemy' });
+                                const a = baseAngle + (i / 6) * Math.PI * 2;
+                                bullets.push({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: 4.5, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'thorn': // 荆棘 - 两侧交叉射击
-                        if (enemy.shootTimer % Math.floor(35 * shootInterval) === 0) {
-                            const side = (enemy.shootTimer / 35) % 2;
-                            for (let i = 0; i < 3; i++) {
-                                const angle = (side ? 0.3 : -0.3) + (i - 1) * 0.15;
-                                bullets.push({ x: cx + (side ? 60 : -60), y: cy, vx: Math.sin(angle) * 3.5 * spd, vy: Math.cos(angle) * 4.5 * spd, type: 'enemy' });
+                    case 'slash': // 斩击 - 每55帧一波五连击
+                        if (enemy.shootTimer % 55 < 25 && enemy.shootTimer % 5 === 0) {
+                            const phase = Math.floor((enemy.shootTimer % 55) / 5);
+                            const offset = (phase - 2) * 35;
+                            bullets.push({ x: cx + offset, y: cy, vx: (phase - 2) * 2.5, vy: 7, type: 'enemy' });
+                        }
+                        break;
+                    case 'meteor': // 流星 - 每70帧7发从上方落下
+                        if (enemy.shootTimer % 70 === 0) {
+                            for (let i = 0; i < 7; i++) {
+                                const startX = (i + 0.5) * (CONFIG.CANVAS_WIDTH / 7);
+                                bullets.push({ x: startX, y: cy, vx: (Math.random() - 0.5) * 2, vy: 6, type: 'enemy' });
                             }
                         }
                         break;
-                    case 'tornado': // 龙卷 - 旋转扩散
-                        if (enemy.shootTimer % Math.floor(12 * shootInterval) === 0) {
+                    case 'thorn': // 荆棘 - 每30帧5发，左右交替
+                        if (enemy.shootTimer % 30 === 0) {
+                            const side = (enemy.shootTimer / 30) % 2 === 0 ? -1 : 1;
+                            for (let i = -2; i <= 2; i++) {
+                                bullets.push({ x: cx + side * 50, y: cy, vx: side * 2.5 + i * 0.8, vy: 5, type: 'enemy' });
+                            }
+                        }
+                        break;
+                    case 'tornado': // 龙卷 - 每6帧双发旋转
+                        if (enemy.shootTimer % 6 === 0) {
                             const a = enemy.shootTimer * 0.2;
-                            const r = 30 + (enemy.shootTimer % 80) * 0.5;
-                            bullets.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 0.3, vx: Math.cos(a) * 2 * spd, vy: 4.5 * spd, type: 'enemy' });
+                            bullets.push({ x: cx + Math.cos(a) * 50, y: cy, vx: Math.cos(a) * 2.5, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx + Math.cos(a + Math.PI) * 50, y: cy, vx: Math.cos(a + Math.PI) * 2.5, vy: 5, type: 'enemy' });
                         }
                         break;
-                    case 'inferno': // 地狱火 - 密集火焰弹幕
-                        if (enemy.shootTimer % Math.floor(6 * shootInterval) === 0 && enemy.shootTimer % Math.floor(150 * shootInterval) < Math.floor(70 * shootInterval)) {
-                            const spread = Math.sin(enemy.shootTimer * 0.1) * 80;
-                            bullets.push({ x: cx + spread, y: cy, vx: (Math.random() - 0.5) * 2.5 * spd, vy: (5.5 + Math.random() * 1.5) * spd, type: 'enemy' });
+                    case 'inferno': // 地狱火 - 每80帧一波，持续45帧密集火焰
+                        if (enemy.shootTimer % 80 < 45 && enemy.shootTimer % 3 === 0) {
+                            const spread = Math.sin(enemy.shootTimer * 0.2) * 80;
+                            bullets.push({ x: cx + spread, y: cy, vx: spread * 0.03, vy: 6, type: 'enemy' });
                         }
                         break;
-                    case 'feather': // 羽毛 - 飘落式弹幕
-                        if (enemy.shootTimer % Math.floor(50 * shootInterval) === 0) {
-                            for (let i = 0; i < 4; i++) {
-                                const x = cx - 60 + i * 40;
-                                bullets.push({ x: x, y: cy, vx: Math.sin(i + enemy.shootTimer * 0.05) * 2 * spd, vy: 3.5 * spd, type: 'enemy', wave: true, waveOffset: i * 0.5 });
+                    case 'feather': // 羽毛 - 每45帧6发飘落
+                        if (enemy.shootTimer % 45 === 0) {
+                            for (let i = 0; i < 6; i++) {
+                                const x = cx - 75 + i * 30;
+                                bullets.push({ x: x, y: cy, vx: (i - 2.5) * 1, vy: 4.5, type: 'enemy', wave: true, waveOffset: i * 0.5 });
                             }
                         }
                         break;
-                    case 'random': // 混沌 - 随机组合攻击
-                        if (enemy.shootTimer % Math.floor(30 * shootInterval) === 0) {
-                            const mode = Math.floor(Math.random() * 4);
-                            if (mode === 0) { // 直线
-                                bullets.push({ x: cx, y: cy, vx: 0, vy: 6 * spd, type: 'enemy' });
-                            } else if (mode === 1) { // 双发
-                                bullets.push({ x: cx - 30, y: cy, vx: -1 * spd, vy: 5.5 * spd, type: 'enemy' });
-                                bullets.push({ x: cx + 30, y: cy, vx: 1 * spd, vy: 5.5 * spd, type: 'enemy' });
-                            } else if (mode === 2) { // 追踪
+                    case 'random': // 混沌 - 每30帧随机模式，更密集
+                        if (enemy.shootTimer % 30 === 0) {
+                            const mode = Math.floor(enemy.shootTimer / 30) % 4;
+                            if (mode === 0) { // 三发直线
+                                bullets.push({ x: cx - 25, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                                bullets.push({ x: cx + 25, y: cy, vx: 0, vy: 6, type: 'enemy' });
+                            } else if (mode === 1) { // 四发扩散
+                                for (let i = -2; i <= 1; i++) {
+                                    bullets.push({ x: cx + i * 20, y: cy, vx: i * 2, vy: 5, type: 'enemy' });
+                                }
+                            } else if (mode === 2) { // 双追踪
                                 const dx = player.x - cx, dy = player.y - cy;
                                 const d = Math.sqrt(dx*dx + dy*dy) || 1;
-                                bullets.push({ x: cx, y: cy, vx: (dx/d) * 4.5 * spd, vy: (dy/d) * 4.5 * spd, type: 'enemy' });
-                            } else { // 散射
-                                for (let i = 0; i < 3; i++) {
-                                    bullets.push({ x: cx, y: cy, vx: (Math.random() - 0.5) * 5 * spd, vy: (4 + Math.random() * 2.5) * spd, type: 'enemy' });
+                                bullets.push({ x: cx - 20, y: cy, vx: (dx/d) * 5, vy: (dy/d) * 5, type: 'enemy' });
+                                bullets.push({ x: cx + 20, y: cy, vx: (dx/d) * 5, vy: (dy/d) * 5, type: 'enemy' });
+                            } else { // 五发扇形
+                                for (let i = -2; i <= 2; i++) {
+                                    bullets.push({ x: cx, y: cy, vx: i * 2.5, vy: 5, type: 'enemy' });
                                 }
                             }
                         }
                         break;
-                    case 'heart': // 爱心 - 心形弹幕
-                        if (enemy.shootTimer % Math.floor(70 * shootInterval) === 0) {
-                            // 绘制心形轮廓的子弹
-                            for (let i = 0; i < 14; i++) {
-                                const t = (i / 14) * Math.PI * 2;
-                                // 心形参数方程
+                    case 'heart': // 爱心 - 每70帧16发心形
+                        if (enemy.shootTimer % 70 === 0) {
+                            for (let i = 0; i < 16; i++) {
+                                const t = (i / 16) * Math.PI * 2;
                                 const hx = 16 * Math.pow(Math.sin(t), 3);
                                 const hy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                                bullets.push({ x: cx, y: cy, vx: hx * 0.18 * spd, vy: -hy * 0.18 * spd + 2.5 * spd, type: 'enemy' });
+                                bullets.push({ x: cx, y: cy, vx: hx * 0.2, vy: -hy * 0.2 + 3, type: 'enemy' });
                             }
                         }
                         break;
-                    default: // 默认
-                        if (enemy.shootTimer % Math.floor(50 * shootInterval) === 0) {
-                            bullets.push({ x: cx, y: cy, vx: 0, vy: 5.5 * spd, type: 'enemy' });
+                    default: // 默认 - 每35帧三发扩散
+                        if (enemy.shootTimer % 35 === 0) {
+                            bullets.push({ x: cx - 20, y: cy, vx: -1.5, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx, y: cy, vx: 0, vy: 5, type: 'enemy' });
+                            bullets.push({ x: cx + 20, y: cy, vx: 1.5, vy: 5, type: 'enemy' });
                         }
                 }
             } else if (Math.random() < enemy.shootRate) {
