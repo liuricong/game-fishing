@@ -6416,7 +6416,7 @@
                     { shape: 'octopus', color: '#6c5ce7', pattern: 'ring', hpRatio: 0.35 },
                     { shape: 'octopus', color: '#d63031', pattern: 'tornado', hpRatio: 0.30 }
                 ],
-                totalHp: 400
+                totalHp: 300
             },
             10: { // 第10关 - 烈焰龙王
                 name: '烈焰龙王',
@@ -6425,7 +6425,7 @@
                     { shape: 'dragon', color: '#d63031', pattern: 'inferno', hpRatio: 0.35 },
                     { shape: 'dragon', color: '#ff0000', pattern: 'meteor', hpRatio: 0.30 }
                 ],
-                totalHp: 500
+                totalHp: 320
             },
             15: { // 第15关 - 混沌魔神
                 name: '混沌魔神',
@@ -6434,7 +6434,7 @@
                     { shape: 'chaos', color: '#2d3436', pattern: 'random', hpRatio: 0.35 },
                     { shape: 'eye', color: '#9b59b6', pattern: 'spiral', hpRatio: 0.30 }
                 ],
-                totalHp: 600
+                totalHp: 400
             },
             20: { // 第20关 - 爱与毁灭之神
                 name: '爱与毁灭之神',
@@ -6443,7 +6443,7 @@
                     { shape: 'cupid', color: '#ff69b4', pattern: 'heart', hpRatio: 0.35 },
                     { shape: 'chaos', color: '#d63031', pattern: 'inferno', hpRatio: 0.30 }
                 ],
-                totalHp: 750
+                totalHp: 450
             }
         };
         
@@ -6494,7 +6494,7 @@
             }
             
             // Boss属性
-            const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 250;
+const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             const hp = Math.floor(baseHp * hpMultiplier);
             const size = 220;
             
@@ -6625,7 +6625,7 @@
             { type: 'spread', icon: '🌟', name: '散射', color: '#e74c3c', weight: 15 },
             { type: 'laser', icon: '💠', name: '激光', color: '#00ff88', weight: 15 },
             { type: 'shield', icon: '🛡️', name: '无敌护盾', color: '#ffd700', weight: 10 },
-            { type: 'drone', icon: '🐟', name: '聪仔鱼', color: '#00e5ff', weight: 10 },
+            { type: 'drone', icon: '🐟', name: '聪仔鱼', color: '#00e5ff', weight: 18 },
             { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', weight: 10 }, // 所有模式都可掉落
             { type: 'blackhole', icon: '🌀', name: '黑洞', color: '#4a0080', weight: 5 }
         ];
