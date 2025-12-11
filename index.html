@@ -1333,7 +1333,7 @@
                 stageBossSpawned: false,
                 elapsedFrames: 0,
                 lastBossEndFrame: -99999,
-                lives: mode === 'endless' ? CONFIG.ENDLESS_LIVES : 1,
+                lives: CONFIG.ENDLESS_LIVES, // 所有模式都有3条命
                 secretBuff: false,
                 secretBuffTime: 0
             };
@@ -1766,7 +1766,7 @@
                 // 已是最后一关，显示通关界面
                 gameWin();
             } else {
-                // 进入下一关
+            // 进入下一关
                 gameState.currentStage++;
                 gameState.stageEnemyCount = 0;
                 gameState.stageBossSpawned = false;
@@ -1775,6 +1775,7 @@
                 gameState.score = 0;
                 gameState.combo = 0;
                 gameState.maxCombo = 0;
+                gameState.lives = CONFIG.ENDLESS_LIVES; // 每关重置为3条命
                 gameState.isRunning = true;
                 
                 // 清理战场
@@ -2135,13 +2136,9 @@
             // 更新道具状态显示
             updatePowerupStatus();
             
-            // 更新生命显示（仅无尽模式）
+            // 更新生命显示（所有模式）
             const livesDisplay = document.getElementById('livesDisplay');
-            if (gameState.gameMode === 'endless') {
-                livesDisplay.textContent = '❤️'.repeat(gameState.lives);
-            } else {
-                livesDisplay.textContent = '';
-            }
+            livesDisplay.textContent = '❤️'.repeat(gameState.lives);
         }
         
         // 更新道具状态图标
@@ -6351,24 +6348,29 @@
         }
         
         // 关卡主题：每关不同敌机组合与配色（20关循环）- 避免使用粉色（玩家鱼颜色）
+        // 平衡设计：前期简单敌人为主，逐步增加特殊敌人
         const STAGE_THEMES = [
-            { name: '深海暗流',  types: ['normal','mini'], palette: ['#5c6bc0','#3949ab','#283593'], shapesByType: {normal:'fighter', mini:'droneJet'} },
-            { name: '湛蓝之海',  types: ['fast','normal'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter'} },
-            { name: '琥珀荒原',  types: ['tank','swarm'], palette: ['#ffb74d','#fb8c00','#ef6c00'], shapesByType: {tank:'bomber', swarm:'swarmDrone'} },
-            { name: '紫晶秘域',  types: ['sniper','healer'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {sniper:'sniperJet', healer:'healerShip'} },
-            { name: '翡翠林地',  types: ['splitter','shield'], palette: ['#66e6a8','#2ecc71','#1abc9c'], shapesByType: {splitter:'splitterJet', shield:'shieldCarrier'} },
-            { name: '极夜星空',  types: ['fast','bomber'], palette: ['#a29bfe','#6c5ce7','#341f97'], shapesByType: {fast:'interceptor', bomber:'bomberPlane'} },
-            { name: '熔火之都',  types: ['bomber','splitter'], palette: ['#ff6b6b','#ff3d3d','#c71f1f'], shapesByType: {bomber:'bomberPlane', splitter:'splitterJet'} },
-            { name: '风暴群岛',  types: ['swarm','fast'], palette: ['#00e5ff','#00b3ff','#0088ff'], shapesByType: {swarm:'swarmDrone', fast:'interceptor'} },
-            { name: '雪原晨光',  types: ['shield','sniper'], palette: ['#e3f2fd','#bbdefb','#90caf9'], shapesByType: {shield:'shieldCarrier', sniper:'sniperJet'} },
-            { name: '沙海遗迹',  types: ['tank','healer'], palette: ['#ffd166','#f8b400','#e09f3e'], shapesByType: {tank:'bomber', healer:'healerShip'} },
-            { name: '幽冥深渊',  types: ['splitter','bomber'], palette: ['#00d1b2','#00a896','#05668d'], shapesByType: {splitter:'splitterJet', bomber:'bomberPlane'} },
-            { name: '雷霆高原',  types: ['fast','shield'], palette: ['#ffd54f','#ffca28','#ffa000'], shapesByType: {fast:'interceptor', shield:'shieldCarrier'} },
-            { name: '珊瑩礁岩',  types: ['normal','swarm'], palette: ['#ff8a65','#ff7043','#f4511e'], shapesByType: {normal:'fighter', swarm:'swarmDrone'} },
-            { name: '磁暴城墙',  types: ['healer','sniper'], palette: ['#8fd3fe','#69bff8','#4098d7'], shapesByType: {healer:'healerShip', sniper:'sniperJet'} },
-            { name: '暮色海湾',  types: ['mini','bomber'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {mini:'droneJet', bomber:'bomberPlane'} },
-            { name: '黑曜峡谷',  types: ['tank','shield'], palette: ['#95a5a6','#7f8c8d','#566573'], shapesByType: {tank:'bomber', shield:'shieldCarrier'} },
-            { name: '疾风荒岭',  types: ['swarm','splitter'], palette: ['#a8e6cf','#56c7c2','#2fb7b0'], shapesByType: {swarm:'swarmDrone', splitter:'splitterJet'} },
+            // 第1-5关：新手入门，以普通/快速/迷你为主
+            { name: '深海暗流',  types: ['normal','normal','mini'], palette: ['#5c6bc0','#3949ab','#283593'], shapesByType: {normal:'fighter', mini:'droneJet'} },
+            { name: '湛蓝之海',  types: ['normal','fast','mini'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter', mini:'droneJet'} },
+            { name: '琥珀荒原',  types: ['normal','fast','fast'], palette: ['#ffb74d','#fb8c00','#ef6c00'], shapesByType: {normal:'fighter', fast:'interceptor'} },
+            { name: '紫晶秘域',  types: ['normal','mini','sniper'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {normal:'fighter', mini:'droneJet', sniper:'sniperJet'} },
+            { name: '翡翠林地',  types: ['fast','normal','splitter'], palette: ['#66e6a8','#2ecc71','#1abc9c'], shapesByType: {fast:'interceptor', normal:'fighter', splitter:'splitterJet'} },
+            // 第6-10关：引入特殊敌人
+            { name: '极夜星空',  types: ['fast','normal','tank'], palette: ['#a29bfe','#6c5ce7','#341f97'], shapesByType: {fast:'interceptor', normal:'fighter', tank:'bomber'} },
+            { name: '熔火之都',  types: ['normal','splitter','bomber'], palette: ['#ff6b6b','#ff3d3d','#c71f1f'], shapesByType: {normal:'fighter', splitter:'splitterJet', bomber:'bomberPlane'} },
+            { name: '风暴群岛',  types: ['fast','mini','swarm'], palette: ['#00e5ff','#00b3ff','#0088ff'], shapesByType: {fast:'interceptor', mini:'droneJet', swarm:'swarmDrone'} },
+            { name: '雪原晨光',  types: ['normal','sniper','shield'], palette: ['#e3f2fd','#bbdefb','#90caf9'], shapesByType: {normal:'fighter', sniper:'sniperJet', shield:'shieldCarrier'} },
+            { name: '沙海遗迹',  types: ['tank','normal','healer'], palette: ['#ffd166','#f8b400','#e09f3e'], shapesByType: {tank:'bomber', normal:'fighter', healer:'healerShip'} },
+            // 第11-15关：混合组合
+            { name: '幽冥深渊',  types: ['splitter','bomber','fast'], palette: ['#00d1b2','#00a896','#05668d'], shapesByType: {splitter:'splitterJet', bomber:'bomberPlane', fast:'interceptor'} },
+            { name: '雷霆高原',  types: ['fast','shield','sniper'], palette: ['#ffd54f','#ffca28','#ffa000'], shapesByType: {fast:'interceptor', shield:'shieldCarrier', sniper:'sniperJet'} },
+            { name: '珊瑩礁岩',  types: ['normal','swarm','healer'], palette: ['#ff8a65','#ff7043','#f4511e'], shapesByType: {normal:'fighter', swarm:'swarmDrone', healer:'healerShip'} },
+            { name: '磁暴城墙',  types: ['healer','sniper','tank'], palette: ['#8fd3fe','#69bff8','#4098d7'], shapesByType: {healer:'healerShip', sniper:'sniperJet', tank:'bomber'} },
+            { name: '暮色海湾',  types: ['mini','bomber','shield'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {mini:'droneJet', bomber:'bomberPlane', shield:'shieldCarrier'} },
+            // 第16-20关：高难度组合
+            { name: '黑曜峡谷',  types: ['tank','shield','bomber'], palette: ['#95a5a6','#7f8c8d','#566573'], shapesByType: {tank:'bomber', shield:'shieldCarrier', bomber:'bomberPlane'} },
+            { name: '疾风荒岭',  types: ['swarm','splitter','fast'], palette: ['#a8e6cf','#56c7c2','#2fb7b0'], shapesByType: {swarm:'swarmDrone', splitter:'splitterJet', fast:'interceptor'} },
             { name: '紫电码头',  types: ['fast','healer','bomber'], palette: ['#9575cd','#7e57c2','#5e35b1'], shapesByType: {fast:'interceptor', healer:'healerShip', bomber:'bomberPlane'} },
             { name: '青雷竹海',  types: ['tank','shield','swarm'], palette: ['#a7ff83','#17b978','#086972'], shapesByType: {tank:'bomber', shield:'shieldCarrier', swarm:'swarmDrone'} },
             { name: '月光天穹',  types: ['bomber','healer','sniper'], palette: ['#c5b3ff','#9d7dff','#6b4eff'], shapesByType: {bomber:'bomberPlane', healer:'healerShip', sniper:'sniperJet'} }
@@ -6626,7 +6628,7 @@
             { type: 'laser', icon: '💠', name: '激光', color: '#00ff88', weight: 15 },
             { type: 'shield', icon: '🛡️', name: '无敌护盾', color: '#ffd700', weight: 10 },
             { type: 'drone', icon: '🐟', name: '聪仔鱼', color: '#00e5ff', weight: 10 },
-            { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', weight: 10, endlessOnly: true },
+            { type: 'heart', icon: '❤️', name: '生命恢复', color: '#ff1493', weight: 10 }, // 所有模式都可掉落
             { type: 'blackhole', icon: '🌀', name: '黑洞', color: '#4a0080', weight: 5 }
         ];
         
@@ -6644,12 +6646,13 @@
         // 生成道具
         function spawnPowerUp(x, y) {
             if (Math.random() < CONFIG.POWERUP_DROP_RATE) {
-                // 过滤道具：无尽模式才能掉落爱心，且生命未满时才掉落
+                // 过滤道具：闯关模式不掉爱心；无尽模式仅在生命未满时可掉爱心
                 let availableTypes = POWERUP_TYPES.filter(p => {
                     if (p.type === 'heart') {
-                        return gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES;
+                        if (gameState.gameMode === 'stage') return false;
+                        return gameState.lives < CONFIG.ENDLESS_LIVES;
                     }
-                    return !p.endlessOnly || gameState.gameMode === 'endless';
+                    return true;
                 });
                 const powerType = weightedRandomPowerup(availableTypes);
                 powerUps.push({
@@ -6666,13 +6669,14 @@
         
         // Boss战期间掉落道具（排除黑洞）
         function spawnBossPowerUp(x, y) {
-            // 过滤掉黑洞和无尽模式限定道具
+            // 过滤掉黑洞；闯关模式不掉爱心；无尽模式仅在生命未满时可掉爱心
             let availableTypes = POWERUP_TYPES.filter(p => {
                 if (p.type === 'blackhole') return false; // 排除黑洞
                 if (p.type === 'heart') {
-                    return gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES;
+                    if (gameState.gameMode === 'stage') return false;
+                    return gameState.lives < CONFIG.ENDLESS_LIVES;
                 }
-                return !p.endlessOnly || gameState.gameMode === 'endless';
+                return true;
             });
             const powerType = weightedRandomPowerup(availableTypes);
             powerUps.push({
@@ -7367,8 +7371,8 @@
                         gameState.droneTime = CONFIG.DRONE_DURATION; // 重置时间
                         addDrone();
                     } else if (p.powerType === 'heart') {
-                        // 爱心 - 恢复生命（仅无尽模式）
-                        if (gameState.gameMode === 'endless' && gameState.lives < CONFIG.ENDLESS_LIVES) {
+                        // 爱心 - 恢复生命（所有模式）
+                        if (gameState.lives < CONFIG.ENDLESS_LIVES) {
                             gameState.lives++;
                             showLivesHint();
                         }
@@ -7427,9 +7431,9 @@
             } else {
                 let spawnRate, maxEnemies;
                 if (gameState.gameMode === 'stage') {
-                    // 第1关: spawnRate=0.028, maxEnemies=5; 第20关: spawnRate=0.085, maxEnemies=12
-                    spawnRate = 0.025 + gameState.currentStage * 0.003;
-                    maxEnemies = 5 + Math.floor(gameState.currentStage * 0.4);
+                    // 第1关: spawnRate=0.025, maxEnemies=4; 第10关: spawnRate=0.04, maxEnemies=6; 第20关: spawnRate=0.055, maxEnemies=8
+                    spawnRate = 0.025 + gameState.currentStage * 0.0015; // 降低生成率增长
+                    maxEnemies = 4 + Math.floor(gameState.currentStage * 0.2); // 降低最大数量
                 } else {
                     // 无尽模式：基础与闯关模式一致，但超过20波后缓慢增加，有封顶
                     const wave = gameState.wave;
@@ -7463,8 +7467,8 @@
         function playerHit() {
             createExplosion(player.x, player.y, 1.5);
             
-            // 无尽模式有多条命
-            if (gameState.gameMode === 'endless' && gameState.lives > 1) {
+            // 所有模式都有多条命
+            if (gameState.lives > 1) {
                 gameState.lives--;
                 // 给予短暂无敌时间
                 player.invincible = CONFIG.RESPAWN_INVINCIBLE;
