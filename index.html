@@ -861,9 +861,9 @@
             // 彩蛋 Boss强化持续时间（帧）
             SECRET_BUFF_DURATION: 1800,  // 30秒
             // 黑洞配置
-            BLACKHOLE_DURATION: 300,     // 黑洞持续5秒
-            BLACKHOLE_RADIUS: 120,       // 黑洞吸引半径
-            BLACKHOLE_PULL_FORCE: 3      // 吸引力度
+            BLACKHOLE_DURATION: 420,     // 黑洞持续7秒
+            BLACKHOLE_RADIUS: 350,       // 黑洞吸引半径（覆盖顶部大范围）
+            BLACKHOLE_PULL_FORCE: 5      // 吸引力度
         };
         
         // === 武器冷却/发数/间距配置（方案A）===
@@ -3960,7 +3960,7 @@
                 bh.duration--;
                 bh.rotation += 0.15;
                 
-                // 吸引敌人 - 先吸到中心再消灭
+                // 吸引敌人 - 先吸到中心再消灭（超大范围吸引）
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (enemy.type === 'boss') continue; // Boss不被吸引
@@ -3969,17 +3969,26 @@
                     const dy = bh.y - enemy.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (dist < bh.radius) {
+                    // 扩大吸引范围：只要敌人在屏幕上半部分且在水平范围内就吸引
+                    const inVerticalRange = enemy.y < CONFIG.CANVAS_HEIGHT * 0.6;
+                    const effectiveRadius = Math.max(bh.radius, CONFIG.CANVAS_WIDTH * 0.6);
+                    
+                    if (dist < effectiveRadius || inVerticalRange) {
                         // 标记为被吸引状态，禁用正常移动
                         enemy.beingSucked = true;
                         
-                        // 吸引力随距离增强（越近中心吸力越大）
-                        const pullStrength = 4 + (1 - dist / bh.radius) * 8;
-                        enemy.x += (dx / dist) * pullStrength;
-                        enemy.y += (dy / dist) * pullStrength;
+                        // 吸引力：距离越远吸力越强（确保能拉过来）
+                        const basePull = CONFIG.BLACKHOLE_PULL_FORCE;
+                        const pullStrength = basePull + (dist / 100) * 3 + (1 - dist / effectiveRadius) * 6;
+                        const clampedPull = Math.min(pullStrength, 15); // 最大速度限制
+                        
+                        if (dist > 1) {
+                            enemy.x += (dx / dist) * clampedPull;
+                            enemy.y += (dy / dist) * clampedPull;
+                        }
                         
                         // 到达中心则消灭
-                        if (dist < 25) {
+                        if (dist < 30) {
                             createExplosion(bh.x, bh.y, 0.8);
                             enemies.splice(j, 1);
                             gameState.score += 15;
