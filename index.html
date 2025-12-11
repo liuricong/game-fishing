@@ -1427,6 +1427,8 @@
                 initGame('stage');
                 gameState.currentStage = Math.max(1, Math.min(resume, gameState.maxStage));
                 gameState.isRunning = true;
+                // 显示暂停按钮（之前遗漏，导致看不到）
+                document.getElementById('pauseBtn').classList.remove('hidden');
                 showStage();
                 gameLoop();
             } else {
