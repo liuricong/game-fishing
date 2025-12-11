@@ -6416,7 +6416,7 @@
                     { shape: 'octopus', color: '#6c5ce7', pattern: 'ring', hpRatio: 0.35 },
                     { shape: 'octopus', color: '#d63031', pattern: 'tornado', hpRatio: 0.30 }
                 ],
-                totalHp: 800
+                totalHp: 400
             },
             10: { // 第10关 - 烈焰龙王
                 name: '烈焰龙王',
@@ -6425,7 +6425,7 @@
                     { shape: 'dragon', color: '#d63031', pattern: 'inferno', hpRatio: 0.35 },
                     { shape: 'dragon', color: '#ff0000', pattern: 'meteor', hpRatio: 0.30 }
                 ],
-                totalHp: 1000
+                totalHp: 500
             },
             15: { // 第15关 - 混沌魔神
                 name: '混沌魔神',
@@ -6434,7 +6434,7 @@
                     { shape: 'chaos', color: '#2d3436', pattern: 'random', hpRatio: 0.35 },
                     { shape: 'eye', color: '#9b59b6', pattern: 'spiral', hpRatio: 0.30 }
                 ],
-                totalHp: 1200
+                totalHp: 600
             },
             20: { // 第20关 - 爱与毁灭之神
                 name: '爱与毁灭之神',
@@ -6443,7 +6443,7 @@
                     { shape: 'cupid', color: '#ff69b4', pattern: 'heart', hpRatio: 0.35 },
                     { shape: 'chaos', color: '#d63031', pattern: 'inferno', hpRatio: 0.30 }
                 ],
-                totalHp: 1500
+                totalHp: 750
             }
         };
         
@@ -6494,7 +6494,7 @@
             }
             
             // Boss属性
-            const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 500;
+            const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 250;
             const hp = Math.floor(baseHp * hpMultiplier);
             const size = 220;
             
