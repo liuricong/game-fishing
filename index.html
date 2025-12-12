@@ -2164,11 +2164,11 @@
                 </div>`;
             }
             
-            // 聪仔机
+            // 聪仔鱼
             if (gameState.droneActive && gameState.droneTime > 0) {
                 const percent = (gameState.droneTime / CONFIG.DRONE_DURATION) * 100;
                 html += `<div class="powerup-icon" style="border-color: #00e5ff;">
-                    🛰️
+                    🐟
                     <div class="timer-bar" style="width: ${percent}%; background: #00e5ff;"></div>
                 </div>`;
             }
@@ -2444,23 +2444,23 @@
             }
             
             switch(style) {
-                case 'fast': // 快速鱼 - 尖锐绿色小子弹
-                    ctx.fillStyle = '#00d2d3';
-                    ctx.shadowColor = '#00d2d3';
-                    ctx.shadowBlur = 6;
+                case 'fast': // 快速鱼 - 尖锐橙色子弹（加大）
+                    ctx.fillStyle = '#ff9500';
+                    ctx.shadowColor = '#ff9500';
+                    ctx.shadowBlur = 10;
                     ctx.beginPath();
-                    ctx.moveTo(0, -8);
-                    ctx.lineTo(-4, 4);
-                    ctx.lineTo(0, 2);
-                    ctx.lineTo(4, 4);
+                    ctx.moveTo(0, -12);
+                    ctx.lineTo(-6, 6);
+                    ctx.lineTo(0, 3);
+                    ctx.lineTo(6, 6);
                     ctx.closePath();
                     ctx.fill();
                     // 尾迹
-                    ctx.fillStyle = 'rgba(0, 210, 211, 0.4)';
+                    ctx.fillStyle = 'rgba(255, 149, 0, 0.5)';
                     ctx.beginPath();
-                    ctx.moveTo(-2, 4);
-                    ctx.lineTo(0, 12);
-                    ctx.lineTo(2, 4);
+                    ctx.moveTo(-3, 6);
+                    ctx.lineTo(0, 18);
+                    ctx.lineTo(3, 6);
                     ctx.fill();
                     break;
                     
@@ -2570,21 +2570,21 @@
                     ctx.fill();
                     break;
                     
-                case 'shield': // 护盾鱼 - 电弧子弹（使用缓存渐变）
-                    ctx.shadowColor = '#00d2ff';
-                    ctx.shadowBlur = 12;
+                case 'shield': // 护盾鱼 - 电弧子弹（使用缓存渐变）- 改为黄色
+                    ctx.shadowColor = '#ffc107';
+                    ctx.shadowBlur = 14;
                     ctx.fillStyle = GradientCache.cache['shieldBullet'];
                     ctx.beginPath();
-                    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 9, 0, Math.PI * 2);
                     ctx.fill();
                     // 电弧效果
-                    ctx.strokeStyle = 'rgba(0, 210, 255, 0.6)';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'rgba(255, 193, 7, 0.7)';
+                    ctx.lineWidth = 2.5;
                     for (let i = 0; i < 4; i++) {
                         const angle = (i / 4) * Math.PI * 2 + Math.random() * 0.5;
                         ctx.beginPath();
-                        ctx.moveTo(Math.cos(angle) * 6, Math.sin(angle) * 6);
-                        ctx.lineTo(Math.cos(angle) * 12, Math.sin(angle) * 12);
+                        ctx.moveTo(Math.cos(angle) * 9, Math.sin(angle) * 9);
+                        ctx.lineTo(Math.cos(angle) * 16, Math.sin(angle) * 16);
                         ctx.stroke();
                     }
                     break;
@@ -2606,35 +2606,37 @@
                     ctx.fill();
                     break;
                     
-                case 'swarm': // 蜂群鱼 - 微小鱼鳞子弹
-                    ctx.shadowColor = '#74b9ff';
-                    ctx.shadowBlur = 5;
+                case 'swarm': // 蜂群鱼 - 鱼鳞子弹（改为紫色，加大）
+                    ctx.shadowColor = '#e040fb';
+                    ctx.shadowBlur = 8;
                     // 鱼鳞形状
-                    ctx.fillStyle = '#74b9ff';
+                    ctx.fillStyle = '#e040fb';
                     ctx.beginPath();
-                    ctx.ellipse(0, 0, 3, 5, 0, 0, Math.PI * 2);
+                    ctx.ellipse(0, 0, 5, 8, 0, 0, Math.PI * 2);
                     ctx.fill();
                     // 鳞片纹理
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-                    ctx.lineWidth = 0.5;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.lineWidth = 1;
                     ctx.beginPath();
-                    ctx.arc(0, -1, 2, 0, Math.PI);
+                    ctx.arc(0, -2, 3, 0, Math.PI);
                     ctx.stroke();
                     break;
                     
-                default: // 普通鱼 - 标准红色水泡
-                    const r = 6;
+                default: // 普通鱼 - 标准红色水泡（加大）
+                    const r = 9;
                     ctx.beginPath();
                     ctx.arc(0, 0, r, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255, 100, 100, 0.7)';
+                    ctx.fillStyle = 'rgba(255, 80, 80, 0.85)';
+                    ctx.shadowColor = '#ff5050';
+                    ctx.shadowBlur = 10;
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(255, 150, 150, 0.9)';
-                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = 'rgba(255, 130, 130, 0.95)';
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                     // 高光
                     ctx.beginPath();
-                    ctx.arc(-1.5, -1.5, r * 0.25, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.arc(-2, -2, r * 0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
                     ctx.fill();
             }
         }
@@ -2645,42 +2647,49 @@
             ctx.shadowBlur = 12;
             
             switch(style) {
-                case 'boss_spiral': // 螺旋 - 星形旋转子弹
-                    ctx.fillStyle = color;
+                case 'boss_spiral': // 螺旋 - 星形旋转子弹（玄月专用，加大加亮）
+                    ctx.fillStyle = '#ff6b6b'; // 改为红色，更醒目
+                    ctx.shadowColor = '#ff6b6b';
+                    ctx.shadowBlur = 15;
                     ctx.beginPath();
                     for (let i = 0; i < 5; i++) {
                         const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-                        const x = Math.cos(angle) * 8;
-                        const y = Math.sin(angle) * 8;
+                        const x = Math.cos(angle) * 14;  // 外半径8->14
+                        const y = Math.sin(angle) * 14;
                         if (i === 0) ctx.moveTo(x, y);
                         else ctx.lineTo(x, y);
                         const innerAngle = angle + Math.PI / 5;
-                        ctx.lineTo(Math.cos(innerAngle) * 4, Math.sin(innerAngle) * 4);
+                        ctx.lineTo(Math.cos(innerAngle) * 7, Math.sin(innerAngle) * 7); // 内半径4->7
                     }
                     ctx.closePath();
                     ctx.fill();
+                    // 外圈光晕
+                    ctx.strokeStyle = 'rgba(255, 107, 107, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
                     // 中心亮点
                     ctx.fillStyle = '#fff';
                     ctx.beginPath();
-                    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 4, 0, Math.PI * 2);  // 2->4
                     ctx.fill();
                     break;
                     
-                case 'boss_burst': // 爆裂 - 圆形能量球
+                case 'boss_burst': // 爆裂 - 圆形能量球（加大）
                 case 'boss_ring':
-                    const burstGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 8);
+                    const burstGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 12);
                     burstGrad.addColorStop(0, '#ffffff');
                     burstGrad.addColorStop(0.3, color);
                     burstGrad.addColorStop(1, color + '88');
                     ctx.fillStyle = burstGrad;
+                    ctx.shadowBlur = 15;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 11, 0, Math.PI * 2);  // 7->11
                     ctx.fill();
                     // 外圈光筛
-                    ctx.strokeStyle = color + '66';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = color + '88';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);  // 10->15
                     ctx.stroke();
                     break;
                     
@@ -2892,15 +2901,25 @@
 
         // 绘制小鱼助手
         function drawDrones() {
-            if (!gameState.droneActive || !drones.length) return;
+            if (!drones.length) return;
             drones.forEach(d => {
-                const x = player.x + d.offsetX;
-                const y = player.y + d.offsetY;
+                let x, y;
+                if (d.leaving) {
+                    // 游走状态：使用独立位置
+                    x = d.leaveX;
+                    y = d.leaveY;
+                } else if (gameState.droneActive) {
+                    // 正常状态：跟随玩家
+                    x = player.x + d.offsetX;
+                    y = player.y + d.offsetY;
+                } else {
+                    return; // 无效状态
+                }
                 ctx.save();
                 
                 // 小鱼助手（矢量绘制）
                 d.t = (d.t || 0) + 0.1;
-                const floatY = Math.sin(d.t) * 3;
+                const floatY = d.leaving ? 0 : Math.sin(d.t) * 3;
                 ctx.translate(x, y + floatY);
                 
                 const sc = 0.7;
@@ -6416,7 +6435,7 @@
                     { shape: 'octopus', color: '#6c5ce7', pattern: 'ring', hpRatio: 0.35 },
                     { shape: 'octopus', color: '#d63031', pattern: 'tornado', hpRatio: 0.30 }
                 ],
-                totalHp: 300
+                totalHp: 180
             },
             10: { // 第10关 - 烈焰龙王
                 name: '烈焰龙王',
@@ -6425,7 +6444,7 @@
                     { shape: 'dragon', color: '#d63031', pattern: 'inferno', hpRatio: 0.35 },
                     { shape: 'dragon', color: '#ff0000', pattern: 'meteor', hpRatio: 0.30 }
                 ],
-                totalHp: 320
+                totalHp: 220
             },
             15: { // 第15关 - 混沌魔神
                 name: '混沌魔神',
@@ -6434,7 +6453,7 @@
                     { shape: 'chaos', color: '#2d3436', pattern: 'random', hpRatio: 0.35 },
                     { shape: 'eye', color: '#9b59b6', pattern: 'spiral', hpRatio: 0.30 }
                 ],
-                totalHp: 400
+                totalHp: 280
             },
             20: { // 第20关 - 爱与毁灭之神
                 name: '爱与毁灭之神',
@@ -6443,7 +6462,7 @@
                     { shape: 'cupid', color: '#ff69b4', pattern: 'heart', hpRatio: 0.35 },
                     { shape: 'chaos', color: '#d63031', pattern: 'inferno', hpRatio: 0.30 }
                 ],
-                totalHp: 450
+                totalHp: 350
             }
         };
         
@@ -6494,7 +6513,7 @@
             }
             
             // Boss属性
-const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
+const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 150;
             const hp = Math.floor(baseHp * hpMultiplier);
             const size = 220;
             
@@ -6991,13 +7010,34 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 }
             }
             
-            // 聪仔机时间与行为
+            // 聪仔鱼时间与行为
             if (gameState.droneActive) {
                 if (gameState.droneTime > 0) {
                     gameState.droneTime--;
                 } else {
+                    // 时间到，设置游走状态
                     gameState.droneActive = false;
-                    drones = [];
+                    drones.forEach(d => {
+                        d.leaving = true;
+                        d.leaveX = player.x + d.offsetX;
+                        d.leaveY = player.y + d.offsetY;
+                        d.leaveVx = (Math.random() - 0.5) * 4; // 随机横向速度
+                        d.leaveVy = -3 - Math.random() * 2; // 向上游走
+                    });
+                }
+            }
+            
+            // 更新游走中的聪仔鱼
+            for (let i = drones.length - 1; i >= 0; i--) {
+                const d = drones[i];
+                if (d.leaving) {
+                    d.leaveX += d.leaveVx;
+                    d.leaveY += d.leaveVy;
+                    d.leaveVy -= 0.05; // 稍微加速向上
+                    // 离开屏幕后移除
+                    if (d.leaveY < -50 || d.leaveX < -50 || d.leaveX > CONFIG.CANVAS_WIDTH + 50) {
+                        drones.splice(i, 1);
+                    }
                 }
             }
             // 彩蛋 Boss强化时间
@@ -7197,8 +7237,8 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         enemy.hp--;
                         enemy.hitFlash = 8;
                         
-                        // Boss被击中时有概率掉落道具
-                        if (enemy.type === 'boss' && Math.random() < 0.03) {
+                        // Boss被击中时有概率掉落道具（10%概率）
+                        if (enemy.type === 'boss' && Math.random() < 0.10) {
                             spawnBossPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y + 50);
                         }
                         
