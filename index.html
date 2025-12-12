@@ -2511,24 +2511,24 @@
                     ctx.fill();
                     break;
                     
-                case 'splitter': // 分裂鱼 - 紫色透明水母子弹（使用缓存渐变）
-                    ctx.shadowColor = '#a29bfe';
-                    ctx.shadowBlur = 8;
-                    ctx.fillStyle = GradientCache.cache['splitterBullet'];
+                case 'splitter': // 分裂鱼 - 粉红色水母子弹
+                    ctx.shadowColor = '#ff6b9d';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#ff6b9d';
                     ctx.beginPath();
-                    ctx.arc(0, 0, 7, Math.PI, 0, false);
-                    ctx.quadraticCurveTo(8, 4, 5, 6);
-                    ctx.lineTo(-5, 6);
-                    ctx.quadraticCurveTo(-8, 4, -7, 0);
+                    ctx.arc(0, 0, 8, Math.PI, 0, false);
+                    ctx.quadraticCurveTo(9, 5, 6, 7);
+                    ctx.lineTo(-6, 7);
+                    ctx.quadraticCurveTo(-9, 5, -8, 0);
                     ctx.fill();
                     // 触手
-                    ctx.strokeStyle = 'rgba(162, 155, 254, 0.7)';
-                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = 'rgba(255, 107, 157, 0.8)';
+                    ctx.lineWidth = 2;
                     ctx.lineCap = 'round';
                     for (let i = 0; i < 3; i++) {
                         ctx.beginPath();
-                        ctx.moveTo(-4 + i * 4, 6);
-                        ctx.lineTo(-4 + i * 4 + (Math.random() - 0.5) * 3, 14);
+                        ctx.moveTo(-5 + i * 5, 7);
+                        ctx.lineTo(-5 + i * 5 + (Math.random() - 0.5) * 3, 16);
                         ctx.stroke();
                     }
                     break;
@@ -2606,11 +2606,11 @@
                     ctx.fill();
                     break;
                     
-                case 'swarm': // 蜂群鱼 - 鱼鳞子弹（改为紫色，加大）
-                    ctx.shadowColor = '#e040fb';
+                case 'swarm': // 蜂群鱼 - 鱼鳞子弹（橙黄色）
+                    ctx.shadowColor = '#ffab00';
                     ctx.shadowBlur = 8;
                     // 鱼鳞形状
-                    ctx.fillStyle = '#e040fb';
+                    ctx.fillStyle = '#ffab00';
                     ctx.beginPath();
                     ctx.ellipse(0, 0, 5, 8, 0, 0, Math.PI * 2);
                     ctx.fill();
@@ -6435,7 +6435,7 @@
                     { shape: 'octopus', color: '#6c5ce7', pattern: 'ring', hpRatio: 0.35 },
                     { shape: 'octopus', color: '#d63031', pattern: 'tornado', hpRatio: 0.30 }
                 ],
-                totalHp: 180
+                totalHp: 240
             },
             10: { // 第10关 - 烈焰龙王
                 name: '烈焰龙王',
@@ -6444,7 +6444,7 @@
                     { shape: 'dragon', color: '#d63031', pattern: 'inferno', hpRatio: 0.35 },
                     { shape: 'dragon', color: '#ff0000', pattern: 'meteor', hpRatio: 0.30 }
                 ],
-                totalHp: 220
+                totalHp: 300
             },
             15: { // 第15关 - 混沌魔神
                 name: '混沌魔神',
@@ -6453,7 +6453,7 @@
                     { shape: 'chaos', color: '#2d3436', pattern: 'random', hpRatio: 0.35 },
                     { shape: 'eye', color: '#9b59b6', pattern: 'spiral', hpRatio: 0.30 }
                 ],
-                totalHp: 280
+                totalHp: 380
             },
             20: { // 第20关 - 爱与毁灭之神
                 name: '爱与毁灭之神',
@@ -6462,7 +6462,7 @@
                     { shape: 'cupid', color: '#ff69b4', pattern: 'heart', hpRatio: 0.35 },
                     { shape: 'chaos', color: '#d63031', pattern: 'inferno', hpRatio: 0.30 }
                 ],
-                totalHp: 350
+                totalHp: 450
             }
         };
         
@@ -6513,7 +6513,7 @@
             }
             
             // Boss属性
-const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 150;
+const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             const hp = Math.floor(baseHp * hpMultiplier);
             const size = 220;
             
@@ -7682,12 +7682,30 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 150;
                             enemy.hp -= 1;
                             enemy.hitFlash = 3; // 受击闪烁效果
                             
-                            // 检查Boss是否死亡
-                            if (enemy.hp <= 0) {
+                            // 更新Boss血条
+                            updateBossHpBar(enemy);
+                            
+                            // 三阶段Boss阶段转换检查
+                            if (enemy.isMultiPhase && !enemy.phaseTransitioning) {
+                                const config = enemy.multiPhaseConfig;
+                                const hpPercent = enemy.hp / enemy.maxHp;
+                                const phase1Threshold = 1 - config.phases[0].hpRatio;
+                                const phase2Threshold = config.phases[2].hpRatio;
+                                
+                                if (enemy.currentPhase === 1 && hpPercent <= phase1Threshold) {
+                                    triggerPhaseTransition(enemy, 2);
+                                } else if (enemy.currentPhase === 2 && hpPercent <= phase2Threshold) {
+                                    triggerPhaseTransition(enemy, 3);
+                                }
+                            }
+                            
+                            // 检查Boss是否死亡（只有非三阶段Boss或三阶段Boss第三阶段才能死亡）
+                            if (enemy.hp <= 0 && (!enemy.isMultiPhase || enemy.currentPhase === 3)) {
                                 createExplosion(enemy.x, enemy.y, 2);
                                 gameState.score += 500;
                                 gameState.combo += 10;
                                 updateStats('bossKill', 1);
+                                hideBossHpBar();
                                 
                                 // 处理Boss死亡后的逻辑
                                 gameState.bossActive = false;
