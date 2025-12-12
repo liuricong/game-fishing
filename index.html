@@ -6589,7 +6589,10 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 isMultiPhase: isMultiPhaseBoss,
                 multiPhaseConfig: multiPhaseConfig,
                 currentPhase: 1,
-                phaseTransitioning: false
+                phaseTransitioning: false,
+                // 低血量召唤小怪属性
+                summonTriggered: false,  // 是否已触发召唤
+                summonCooldown: 0        // 召唤冷却
             };
             enemies.push(bossObj);
             
@@ -6652,6 +6655,66 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 
                 boss.phaseTransitioning = false;
             }, 500);
+        }
+        
+        // Boss低血量召唤小怪
+        function bossSummonMinions(boss) {
+            // 召唤2-3只小怪
+            const count = 2 + Math.floor(Math.random() * 2);
+            const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
+            const theme = STAGE_THEMES[(stage - 1) % STAGE_THEMES.length];
+            
+            // 显示召唤提示
+            const waveDisplay = document.getElementById('waveDisplay');
+            waveDisplay.textContent = '⚠️ 召唤援兵!';
+            waveDisplay.classList.remove('show');
+            void waveDisplay.offsetWidth;
+            waveDisplay.classList.add('show');
+            
+            // 在Boss左右两侧生成小怪
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    // 随机生成位置：Boss左右两侧
+                    const side = i % 2 === 0 ? -1 : 1;
+                    const offsetX = (80 + Math.random() * 60) * side;
+                    const spawnX = Math.max(40, Math.min(CONFIG.CANVAS_WIDTH - 40, boss.x + offsetX));
+                    
+                    // 生成快速/蜂群类型的小怪（较弱）
+                    const minionTypes = ['fast', 'swarm', 'normal'];
+                    const minionType = minionTypes[Math.floor(Math.random() * minionTypes.length)];
+                    
+                    const minion = {
+                        x: spawnX,
+                        y: boss.y + 50,
+                        width: minionType === 'swarm' ? 22 : 35,
+                        height: minionType === 'swarm' ? 20 : 30,
+                        type: minionType,
+                        hp: 1,
+                        maxHp: 1,
+                        speed: 1.5 + Math.random() * 1.5,
+                        shootRate: 0.003,
+                        movePattern: 0,
+                        waveAmp: 2 + Math.random() * 2,
+                        waveFreq: 0.04 + Math.random() * 0.03,
+                        phase1: Math.random() * Math.PI * 2,
+                        waveAmp2: 1 + Math.random() * 1.5,
+                        waveFreq2: 0.02 + Math.random() * 0.02,
+                        phase2: Math.random() * Math.PI * 2,
+                        driftDir: side,
+                        driftSpeed: 0.3 + Math.random() * 0.4,
+                        switchInterval: 50 + Math.floor(Math.random() * 60),
+                        chaseStrength: 0.2 + Math.random() * 0.3,
+                        moveTime: Math.random() * 50,
+                        colors: theme.palette,
+                        shape: minionType === 'swarm' ? 'swarmDrone' : 'interceptor',
+                        isBossMinion: true  // 标记为Boss召唤的小怪
+                    };
+                    enemies.push(minion);
+                    
+                    // 生成特效
+                    createExplosion(spawnX, boss.y + 50, 0.3);
+                }, i * 200);  // 每只小怪间隔200ms生成
+            }
         }
         
         // 道具类型配置（带权重）
@@ -7266,6 +7329,13 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         // 更新Boss血条
                         if (enemy.type === 'boss') {
                             updateBossHpBar(enemy);
+                            
+                            // Boss低血量召唤小怪（血量低于25%时触发，只触发一次）
+                            const hpRatio = enemy.hp / enemy.maxHp;
+                            if (hpRatio <= 0.25 && !enemy.summonTriggered && enemy.hp > 0) {
+                                enemy.summonTriggered = true;
+                                bossSummonMinions(enemy);
+                            }
                         }
                         
                         // 三阶段Boss阶段转换检查
