@@ -6431,8 +6431,8 @@
             5: { // 第5关 - 深海霸主
                 name: '深海霸主',
                 phases: [
-                    { shape: 'octopus', color: '#0984e3', pattern: 'tentacle', hpRatio: 0.35 },
-                    { shape: 'octopus', color: '#6c5ce7', pattern: 'ring', hpRatio: 0.35 },
+                    { shape: 'octopus', color: '#e17055', pattern: 'tentacle', hpRatio: 0.35 },
+                    { shape: 'octopus', color: '#ff6b6b', pattern: 'ring', hpRatio: 0.35 },
                     { shape: 'octopus', color: '#d63031', pattern: 'tornado', hpRatio: 0.30 }
                 ],
                 totalHp: 240
@@ -7261,6 +7261,11 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                                 // 进入第三阶段
                                 triggerPhaseTransition(enemy, 3);
                             }
+                        }
+                        
+                        // 三阶段Boss在第一、二阶段血量不能低于1（防止跳过阶段转换）
+                        if (enemy.type === 'boss' && enemy.isMultiPhase && enemy.currentPhase < 3 && enemy.hp <= 0) {
+                            enemy.hp = 1;
                         }
                         
                         if (enemy.hp <= 0) {
