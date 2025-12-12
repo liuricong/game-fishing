@@ -6619,8 +6619,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             const phaseData = config.phases[newPhase - 1];
             const phaseNames = ['Ⅰ', 'Ⅱ', 'Ⅲ'];
             
-            // 清除屏幕上所有敌人子弹
-            bullets = bullets.filter(b => b.type === 'player');
+            // 三阶段Boss阶段切换：按需求保留场上所有子弹，不做清空处理
             
             // 创建变身爆炸效果
             createExplosion(boss.x, boss.y, 2);
@@ -7163,6 +7162,10 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             // 更新子弹（从后向前遍历以避免splice索引问题）
             for (let index = bullets.length - 1; index >= 0; index--) {
                 const bullet = bullets[index];
+                if (!bullet) {
+                    bullets.splice(index, 1);
+                    continue;
+                }
                 bullet.y += (bullet.vy || 0);
                 bullet.x += (bullet.vx || 0);
                 // 波动子弹特殊处理
@@ -7289,6 +7292,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             // 碰撞检测：玩家子弹 vs 敌人（使用Y轴分区优化）
             for (let bIndex = bullets.length - 1; bIndex >= 0; bIndex--) {
                 const bullet = bullets[bIndex];
+                if (!bullet) continue;
                 if (bullet.type !== 'player') continue;
                 
                 // 获取子弹Y坐标附近的敌人（优化）
@@ -7476,6 +7480,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 let playerWasHit = false;
                 for (let bIndex = bullets.length - 1; bIndex >= 0; bIndex--) {
                     const bullet = bullets[bIndex];
+                    if (!bullet) continue;
                     if (bullet.type !== 'enemy') continue;
                     if (playerWasHit) continue; // 已被击中后不再检测
                     
@@ -7869,6 +7874,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 // 吸引敌人子弹
                 for (let j = bullets.length - 1; j >= 0; j--) {
                     const bullet = bullets[j];
+                    if (!bullet) continue;
                     if (bullet.type !== 'enemy') continue;
                     
                     const dx = bh.x - bullet.x;
@@ -7883,6 +7889,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         
                         // 到达中心则消灭
                         if (dist < 20) {
+                            ObjectPool.releaseBullet(bullet);
                             bullets.splice(j, 1);
                         }
                     }
@@ -8442,7 +8449,9 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 homepageFish.forEach(f => { f.w = w; f.h = h; });
             } else {
                 // 游戏运行中时，同步更新画布尺寸和CONFIG
-                const container = document.getElementById('game-container');
+                // 注意：DOM里是 class="game-container"，不是 id="game-container"
+                const container = document.querySelector('.game-container');
+                if (!container) return;
                 CONFIG.CANVAS_WIDTH = container.clientWidth;
                 CONFIG.CANVAS_HEIGHT = container.clientHeight;
                 canvas.width = CONFIG.CANVAS_WIDTH;
