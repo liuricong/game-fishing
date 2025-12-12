@@ -2782,17 +2782,24 @@
                     ctx.fill();
                     break;
                     
-                case 'boss_tentacle': // 触手 - 波浪形
-                    ctx.fillStyle = color;
+                case 'boss_tentacle': // 触手 - 波浪形（加大加亮）
+                    ctx.shadowColor = '#ff6b6b';
+                    ctx.shadowBlur = 12;
+                    ctx.fillStyle = '#ff6b6b'; // 固定红色，更醒目
                     ctx.beginPath();
-                    ctx.ellipse(0, 0, 5, 8, 0, 0, Math.PI * 2);
+                    ctx.ellipse(0, 0, 8, 12, 0, 0, Math.PI * 2);
                     ctx.fill();
                     // 触手纹理
-                    ctx.strokeStyle = color + 'aa';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = 'rgba(255, 107, 107, 0.8)';
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 7, Math.PI * 0.3, Math.PI * 0.7);
+                    ctx.arc(0, 0, 11, Math.PI * 0.25, Math.PI * 0.75);
                     ctx.stroke();
+                    // 中心亮点
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(0, -3, 3, 0, Math.PI * 2);
+                    ctx.fill();
                     break;
                     
                 case 'boss_feather': // 羽毛 - 羽毛形状
