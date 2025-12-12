@@ -1088,7 +1088,7 @@
             tank: 0.006,      // 坦克鱼 - 单发大弹
             sniper: 0.008,    // 狙击鱼 - 精准追踪
             splitter: 0.005,  // 分裂鱼 - 三发扩散
-            mini: 0.003,      // 迷你鱼 - 微小子弹
+            tracker: 0.006,   // 追踪鱼 - 朝玩家方向射击
             normal: 0.005,    // 普通鱼 - 标准子弹
             bomber: 0.004,    // 轰炸鱼 - 投弹
             shield: 0.005,    // 护盾鱼 - 有护盾保护
@@ -2533,17 +2533,23 @@
                     }
                     break;
                     
-                case 'mini': // 迷你鱼 - 微小红色子弹
-                    ctx.fillStyle = '#ff7675';
-                    ctx.shadowColor = '#ff7675';
-                    ctx.shadowBlur = 5;
+                case 'tracker': // 追踪鱼 - 橙红色箭头子弹
+                    ctx.fillStyle = '#ff5722';
+                    ctx.shadowColor = '#ff5722';
+                    ctx.shadowBlur = 10;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                    ctx.moveTo(0, -10);
+                    ctx.lineTo(-6, 6);
+                    ctx.lineTo(0, 3);
+                    ctx.lineTo(6, 6);
+                    ctx.closePath();
                     ctx.fill();
-                    // 小高光
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    // 尾迹
+                    ctx.fillStyle = 'rgba(255, 87, 34, 0.5)';
                     ctx.beginPath();
-                    ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
+                    ctx.moveTo(-3, 6);
+                    ctx.lineTo(0, 14);
+                    ctx.lineTo(3, 6);
                     ctx.fill();
                     break;
                     
@@ -6224,7 +6230,7 @@
             const theme = STAGE_THEMES[(stage - 1) % STAGE_THEMES.length];
             const pool = theme.types;
             type = pool[Math.floor(Math.random() * pool.length)];
-            const defaultByType = { normal:'fighter', fast:'interceptor', tank:'bomber', sniper:'sniperJet', splitter:'splitterJet', mini:'droneJet', bomber:'bomberPlane', shield:'shieldCarrier', healer:'healerShip', swarm:'swarmDrone' };
+            const defaultByType = { normal:'fighter', fast:'interceptor', tank:'bomber', sniper:'sniperJet', splitter:'splitterJet', tracker:'interceptor', bomber:'bomberPlane', shield:'shieldCarrier', healer:'healerShip', swarm:'swarmDrone' };
             const shape = (theme.shapesByType && theme.shapesByType[type]) || defaultByType[type] || 'triangle';
             
             // 按类型设定属性 - 射速和速度随关卡递增
@@ -6252,11 +6258,11 @@
                     speed = (1.0 + diffMult * 1.2) * speedMult;
                     shootRate = ENEMY_SHOOT_BASE.splitter * shootMult;
                     width = 45; height = 40; break;
-                case 'mini':
-                    hp = 1;
-                    speed = (1.4 + diffMult * 1.5) * speedMult;
-                    shootRate = ENEMY_SHOOT_BASE.mini * shootMult;
-                    width = 25; height = 22; break;
+                case 'tracker': // 追踪鱼 - 子弹朝玩家方向
+                    hp = 2;
+                    speed = (1.0 + diffMult * 1.2) * speedMult;
+                    shootRate = ENEMY_SHOOT_BASE.tracker * shootMult;
+                    width = 38; height = 32; break;
                 case 'bomber': // 轰炸鱼 - 投弹
                     hp = 2 + Math.floor(stage / 5);
                     speed = (0.8 + diffMult * 0.8) * speedMult;
@@ -6379,16 +6385,16 @@
         // 关卡主题：每关不同敌机组合与配色（20关循环）- 避免使用粉色（玩家鱼颜色）
         // 平衡设计：前期简单敌人为主，逐步增加特殊敌人
         const STAGE_THEMES = [
-            // 第1-5关：新手入门，以普通/快速/迷你为主
-            { name: '深海暗流',  types: ['normal','normal','mini'], palette: ['#5c6bc0','#3949ab','#283593'], shapesByType: {normal:'fighter', mini:'droneJet'} },
-            { name: '湛蓝之海',  types: ['normal','fast','mini'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter', mini:'droneJet'} },
+            // 第1-5关：新手入门，以普通/快速/追踪为主
+            { name: '深海暗流',  types: ['normal','normal','tracker'], palette: ['#5c6bc0','#3949ab','#283593'], shapesByType: {normal:'fighter', tracker:'interceptor'} },
+            { name: '湛蓝之海',  types: ['normal','fast','tracker'], palette: ['#74c0ff','#4dabf7','#228be6'], shapesByType: {fast:'interceptor', normal:'fighter', tracker:'interceptor'} },
             { name: '琥珀荒原',  types: ['normal','fast','fast'], palette: ['#ffb74d','#fb8c00','#ef6c00'], shapesByType: {normal:'fighter', fast:'interceptor'} },
-            { name: '紫晶秘域',  types: ['normal','mini','sniper'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {normal:'fighter', mini:'droneJet', sniper:'sniperJet'} },
+            { name: '紫晶秘域',  types: ['normal','tracker','sniper'], palette: ['#b388ff','#7c4dff','#651fff'], shapesByType: {normal:'fighter', tracker:'interceptor', sniper:'sniperJet'} },
             { name: '翡翠林地',  types: ['fast','normal','splitter'], palette: ['#66e6a8','#2ecc71','#1abc9c'], shapesByType: {fast:'interceptor', normal:'fighter', splitter:'splitterJet'} },
             // 第6-10关：引入特殊敌人
             { name: '极夜星空',  types: ['fast','normal','tank'], palette: ['#a29bfe','#6c5ce7','#341f97'], shapesByType: {fast:'interceptor', normal:'fighter', tank:'bomber'} },
             { name: '熔火之都',  types: ['normal','splitter','bomber'], palette: ['#ff6b6b','#ff3d3d','#c71f1f'], shapesByType: {normal:'fighter', splitter:'splitterJet', bomber:'bomberPlane'} },
-            { name: '风暴群岛',  types: ['fast','mini','swarm'], palette: ['#00e5ff','#00b3ff','#0088ff'], shapesByType: {fast:'interceptor', mini:'droneJet', swarm:'swarmDrone'} },
+            { name: '风暴群岛',  types: ['fast','tracker','swarm'], palette: ['#00e5ff','#00b3ff','#0088ff'], shapesByType: {fast:'interceptor', tracker:'interceptor', swarm:'swarmDrone'} },
             { name: '雪原晨光',  types: ['normal','sniper','shield'], palette: ['#e3f2fd','#bbdefb','#90caf9'], shapesByType: {normal:'fighter', sniper:'sniperJet', shield:'shieldCarrier'} },
             { name: '沙海遗迹',  types: ['tank','normal','healer'], palette: ['#ffd166','#f8b400','#e09f3e'], shapesByType: {tank:'bomber', normal:'fighter', healer:'healerShip'} },
             // 第11-15关：混合组合
@@ -6396,7 +6402,7 @@
             { name: '雷霆高原',  types: ['fast','shield','sniper'], palette: ['#ffd54f','#ffca28','#ffa000'], shapesByType: {fast:'interceptor', shield:'shieldCarrier', sniper:'sniperJet'} },
             { name: '珊瑩礁岩',  types: ['normal','swarm','healer'], palette: ['#ff8a65','#ff7043','#f4511e'], shapesByType: {normal:'fighter', swarm:'swarmDrone', healer:'healerShip'} },
             { name: '磁暴城墙',  types: ['healer','sniper','tank'], palette: ['#8fd3fe','#69bff8','#4098d7'], shapesByType: {healer:'healerShip', sniper:'sniperJet', tank:'bomber'} },
-            { name: '暮色海湾',  types: ['mini','bomber','shield'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {mini:'droneJet', bomber:'bomberPlane', shield:'shieldCarrier'} },
+            { name: '暮色海湾',  types: ['tracker','bomber','shield'], palette: ['#98c1d9','#6ea8d6','#3d5a80'], shapesByType: {tracker:'interceptor', bomber:'bomberPlane', shield:'shieldCarrier'} },
             // 第16-20关：高难度组合
             { name: '黑曜峡谷',  types: ['tank','shield','bomber'], palette: ['#95a5a6','#7f8c8d','#566573'], shapesByType: {tank:'bomber', shield:'shieldCarrier', bomber:'bomberPlane'} },
             { name: '疾风荒岭',  types: ['swarm','splitter','fast'], palette: ['#a8e6cf','#56c7c2','#2fb7b0'], shapesByType: {swarm:'swarmDrone', splitter:'splitterJet', fast:'interceptor'} },
@@ -6936,8 +6942,11 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         createBullet({ x: ex, y: ey, vx: 0, vy: 5, type: 'enemy', bulletStyle: 'splitter' });
                         createBullet({ x: ex, y: ey, vx: 2, vy: 4, type: 'enemy', bulletStyle: 'splitter' });
                         break;
-                    case 'mini': // 迷你鱼 - 微小子弹，快速但弱
-                        createBullet({ x: ex, y: ey, vx: (Math.random() - 0.5) * 2, vy: 6, type: 'enemy', bulletStyle: 'mini' });
+                    case 'tracker': // 追踪鱼 - 子弹朝玩家方向
+                        const tdx = player.x - ex;
+                        const tdy = player.y - ey;
+                        const tdist = Math.sqrt(tdx * tdx + tdy * tdy) || 1;
+                        createBullet({ x: ex, y: ey, vx: (tdx / tdist) * 5, vy: (tdy / tdist) * 5, type: 'enemy', bulletStyle: 'tracker' });
                         break;
                     case 'bomber': // 轰炸鱼 - 投下炸弹，爆炸时分裂
                         createBullet({ x: ex, y: ey, vx: 0, vy: 2.5, type: 'enemy', bulletStyle: 'bomber', isBomb: true, bombTimer: 60 });
