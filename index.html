@@ -6217,10 +6217,12 @@
             
             // 难度与主题
             const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
-            // 闯关模式难度封顶为1，无尽模式难度继续增加（超过20波后每10波+0.1）
+            // 闯关模式：第6关后保持与1-5关一致的移动/射速（难度不再递增）
+            // 无尽模式：仍按原逻辑增长
             let diffMult;
             if (gameState.gameMode === 'stage') {
-                diffMult = (stage - 1) / 19;
+                const stageForDiff = Math.min(stage, 5);
+                diffMult = (stageForDiff - 1) / 19;
             } else {
                 // 无尽模式：前20波正常增长，之后缓慢增加，封顶1.3倍
                 const baseDiff = Math.min(1, (stage - 1) / 19);
@@ -6342,7 +6344,8 @@
             const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
             let diffMult;
             if (gameState.gameMode === 'stage') {
-                diffMult = (stage - 1) / 19;
+                const stageForDiff = Math.min(stage, 5);
+                diffMult = (stageForDiff - 1) / 19;
             } else {
                 const baseDiff = Math.min(1, (stage - 1) / 19);
                 const extraDiff = stage > 20 ? (stage - 20) * 0.015 : 0;
@@ -7346,11 +7349,13 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         if (enemy.type === 'boss') {
                             updateBossHpBar(enemy);
                             
-                            // Boss低血量召唤小怪（血量低于25%时触发，只触发一次）
-                            const hpRatio = enemy.hp / enemy.maxHp;
-                            if (hpRatio <= 0.25 && !enemy.summonTriggered && enemy.hp > 0) {
-                                enemy.summonTriggered = true;
-                                bossSummonMinions(enemy);
+                            // Boss低血量召唤小怪（仅普通Boss；三阶段Boss不召唤）
+                            if (!enemy.isMultiPhase) {
+                                const hpRatio = enemy.hp / enemy.maxHp;
+                                if (hpRatio <= 0.25 && !enemy.summonTriggered && enemy.hp > 0) {
+                                    enemy.summonTriggered = true;
+                                    bossSummonMinions(enemy);
+                                }
                             }
                         }
                         
