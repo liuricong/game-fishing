@@ -2654,12 +2654,12 @@
                     ctx.beginPath();
                     for (let i = 0; i < 5; i++) {
                         const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-                        const x = Math.cos(angle) * 14;  // 外半径8->14
-                        const y = Math.sin(angle) * 14;
+                        const x = Math.cos(angle) * 10;  // 外半径
+                        const y = Math.sin(angle) * 10;
                         if (i === 0) ctx.moveTo(x, y);
                         else ctx.lineTo(x, y);
                         const innerAngle = angle + Math.PI / 5;
-                        ctx.lineTo(Math.cos(innerAngle) * 7, Math.sin(innerAngle) * 7); // 内半径4->7
+                        ctx.lineTo(Math.cos(innerAngle) * 5, Math.sin(innerAngle) * 5); // 内半径
                     }
                     ctx.closePath();
                     ctx.fill();
@@ -2670,26 +2670,26 @@
                     // 中心亮点
                     ctx.fillStyle = '#fff';
                     ctx.beginPath();
-                    ctx.arc(0, 0, 4, 0, Math.PI * 2);  // 2->4
+                    ctx.arc(0, 0, 3, 0, Math.PI * 2);
                     ctx.fill();
                     break;
                     
                 case 'boss_burst': // 爆裂 - 圆形能量球（加大）
                 case 'boss_ring':
-                    const burstGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 12);
+                    const burstGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
                     burstGrad.addColorStop(0, '#ffffff');
                     burstGrad.addColorStop(0.3, color);
                     burstGrad.addColorStop(1, color + '88');
                     ctx.fillStyle = burstGrad;
                     ctx.shadowBlur = 15;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 11, 0, Math.PI * 2);  // 7->11
+                    ctx.arc(0, 0, 9, 0, Math.PI * 2);
                     ctx.fill();
                     // 外圈光筛
                     ctx.strokeStyle = color + '88';
                     ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.arc(0, 0, 15, 0, Math.PI * 2);  // 10->15
+                    ctx.arc(0, 0, 12, 0, Math.PI * 2);
                     ctx.stroke();
                     break;
                     
@@ -7663,10 +7663,45 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 150;
                 bh.duration--;
                 bh.rotation += 0.15;
                 
+                // 初始化伤害计时器
+                if (!bh.bossDamageTick) bh.bossDamageTick = 0;
+                bh.bossDamageTick++;
+                
                 // 吸引敌人 - 先吸到中心再消灭（超大范围吸引）
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
-                    if (enemy.type === 'boss') continue; // Boss不被吸引
+                    
+                    // Boss不被吸引，但受到持续伤害
+                    if (enemy.type === 'boss') {
+                        const dx = bh.x - enemy.x;
+                        const dy = bh.y - enemy.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Boss在黑洞范围内受到持续伤害（每20帧造成1点伤害）
+                        if (dist < bh.radius + 80 && bh.bossDamageTick % 20 === 0) {
+                            enemy.hp -= 1;
+                            enemy.hitFlash = 3; // 受击闪烁效果
+                            
+                            // 检查Boss是否死亡
+                            if (enemy.hp <= 0) {
+                                createExplosion(enemy.x, enemy.y, 2);
+                                gameState.score += 500;
+                                gameState.combo += 10;
+                                updateStats('bossKill', 1);
+                                
+                                // 处理Boss死亡后的逻辑
+                                gameState.bossActive = false;
+                                if (gameState.gameMode === 'stage') {
+                                    gameState.stageBossDefeated = true;
+                                } else {
+                                    gameState.nextBossScore += CONFIG.ENDLESS_NEXT_BOSS_ADD;
+                                }
+                                
+                                enemies.splice(j, 1);
+                            }
+                        }
+                        continue;
+                    }
                     
                     const dx = bh.x - enemy.x;
                     const dy = bh.y - enemy.y;
