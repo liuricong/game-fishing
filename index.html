@@ -6634,6 +6634,11 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             
             // 延迟后更新Boss配置
             setTimeout(() => {
+                // 检查Boss是否仍然存在且游戏仍在运行
+                if (!gameState.isRunning || !enemies.includes(boss)) {
+                    return;
+                }
+                
                 // 更新Boss外观和弹道
                 boss.bossConfig = {
                     name: config.name + ' ' + phaseNames[newPhase - 1],
@@ -6664,6 +6669,10 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             const stage = gameState.gameMode === 'stage' ? gameState.currentStage : gameState.wave;
             const theme = STAGE_THEMES[(stage - 1) % STAGE_THEMES.length];
             
+            // 保存Boss当前位置（避免异步回调时Boss已被移除）
+            const bossX = boss.x;
+            const bossY = boss.y;
+            
             // 显示召唤提示
             const waveDisplay = document.getElementById('waveDisplay');
             waveDisplay.textContent = '⚠️ 召唤援兵!';
@@ -6674,10 +6683,13 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             // 在Boss左右两侧生成小怪
             for (let i = 0; i < count; i++) {
                 setTimeout(() => {
+                    // 检查游戏是否仍在运行
+                    if (!gameState.isRunning) return;
+                    
                     // 随机生成位置：Boss左右两侧
                     const side = i % 2 === 0 ? -1 : 1;
                     const offsetX = (80 + Math.random() * 60) * side;
-                    const spawnX = Math.max(40, Math.min(CONFIG.CANVAS_WIDTH - 40, boss.x + offsetX));
+                    const spawnX = Math.max(40, Math.min(CONFIG.CANVAS_WIDTH - 40, bossX + offsetX));
                     
                     // 生成快速/蜂群类型的小怪（较弱）
                     const minionTypes = ['fast', 'swarm', 'normal'];
@@ -6685,7 +6697,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                     
                     const minion = {
                         x: spawnX,
-                        y: boss.y + 50,
+                        y: bossY + 50,
                         width: minionType === 'swarm' ? 22 : 35,
                         height: minionType === 'swarm' ? 20 : 30,
                         type: minionType,
@@ -6712,7 +6724,7 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                     enemies.push(minion);
                     
                     // 生成特效
-                    createExplosion(spawnX, boss.y + 50, 0.3);
+                    createExplosion(spawnX, bossY + 50, 0.3);
                 }, i * 200);  // 每只小怪间隔200ms生成
             }
         }
@@ -7321,9 +7333,9 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                         enemy.hp--;
                         enemy.hitFlash = 8;
                         
-                        // Boss被击中时有概率掉落道具（10%概率）
-                        if (enemy.type === 'boss' && Math.random() < 0.10) {
-                            spawnBossPowerUp(enemy.x + (Math.random() - 0.5) * 60, enemy.y + 50);
+                        // Boss被击中时有概率掉落道具（5%概率，从子弹击中位置掉落）
+                        if (enemy.type === 'boss' && Math.random() < 0.05) {
+                            spawnBossPowerUp(bullet.x, bullet.y);
                         }
                         
                         // 更新Boss血条
@@ -7368,11 +7380,14 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                                 hideBossHpBar(); // 隐藏Boss血条
                                 updateStats('bossKill', 1); // 成就: Boss击杀
                                 
-                                // Boss掉落多个道具（三阶段Boss和彩蛋Boss掉落更多）
-                                const dropCount = enemy.isMultiPhase ? 5 : (enemy.isSecretBoss ? 6 : 3);
+                                // Boss掉落道具（三阶段Boss和彩蛋Boss掉落更多）
+                                const dropCount = enemy.isMultiPhase ? 2 : (enemy.isSecretBoss ? 3 : 1);
+                                const dropX = enemy.x;
+                                const dropY = enemy.y;
                                 for (let i = 0; i < dropCount; i++) {
                                     setTimeout(() => {
-                                        spawnPowerUp(enemy.x + (Math.random() - 0.5) * 80, enemy.y);
+                                        if (!gameState.isRunning) return;
+                                        spawnPowerUp(dropX + (Math.random() - 0.5) * 80, dropY);
                                     }, i * 100);
                                 }
                                 
