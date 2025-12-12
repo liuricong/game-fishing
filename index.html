@@ -6400,24 +6400,24 @@
             { name: '月光天穹',  types: ['bomber','healer','sniper'], palette: ['#c5b3ff','#9d7dff','#6b4eff'], shapesByType: {bomber:'bomberPlane', healer:'healerShip', sniper:'sniperJet'} }
         ];
 
-        // Boss配置 - 20种独特Boss
+        // Boss配置 - 20种独特Boss（避免蓝/紫色）
         const BOSS_CONFIGS = [
-            { name: '珊瑚守卫', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
-            { name: '玄月', color: '#9b59b6', shape: 'crescent', bulletPattern: 'spiral' },
+            { name: '珊瑩守卫', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
+            { name: '玄月', color: '#ff7043', shape: 'crescent', bulletPattern: 'spiral' },
             { name: '暗夜玄鸿', color: '#2c3e50', shape: 'bird', bulletPattern: 'wave' },
             { name: '烈焰凤凰', color: '#e74c3c', shape: 'phoenix', bulletPattern: 'burst' },
-            { name: '冰霜女王', color: '#74b9ff', shape: 'crystal', bulletPattern: 'ring' },
+            { name: '冰霜女王', color: '#ffd700', shape: 'crystal', bulletPattern: 'ring' },
             { name: '雷电之主', color: '#f39c12', shape: 'thunder', bulletPattern: 'zigzag' },
-            { name: '深海巨兽', color: '#0984e3', shape: 'octopus', bulletPattern: 'tentacle' },
+            { name: '深海巨兽', color: '#e17055', shape: 'octopus', bulletPattern: 'tentacle' },
             { name: '毒刺玄蝶', color: '#00b894', shape: 'butterfly', bulletPattern: 'scatter' },
             { name: '血月魔君', color: '#c0392b', shape: 'vampire', bulletPattern: 'cross' },
-            { name: '幻影魔女', color: '#8e44ad', shape: 'witch', bulletPattern: 'homing' },
+            { name: '幻影魔女', color: '#ff6b9d', shape: 'witch', bulletPattern: 'homing' },
             { name: '黄金帝龙', color: '#f1c40f', shape: 'dragon', bulletPattern: 'breath' },
             { name: '樱花精灵', color: '#fd79a8', shape: 'sakura', bulletPattern: 'petal' },
             { name: '暗影刃', color: '#636e72', shape: 'blade', bulletPattern: 'slash' },
-            { name: '星空巨人', color: '#6c5ce7', shape: 'giant', bulletPattern: 'meteor' },
+            { name: '星空巨人', color: '#ffc107', shape: 'giant', bulletPattern: 'meteor' },
             { name: '花园守护者', color: '#e056fd', shape: 'rose', bulletPattern: 'thorn' },
-            { name: '风暴之眼', color: '#00cec9', shape: 'eye', bulletPattern: 'tornado' },
+            { name: '风暴之眼', color: '#ff9800', shape: 'eye', bulletPattern: 'tornado' },
             { name: '地狱火焰', color: '#d63031', shape: 'demon', bulletPattern: 'inferno' },
             { name: '天使之翼', color: '#ffeaa7', shape: 'angel', bulletPattern: 'feather' },
             { name: '混沌之心', color: '#2d3436', shape: 'chaos', bulletPattern: 'random' },
@@ -6428,7 +6428,7 @@
         const SECRET_BOSS_CONFIGS = [
             { name: '🧙‍♀️ 海洋美人鱼', color: '#ff69b4', shape: 'mermaid', bulletPattern: 'heart', hpMult: 1.5, rewardMult: 3 },
             { name: '🐲 海龙王', color: '#ffd700', shape: 'seadragon', bulletPattern: 'breath', hpMult: 2, rewardMult: 5 },
-            { name: '🦑 远古巨鱸', color: '#4a69bd', shape: 'whale', bulletPattern: 'wave', hpMult: 1.8, rewardMult: 4 }
+            { name: '🦑 远古巨鲈', color: '#8b4513', shape: 'whale', bulletPattern: 'wave', hpMult: 1.8, rewardMult: 4 }
         ];
         const SECRET_BOSS_CHANCE = 0.05; // 5%概率
         
@@ -6458,7 +6458,7 @@
                 phases: [
                     { shape: 'demon', color: '#636e72', pattern: 'cross', hpRatio: 0.35 },
                     { shape: 'chaos', color: '#2d3436', pattern: 'random', hpRatio: 0.35 },
-                    { shape: 'eye', color: '#9b59b6', pattern: 'spiral', hpRatio: 0.30 }
+                    { shape: 'eye', color: '#ff5722', pattern: 'spiral', hpRatio: 0.30 }
                 ],
                 totalHp: 380
             },
