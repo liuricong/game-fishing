@@ -6841,19 +6841,19 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                             }
                         }
                         break;
-                    case 'burst': // 爆裂 - 每60帧10发圆形爆发
-                        if (enemy.shootTimer % 60 === 0) {
-                            for (let i = 0; i < 10; i++) {
-                                const a = (i / 10) * Math.PI * 2;
+                    case 'burst': // 爆裂 - 每70帧8发圆形爆发（降低刷屏，但保留压迫感）
+                        if (enemy.shootTimer % 70 === 0) {
+                            for (let i = 0; i < 8; i++) {
+                                const a = (i / 8) * Math.PI * 2;
                                 createBullet({ x: cx, y: cy, vx: Math.cos(a) * 3.5, vy: Math.sin(a) * 3.5 + 2, type: 'enemy', bulletStyle: 'boss_burst', bossColor });
                             }
                         }
                         break;
-                    case 'ring': // 圆环 - 每55帧16发圆环，每次旋转偏移
-                        if (enemy.shootTimer % 55 === 0) {
-                            const offset = (enemy.shootTimer / 55) * 0.15;
-                            for (let i = 0; i < 16; i++) {
-                                const a = (i / 16) * Math.PI * 2 + offset;
+                    case 'ring': // 圆环 - 每70帧12发圆环，每次旋转偏移（降低刷屏）
+                        if (enemy.shootTimer % 70 === 0) {
+                            const offset = (enemy.shootTimer / 70) * 0.15;
+                            for (let i = 0; i < 12; i++) {
+                                const a = (i / 12) * Math.PI * 2 + offset;
                                 createBullet({ x: cx, y: cy, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 + 2, type: 'enemy', bulletStyle: 'boss_ring', bossColor });
                             }
                         }
@@ -6925,23 +6925,23 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                             }
                         }
                         break;
-                    case 'thorn': // 荆棘 - 每30帧5发，左右交替
-                        if (enemy.shootTimer % 30 === 0) {
-                            const side = (enemy.shootTimer / 30) % 2 === 0 ? -1 : 1;
-                            for (let i = -2; i <= 2; i++) {
+                    case 'thorn': // 荆棘 - 每40帧4发，左右交替（降低刷屏）
+                        if (enemy.shootTimer % 40 === 0) {
+                            const side = (enemy.shootTimer / 40) % 2 === 0 ? -1 : 1;
+                            for (let i = -1.5; i <= 1.5; i++) {
                                 createBullet({ x: cx + side * 50, y: cy, vx: side * 2.5 + i * 0.8, vy: 5, type: 'enemy', bulletStyle: 'boss_thorn', bossColor });
                             }
                         }
                         break;
-                    case 'tornado': // 龙卷 - 每6帧双发旋转
-                        if (enemy.shootTimer % 6 === 0) {
+                    case 'tornado': // 龙卷 - 每10帧双发旋转（降低密度）
+                        if (enemy.shootTimer % 10 === 0) {
                             const a = enemy.shootTimer * 0.2;
                             createBullet({ x: cx + Math.cos(a) * 50, y: cy, vx: Math.cos(a) * 2.5, vy: 5, type: 'enemy', bulletStyle: 'boss_tornado', bossColor });
                             createBullet({ x: cx + Math.cos(a + Math.PI) * 50, y: cy, vx: Math.cos(a + Math.PI) * 2.5, vy: 5, type: 'enemy', bulletStyle: 'boss_tornado', bossColor });
                         }
                         break;
-                    case 'inferno': // 地狱火 - 每80帧一波，持纭45帧密集火焰
-                        if (enemy.shootTimer % 80 < 45 && enemy.shootTimer % 3 === 0) {
+                    case 'inferno': // 地狱火 - 每80帧一波，持续36帧，每4帧一发（降低刷屏）
+                        if (enemy.shootTimer % 80 < 36 && enemy.shootTimer % 4 === 0) {
                             const spread = Math.sin(enemy.shootTimer * 0.2) * 80;
                             createBullet({ x: cx + spread, y: cy, vx: spread * 0.03, vy: 6, type: 'enemy', bulletStyle: 'boss_inferno', bossColor });
                         }
@@ -6977,10 +6977,10 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                             }
                         }
                         break;
-                    case 'heart': // 爱心 - 每70帧16发心形
-                        if (enemy.shootTimer % 70 === 0) {
-                            for (let i = 0; i < 16; i++) {
-                                const t = (i / 16) * Math.PI * 2;
+                    case 'heart': // 爱心 - 每90帧12发心形（降低刷屏）
+                        if (enemy.shootTimer % 90 === 0) {
+                            for (let i = 0; i < 12; i++) {
+                                const t = (i / 12) * Math.PI * 2;
                                 const hx = 16 * Math.pow(Math.sin(t), 3);
                                 const hy = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
                                 createBullet({ x: cx, y: cy, vx: hx * 0.2, vy: -hy * 0.2 + 3, type: 'enemy', bulletStyle: 'boss_heart', bossColor });
