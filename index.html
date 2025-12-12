@@ -7779,6 +7779,14 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
         
         // 更新黑洞
         function updateBlackholes() {
+            // 修复：黑洞结束时，如果敌人还处于 beingSucked=true 会导致后续update里跳过移动从而“定住”。
+            // 每帧先重置一次，再由黑洞重新标记需要被吸引的敌人。
+            for (let j = 0; j < enemies.length; j++) {
+                if (enemies[j] && enemies[j].type !== 'boss') {
+                    enemies[j].beingSucked = false;
+                }
+            }
+
             for (let i = blackholes.length - 1; i >= 0; i--) {
                 const bh = blackholes[i];
                 bh.duration--;
