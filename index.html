@@ -1048,9 +1048,12 @@
             DRONE_FIRE_COOLDOWN: 14,    // 小鱼开火间隔（帧）
             
             // === Boss出现节奏配置 ===
-            // 关卡模式：至少击败多少敌人后才可出现Boss（基础+按关卡递增）
+            // 关卡模式：Boss出现需要击败的敌人数（统一阈值，避免后期打太久才见Boss）
+            STAGE_BOSS_KILL_TARGET: 42,
+            // 兼容保留：旧的“基础 + 关卡递增”算法（当前未使用）
             STAGE_BOSS_BASE: 24,
             STAGE_BOSS_PER_STAGE: 6,
+            STAGE_BOSS_STAGE_CAP: 5,
             // 关卡模式：每关Boss最早出现时间（帧，60fps）
             BOSS_MIN_TIME_STAGE: 30 * 60,   // 30秒
             
@@ -2881,6 +2884,49 @@
                     ctx.beginPath();
                     ctx.arc(0, 0, 3, 0, Math.PI * 2);
                     ctx.fill();
+                    break;
+
+                case 'boss_snipe_warn': // 点名预告 - 只描边、不造成伤害（配合延迟点名）
+                    ctx.strokeStyle = color + 'cc';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -14);
+                    ctx.lineTo(-6, 0);
+                    ctx.lineTo(0, 14);
+                    ctx.lineTo(6, 0);
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.strokeStyle = '#fff6';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -10);
+                    ctx.lineTo(0, 10);
+                    ctx.stroke();
+                    break;
+
+                case 'boss_snipe': // 点名狙击 - 细长菱形（高可读性）
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -14);
+                    ctx.lineTo(-5, 0);
+                    ctx.lineTo(0, 14);
+                    ctx.lineTo(5, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff8';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -10);
+                    ctx.lineTo(0, 10);
+                    ctx.stroke();
+                    break;
+
+                case 'boss_gate': // 墙与门 - 方块泡弹（更像“墙体单位”）
+                    ctx.fillStyle = color;
+                    ctx.fillRect(-7, -7, 14, 14);
+                    ctx.strokeStyle = '#fff7';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-7, -7, 14, 14);
                     break;
                     
                 case 'boss_random': // 混沌 - 不规则形状（加大）
@@ -6415,27 +6461,29 @@
         ];
 
         // Boss配置 - 20种独特Boss（避免蓝/紫色）
+        // 说明：为了贴近第2关“持续压迫但可读”的体验，这里统一给所有Boss配置“走位型”的副弹道 gate。
+        // 另外在低血量会插入少量“预告点名狙击”，用于防止玩家卡绝对安全点。
         const BOSS_CONFIGS = [
-            { name: '珊瑩守卫', color: '#ff6b9d', shape: 'fighter', bulletPattern: 'spread3' },
-            { name: '玄月', color: '#ff7043', shape: 'crescent', bulletPattern: 'spiral' },
-            { name: '暗夜玄鸿', color: '#2c3e50', shape: 'bird', bulletPattern: 'wave' },
-            { name: '烈焰凤凰', color: '#e74c3c', shape: 'phoenix', bulletPattern: 'burst' },
-            { name: '冰霜女王', color: '#ffd700', shape: 'crystal', bulletPattern: 'ring' },
-            { name: '雷电之主', color: '#f39c12', shape: 'thunder', bulletPattern: 'zigzag' },
-            { name: '深海巨兽', color: '#e17055', shape: 'octopus', bulletPattern: 'tentacle' },
-            { name: '毒刺玄蝶', color: '#00b894', shape: 'butterfly', bulletPattern: 'scatter' },
-            { name: '血月魔君', color: '#c0392b', shape: 'vampire', bulletPattern: 'cross' },
-            { name: '幻影魔女', color: '#ff6b9d', shape: 'witch', bulletPattern: 'homing' },
-            { name: '黄金帝龙', color: '#f1c40f', shape: 'dragon', bulletPattern: 'breath' },
-            { name: '樱花精灵', color: '#fd79a8', shape: 'sakura', bulletPattern: 'petal' },
-            { name: '暗影刃', color: '#636e72', shape: 'blade', bulletPattern: 'slash' },
-            { name: '星空巨人', color: '#ffc107', shape: 'giant', bulletPattern: 'meteor' },
-            { name: '花园守护者', color: '#e056fd', shape: 'rose', bulletPattern: 'thorn' },
-            { name: '风暴之眼', color: '#ff9800', shape: 'eye', bulletPattern: 'tornado' },
-            { name: '地狱火焰', color: '#d63031', shape: 'demon', bulletPattern: 'inferno' },
-            { name: '天使之翼', color: '#ffeaa7', shape: 'angel', bulletPattern: 'feather' },
-            { name: '混沌之心', color: '#2d3436', shape: 'chaos', bulletPattern: 'random' },
-            { name: '爱神丘比特', color: '#ff69b4', shape: 'cupid', bulletPattern: 'heart' }
+            { name: '珊瑩守卫', color: '#ff6b9d', shape: 'fighter',   bulletPattern: 'spread3', secondaryPattern: 'gate' },
+            { name: '玄月',     color: '#ff7043', shape: 'crescent', bulletPattern: 'spiral',  secondaryPattern: 'gate' },
+            { name: '暗夜玄鸿', color: '#2c3e50', shape: 'bird',     bulletPattern: 'wave',    secondaryPattern: 'gate' },
+            { name: '烈焰凤凰', color: '#e74c3c', shape: 'phoenix',  bulletPattern: 'burst',   secondaryPattern: 'gate' },
+            { name: '冰霜女王', color: '#ffd700', shape: 'crystal',  bulletPattern: 'ring',    secondaryPattern: 'gate' },
+            { name: '雷电之主', color: '#f39c12', shape: 'thunder',  bulletPattern: 'zigzag',  secondaryPattern: 'gate' },
+            { name: '深海巨兽', color: '#e17055', shape: 'octopus',  bulletPattern: 'tentacle',secondaryPattern: 'gate' },
+            { name: '毒刺玄蝶', color: '#00b894', shape: 'butterfly',bulletPattern: 'scatter', secondaryPattern: 'gate' },
+            { name: '血月魔君', color: '#c0392b', shape: 'vampire',  bulletPattern: 'cross',   secondaryPattern: 'gate' },
+            { name: '幻影魔女', color: '#ff6b9d', shape: 'witch',    bulletPattern: 'homing',  secondaryPattern: 'gate' },
+            { name: '黄金帝龙', color: '#f1c40f', shape: 'dragon',   bulletPattern: 'breath',  secondaryPattern: 'gate' },
+            { name: '樱花精灵', color: '#fd79a8', shape: 'sakura',   bulletPattern: 'petal',   secondaryPattern: 'gate' },
+            { name: '暗影刃',   color: '#636e72', shape: 'blade',    bulletPattern: 'slash',   secondaryPattern: 'gate' },
+            { name: '星空巨人', color: '#ffc107', shape: 'giant',    bulletPattern: 'meteor',  secondaryPattern: 'gate' },
+            { name: '花园守护者', color: '#e056fd', shape: 'rose',   bulletPattern: 'thorn',   secondaryPattern: 'gate' },
+            { name: '风暴之眼', color: '#ff9800', shape: 'eye',      bulletPattern: 'tornado', secondaryPattern: 'gate' },
+            { name: '地狱火焰', color: '#d63031', shape: 'demon',    bulletPattern: 'inferno', secondaryPattern: 'gate' },
+            { name: '天使之翼', color: '#ffeaa7', shape: 'angel',    bulletPattern: 'feather', secondaryPattern: 'gate' },
+            { name: '混沌之心', color: '#2d3436', shape: 'chaos',    bulletPattern: 'random',  secondaryPattern: 'gate' },
+            { name: '爱神丘比特', color: '#ff69b4', shape: 'cupid',  bulletPattern: 'heart',   secondaryPattern: 'gate' }
         ];
         
         // 彩蛋 Boss 配置 - 5%概率替代普通 Boss
@@ -6521,7 +6569,9 @@
                     name: multiPhaseConfig.name + ' Ⅰ',
                     color: phase1.color,
                     shape: phase1.shape,
-                    bulletPattern: phase1.pattern
+                    bulletPattern: phase1.pattern,
+                    // 三阶段Boss同样需要反站桩，不然容易被“贴点输出”融化
+                    secondaryPattern: phase1.secondaryPattern || 'gate'
                 };
                 rewardMultiplier = 3; // 三阶段Boss奖励更高
             } else if (isSecretBoss) {
@@ -6531,6 +6581,14 @@
                 rewardMultiplier = secretBoss.rewardMult || 1;
             } else {
                 bossConfig = BOSS_CONFIGS[(bossLevel - 1) % 20];
+            }
+
+            // 兜底：彩蛋Boss / 其他配置若未提供 secondaryPattern，则给一个默认“走位型”副弹道
+            if (!bossConfig.secondaryPattern) {
+                bossConfig = {
+                    ...bossConfig,
+                    secondaryPattern: 'gate'
+                };
             }
             
             // Boss属性
@@ -6646,7 +6704,8 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                     name: config.name + ' ' + phaseNames[newPhase - 1],
                     color: phaseData.color,
                     shape: phaseData.shape,
-                    bulletPattern: phaseData.pattern
+                    bulletPattern: phaseData.pattern,
+                    secondaryPattern: phaseData.secondaryPattern || (boss.bossConfig && boss.bossConfig.secondaryPattern) || 'gate'
                 };
                 boss.currentPhase = newPhase;
                 boss.shootTimer = 0; // 重置射击计时器，给玩家反应时间
@@ -6802,6 +6861,32 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             });
         }
 
+        function queueBossShot(boss, delayFrames, kind, args) {
+            if (!boss.pendingShots) boss.pendingShots = [];
+            boss.pendingShots.push({ t: delayFrames, kind, args });
+        }
+
+        // Boss反站桩：点名狙击（朝玩家当前位置发射）
+        function fireBossSnipe(cx, cy, bossColor, offsetX = 0, speed = 6.2, bulletStyle = 'boss_snipe', bulletType = 'enemy') {
+            const sx = cx + offsetX;
+            const dx = player.x - sx;
+            const dy = player.y - cy;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            createBullet({ x: sx, y: cy, vx: (dx / dist) * speed, vy: (dy / dist) * speed, type: bulletType, bulletStyle, bossColor });
+        }
+
+        // Boss反站桩：墙与门（生成下落弹墙，给玩家留一段安全门）
+        function fireBossGateLine(cy, bossColor, opts = {}) {
+            const gapCenter = player.x;
+            const gapHalf = opts.gapHalf ?? 90;   // 门宽 = gapHalf * 2
+            const step = opts.step ?? 48;         // 弹墙密度（越小越难）
+            const vy = opts.vy ?? 5.3;
+            for (let x = step / 2; x <= CONFIG.CANVAS_WIDTH - step / 2; x += step) {
+                if (Math.abs(x - gapCenter) <= gapHalf) continue;
+                createBullet({ x, y: cy, vx: 0, vy, type: 'enemy', bulletStyle: 'boss_gate', bossColor });
+            }
+        }
+
         // 敌人射击
         function enemyShoot(enemy) {
             // 统一子弹速度
@@ -6810,6 +6895,21 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             if (enemy.type === 'boss' && enemy.bossConfig) {
                 // Boss特殊弹道 - 每种弹道有固定节奏，有规律可躲
                 enemy.shootTimer = (enemy.shootTimer || 0) + 1;
+
+                // 处理延迟发射（用于点名狙击预告）
+                if (enemy.pendingShots && enemy.pendingShots.length) {
+                    for (let pi = enemy.pendingShots.length - 1; pi >= 0; pi--) {
+                        const ps = enemy.pendingShots[pi];
+                        ps.t--;
+                        if (ps.t <= 0) {
+                            if (ps.kind === 'snipe') {
+                                fireBossSnipe(ps.args.cx, ps.args.cy, ps.args.bossColor, ps.args.offsetX, ps.args.speed, 'boss_snipe', 'enemy');
+                            }
+                            enemy.pendingShots.splice(pi, 1);
+                        }
+                    }
+                }
+
                 // Boss进入后统一延迟120帧开火
                 if (enemy.shootTimer < 120) return;
                 
@@ -6819,7 +6919,11 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                 
                 // 获取Boss颜色用于子弹
                 const bossColor = enemy.bossConfig.color || '#ff4757';
-                
+
+                const hpPercent = (enemy.hp / enemy.maxHp) || 1;
+                // 像第2关一样：越打越紧，但前期给学习窗口
+                const secondaryInterval = hpPercent > 0.7 ? 150 : (hpPercent > 0.35 ? 120 : 95);
+
                 switch(pattern) {
                     case 'spread3': // 3路扩散 - 每45帧一波，三发子弹向下扩散
                         if (enemy.shootTimer % 45 === 0) {
@@ -6993,6 +7097,24 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
                             createBullet({ x: cx, y: cy, vx: 0, vy: 5, type: 'enemy', bulletStyle: 'boss_spread', bossColor });
                             createBullet({ x: cx + 20, y: cy, vx: 1.5, vy: 5, type: 'enemy', bulletStyle: 'boss_spread', bossColor });
                         }
+                }
+
+                // === 走位型副弹道（像第2关那样持续施压）===
+                const secondary = enemy.bossConfig.secondaryPattern;
+                if (secondary === 'gate' && enemy.shootTimer % secondaryInterval === 0) {
+                    const gateOpts = hpPercent > 0.7
+                        ? { gapHalf: 105, step: 52, vy: 5.1 }
+                        : (hpPercent > 0.35 ? { gapHalf: 90, step: 48, vy: 5.3 } : { gapHalf: 72, step: 44, vy: 5.5 });
+                    fireBossGateLine(cy, bossColor, gateOpts);
+                }
+
+                // 低血量插入少量“预告点名狙击”，防止玩家卡绝对安全点（不做高频，避免不公平）
+                if (hpPercent <= 0.35 && enemy.shootTimer % 190 === 0) {
+                    // 先发预告（无伤害、速度更慢），再延迟24帧发真实点名
+                    fireBossSnipe(cx, cy, bossColor, -28, 3.0, 'boss_snipe_warn', 'warn');
+                    fireBossSnipe(cx, cy, bossColor, 28, 3.0, 'boss_snipe_warn', 'warn');
+                    queueBossShot(enemy, 24, 'snipe', { cx, cy, bossColor, offsetX: -28, speed: 6.5 });
+                    queueBossShot(enemy, 24, 'snipe', { cx, cy, bossColor, offsetX: 28, speed: 6.5 });
                 }
             } else if (Math.random() < enemy.shootRate) {
                 // 根据敌鱼类型发射不同子弹
@@ -7557,7 +7679,9 @@ const baseHp = isMultiPhaseBoss ? multiPhaseConfig.totalHp : 200;
             // 根据游戏模式处理进度
             if (gameState.gameMode === 'stage') {
             // 闯关模式：击败足够敌人后出现Boss（且达到最短时间）
-                const enemiesNeeded = CONFIG.STAGE_BOSS_BASE + gameState.currentStage * CONFIG.STAGE_BOSS_PER_STAGE;
+                const enemiesNeeded = (CONFIG.STAGE_BOSS_KILL_TARGET != null)
+                    ? CONFIG.STAGE_BOSS_KILL_TARGET
+                    : (CONFIG.STAGE_BOSS_BASE + Math.min(gameState.currentStage, CONFIG.STAGE_BOSS_STAGE_CAP || 5) * CONFIG.STAGE_BOSS_PER_STAGE);
                 if (
                     gameState.stageEnemyCount >= enemiesNeeded &&
                     !gameState.bossActive &&
